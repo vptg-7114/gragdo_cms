@@ -1,4 +1,4 @@
-// File: /home/project/app/layout.tsx
+// File: /home/sk_883/Tech/GradGo_CMS/bolt_cms/app/layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
