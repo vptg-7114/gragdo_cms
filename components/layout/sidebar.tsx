@@ -144,9 +144,9 @@ export function Sidebar({ userRole }: SidebarProps) {
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 md:hidden h-10 w-10 bg-white shadow-md border hover:bg-gray-50"
+          className="fixed top-4 left-4 z-50 md:hidden h-10 w-10 digigo-card shadow-md border hover:bg-gray-50 dark:hover:bg-[#3a3a4a]"
         >
-          <Menu className="h-5 w-5 text-[#7165e1]" />
+          <Menu className="h-5 w-5 text-[#7165e1] dark:text-[#9b8ff5]" />
         </Button>
 
         {/* Mobile Overlay */}
@@ -159,7 +159,7 @@ export function Sidebar({ userRole }: SidebarProps) {
 
         {/* Mobile Sidebar */}
         <aside className={cn(
-          "fixed left-0 top-0 h-full w-[280px] bg-white shadow-lg z-50 transform transition-transform duration-300 md:hidden",
+          "fixed left-0 top-0 h-full w-[280px] digigo-sidebar shadow-lg z-50 transform transition-transform duration-300 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* Close Button */}
@@ -169,15 +169,15 @@ export function Sidebar({ userRole }: SidebarProps) {
             onClick={closeMobileSidebar}
             className="absolute right-4 top-4 h-8 w-8"
           >
-            <X className="h-4 w-4 text-[#7165e1]" />
+            <X className="h-4 w-4 text-[#7165e1] dark:text-[#9b8ff5]" />
           </Button>
 
           {/* Logo */}
           <div className="flex items-center px-6 py-6 mt-8">
-            <div className="w-[40px] h-[40px] bg-[#7165e1] rounded-lg flex items-center justify-center">
+            <div className="w-[40px] h-[40px] bg-[#7165e1] dark:bg-[#9b8ff5] rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <h1 className="ml-3 font-extrabold text-[#7165e1] text-[20px] tracking-[-0.22px] font-tt-tricks">
+            <h1 className="ml-3 font-extrabold text-[#7165e1] dark:text-[#9b8ff5] text-[20px] tracking-[-0.22px] font-tt-tricks">
               DigiGo Care
             </h1>
           </div>
@@ -189,8 +189,8 @@ export function Sidebar({ userRole }: SidebarProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10",
-                    pathname === item.href ? "bg-[#7165e1]" : ""
+                    "flex items-center p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10 dark:hover:bg-[#9b8ff5]/10",
+                    pathname === item.href ? "bg-[#7165e1] dark:bg-[#9b8ff5]" : ""
                   )}
                   onClick={() => {
                     if (item.hasSubmenu) {
@@ -204,7 +204,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                   <span
                     className={cn(
                       "ml-4 text-base font-sf-pro font-semibold",
-                      pathname === item.href ? "text-white" : "text-[#888888]"
+                      pathname === item.href ? "text-white" : "digigo-text-muted"
                     )}
                   >
                     {item.name}
@@ -214,7 +214,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                       className={cn(
                         "ml-auto w-[20px] h-[20px] transition-transform",
                         expandedItems.includes(item.name) ? "rotate-180" : "",
-                        pathname === item.href ? "text-white" : "text-[#888888]"
+                        pathname === item.href ? "text-white" : "digigo-text-muted"
                       )}
                     />
                   )}
@@ -229,8 +229,8 @@ export function Sidebar({ userRole }: SidebarProps) {
                         className={cn(
                           "block p-2 rounded-lg text-sm font-sf-pro transition-colors",
                           pathname === subItem.href 
-                            ? "bg-[#7165e1] text-white" 
-                            : "text-[#888888] hover:bg-[#7165e1]/10"
+                            ? "bg-[#7165e1] dark:bg-[#9b8ff5] text-white" 
+                            : "digigo-text-muted hover:bg-[#7165e1]/10 dark:hover:bg-[#9b8ff5]/10"
                         )}
                         onClick={closeMobileSidebar}
                       >
@@ -249,7 +249,7 @@ export function Sidebar({ userRole }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-white h-full flex flex-col shadow-lg transition-all duration-300 ease-in-out relative hidden md:flex",
+      "digigo-sidebar h-full flex flex-col shadow-lg transition-all duration-300 ease-in-out relative hidden md:flex",
       isCollapsed ? "w-[80px]" : "w-[300px]"
     )}>
       {/* Toggle Button */}
@@ -258,14 +258,14 @@ export function Sidebar({ userRole }: SidebarProps) {
         size="icon"
         onClick={toggleSidebar}
         className={cn(
-          "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full bg-white shadow-md border hover:bg-gray-50",
+          "absolute -right-3 top-6 z-10 h-6 w-6 rounded-full digigo-card shadow-md border hover:bg-gray-50 dark:hover:bg-[#3a3a4a]",
           "flex items-center justify-center"
         )}
       >
         {isCollapsed ? (
-          <Menu className="h-3 w-3 text-[#7165e1]" />
+          <Menu className="h-3 w-3 text-[#7165e1] dark:text-[#9b8ff5]" />
         ) : (
-          <X className="h-3 w-3 text-[#7165e1]" />
+          <X className="h-3 w-3 text-[#7165e1] dark:text-[#9b8ff5]" />
         )}
       </Button>
 
@@ -274,11 +274,11 @@ export function Sidebar({ userRole }: SidebarProps) {
         "flex items-center px-[24px] py-6 transition-all duration-300",
         isCollapsed && "px-[20px] justify-center"
       )}>
-        <div className="w-[40px] h-[40px] bg-[#7165e1] rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="w-[40px] h-[40px] bg-[#7165e1] dark:bg-[#9b8ff5] rounded-lg flex items-center justify-center flex-shrink-0">
           <Building2 className="w-5 h-5 text-white" />
         </div>
         {!isCollapsed && (
-          <h1 className="ml-3 font-extrabold text-[#7165e1] text-[22px] tracking-[-0.22px] font-tt-tricks transition-opacity duration-300">
+          <h1 className="ml-3 font-extrabold text-[#7165e1] dark:text-[#9b8ff5] text-[22px] tracking-[-0.22px] font-tt-tricks transition-opacity duration-300">
             DigiGo Care
           </h1>
         )}
@@ -294,8 +294,8 @@ export function Sidebar({ userRole }: SidebarProps) {
             <Link
               href={item.href}
               className={cn(
-                "flex items-center p-3 rounded-[16px] transition-all duration-200 hover:bg-[#7165e1]/10 group",
-                pathname === item.href ? "bg-[#7165e1]" : "",
+                "flex items-center p-3 rounded-[16px] transition-all duration-200 hover:bg-[#7165e1]/10 dark:hover:bg-[#9b8ff5]/10 group",
+                pathname === item.href ? "bg-[#7165e1] dark:bg-[#9b8ff5]" : "",
                 isCollapsed && "justify-center"
               )}
               onClick={() => item.hasSubmenu && !isCollapsed && toggleExpanded(item.name)}
@@ -306,7 +306,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                   <span
                     className={cn(
                       "ml-[24px] text-lg font-sf-pro font-semibold transition-opacity duration-300",
-                      pathname === item.href ? "text-white" : "text-[#888888]"
+                      pathname === item.href ? "text-white" : "digigo-text-muted"
                     )}
                   >
                     {item.name}
@@ -316,7 +316,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                       className={cn(
                         "ml-auto w-[24px] h-[24px] transition-transform duration-200",
                         expandedItems.includes(item.name) ? "rotate-180" : "",
-                        pathname === item.href ? "text-white" : "text-[#888888]"
+                        pathname === item.href ? "text-white" : "digigo-text-muted"
                       )}
                     />
                   )}
@@ -325,7 +325,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               
               {/* Tooltip for collapsed state */}
               {isCollapsed && (
-                <div className="absolute left-[90px] bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                <div className="absolute left-[90px] bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                   {item.name}
                 </div>
               )}
@@ -341,8 +341,8 @@ export function Sidebar({ userRole }: SidebarProps) {
                     className={cn(
                       "block p-2 rounded-lg text-base font-sf-pro transition-colors duration-200",
                       pathname === subItem.href 
-                        ? "bg-[#7165e1] text-white" 
-                        : "text-[#888888] hover:bg-[#7165e1]/10"
+                        ? "bg-[#7165e1] dark:bg-[#9b8ff5] text-white" 
+                        : "digigo-text-muted hover:bg-[#7165e1]/10 dark:hover:bg-[#9b8ff5]/10"
                     )}
                   >
                     {subItem.name}
