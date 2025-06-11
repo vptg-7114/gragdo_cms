@@ -3,15 +3,17 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { AppointmentTable } from "@/components/appointments/appointment-table"
+import { DoctorsActivity } from "@/components/dashboard/doctors-activity"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Filter } from "lucide-react"
-import { getDashboardStats, getRecentAppointments } from "@/lib/actions/dashboard"
+import { getDashboardStats, getRecentAppointments, getDoctorsActivity } from "@/lib/actions/dashboard"
 
 export default async function DashboardPage() {
-  const [stats, appointments] = await Promise.all([
+  const [stats, appointments, doctorsActivity] = await Promise.all([
     getDashboardStats(),
-    getRecentAppointments()
+    getRecentAppointments(),
+    getDoctorsActivity()
   ])
 
   return (
@@ -61,9 +63,17 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Appointments Table */}
-          <div className="mt-8 lg:mt-[50px]">
-            <AppointmentTable appointments={appointments} />
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mt-8 lg:mt-[50px]">
+            {/* Appointments Table */}
+            <div className="xl:col-span-1">
+              <AppointmentTable appointments={appointments} />
+            </div>
+
+            {/* Doctor's Activity */}
+            <div className="xl:col-span-1">
+              <DoctorsActivity doctors={doctorsActivity} />
+            </div>
           </div>
         </div>
       </main>

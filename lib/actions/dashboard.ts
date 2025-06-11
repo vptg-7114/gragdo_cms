@@ -63,3 +63,43 @@ export async function getRecentAppointments() {
     return []
   }
 }
+
+export async function getDoctorsActivity() {
+  try {
+    const doctors = await prisma.doctor.findMany({
+      include: {
+        appointments: {
+          select: {
+            status: true
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    })
+
+    const doctorsActivity = doctors.map(doctor => {
+      const appointments = doctor.appointments
+      const inProgress = appointments.filter(apt => apt.status === 'IN_PROGRESS').length
+      const completed = appointments.filter(apt => apt.status === 'COMPLETED').length
+      const pending = appointments.filter(apt => apt.status === 'PENDING').length
+
+      return {
+        id: doctor.id,
+        name: doctor.name,
+        specialization: doctor.specialization,
+        isAvailable: doctor.isAvailable,
+        appointments: {
+          inProgress,
+          completed,
+          pending,
+          total: appointments.length
+        }
+      }
+    })
+
+    return doctorsActivity
+  } catch (error) {
+    console.error('Error fetching doctors activity:', error)
+    return []
+  }
+}
