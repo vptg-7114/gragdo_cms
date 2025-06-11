@@ -155,131 +155,143 @@ export default function AppointmentsPage() {
             </Dialog>
           </div>
 
-          {/* Search and Filter Controls */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            {/* Search Bar */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search by patient name, ID, phone, doctor, concern, or status..."
-                className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#7165e1] focus:ring-[#7165e1]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            {/* Records Per Page Dropdown */}
-            <div className="flex items-center gap-2 lg:min-w-[200px]">
-              <span className="text-sm text-gray-600 whitespace-nowrap">Records per page:</span>
-              <Select value={recordsPerPage} onValueChange={handleRecordsPerPageChange}>
-                <SelectTrigger className="h-12 w-[100px] rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Results Summary */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-            <p className="text-sm text-gray-600">
-              Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} appointments
-              {searchTerm && ` (filtered from ${appointments.length} total)`}
-            </p>
-            
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="h-8 px-3"
-                >
-                  Previous
-                </Button>
+          {/* Appointments Container with integrated search and pagination */}
+          <div className="bg-white rounded-[20px] shadow-sm">
+            <div className="p-4 md:p-6 lg:p-[34px]">
+              {/* Header with Search and Records Per Page */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold">
+                  Appointments
+                </h2>
                 
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = currentPage - 2 + i
-                    }
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "digigo" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                  {/* Search Bar */}
+                  <div className="relative flex-1 lg:w-[300px]">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search appointments..."
+                      className="pl-10 h-10 rounded-xl border-gray-200 focus:border-[#7165e1] focus:ring-[#7165e1] text-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Records Per Page Dropdown */}
+                  <div className="flex items-center gap-2 lg:min-w-[160px]">
+                    <span className="text-sm text-gray-600 whitespace-nowrap">Show:</span>
+                    <Select value={recordsPerPage} onValueChange={handleRecordsPerPageChange}>
+                      <SelectTrigger className="h-10 w-[80px] rounded-xl text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="h-8 px-3"
-                >
-                  Next
-                </Button>
               </div>
-            )}
-          </div>
 
-          <AppointmentTable
-            appointments={paginatedAppointments}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-
-          {/* Bottom Pagination (for mobile) */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6 lg:hidden">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
+              {/* Results Summary and Pagination */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <p className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} appointments
+                  {searchTerm && ` (filtered from ${appointments.length} total)`}
+                </p>
                 
-                <span className="text-sm text-gray-600 px-3">
-                  Page {currentPage} of {totalPages}
-                </span>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-8 px-3 text-xs"
+                    >
+                      Previous
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum
+                        if (totalPages <= 5) {
+                          pageNum = i + 1
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i
+                        } else {
+                          pageNum = currentPage - 2 + i
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "digigo" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(pageNum)}
+                            className="h-8 w-8 p-0 text-xs"
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-3 text-xs"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </div>
+
+              {/* Appointments Table */}
+              <AppointmentTable
+                appointments={paginatedAppointments}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+
+              {/* Bottom Pagination (for mobile) */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6 lg:hidden">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    
+                    <span className="text-sm text-gray-600 px-3">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </main>
     </div>
