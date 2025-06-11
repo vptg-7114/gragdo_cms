@@ -6,8 +6,16 @@ import { Header } from "@/components/layout/header"
 import { AppointmentTable } from "@/components/appointments/appointment-table"
 import { AppointmentForm } from "@/components/appointments/appointment-form"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Plus } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Plus, Search } from "lucide-react"
 import { getAppointments, deleteAppointment } from "@/lib/actions/appointments"
 import { getPatients } from "@/lib/actions/patients"
 import { getDoctors } from "@/lib/actions/doctors"
@@ -16,13 +24,31 @@ export default function AppointmentsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<string | null>(null)
   const [appointments, setAppointments] = useState([])
+  const [filteredAppointments, setFilteredAppointments] = useState([])
   const [patients, setPatients] = useState([])
   const [doctors, setDoctors] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [recordsPerPage, setRecordsPerPage] = useState("10")
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    // Filter appointments based on search term
+    const filtered = appointments.filter((appointment: any) =>
+      appointment.patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.patient.patientId.includes(searchTerm) ||
+      appointment.patient.phone.includes(searchTerm) ||
+      appointment.doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.concern.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.status.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredAppointments(filtered)
+    setCurrentPage(1) // Reset to first page when searching
+  }, [searchTerm, appointments])
 
   const loadData = async () => {
     try {
@@ -33,6 +59,7 @@ export default function AppointmentsPage() {
       ])
       
       setAppointments(appointmentsData)
+      setFilteredAppointments(appointmentsData)
       setPatients(patientsData)
       setDoctors(doctorsData)
     } catch (error) {
@@ -61,6 +88,23 @@ export default function AppointmentsPage() {
     } else {
       console.error('Failed to delete appointment:', result.error)
     }
+  }
+
+  // Pagination logic
+  const totalRecords = filteredAppointments.length
+  const recordsPerPageNum = parseInt(recordsPerPage)
+  const totalPages = Math.ceil(totalRecords / recordsPerPageNum)
+  const startIndex = (currentPage - 1) * recordsPerPageNum
+  const endIndex = startIndex + recordsPerPageNum
+  const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleRecordsPerPageChange = (value: string) => {
+    setRecordsPerPage(value)
+    setCurrentPage(1) // Reset to first page when changing records per page
   }
 
   if (loading) {
@@ -111,11 +155,131 @@ export default function AppointmentsPage() {
             </Dialog>
           </div>
 
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                placeholder="Search by patient name, ID, phone, doctor, concern, or status..."
+                className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#7165e1] focus:ring-[#7165e1]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Records Per Page Dropdown */}
+            <div className="flex items-center gap-2 lg:min-w-[200px]">
+              <span className="text-sm text-gray-600 whitespace-nowrap">Records per page:</span>
+              <Select value={recordsPerPage} onValueChange={handleRecordsPerPageChange}>
+                <SelectTrigger className="h-12 w-[100px] rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Results Summary */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+            <p className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} appointments
+              {searchTerm && ` (filtered from ${appointments.length} total)`}
+            </p>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 px-3"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum
+                    if (totalPages <= 5) {
+                      pageNum = i + 1
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i
+                    } else {
+                      pageNum = currentPage - 2 + i
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "digigo" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-8 px-3"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </div>
+
           <AppointmentTable
-            appointments={appointments}
+            appointments={paginatedAppointments}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
+
+          {/* Bottom Pagination (for mobile) */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6 lg:hidden">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                
+                <span className="text-sm text-gray-600 px-3">
+                  Page {currentPage} of {totalPages}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
