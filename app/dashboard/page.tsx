@@ -4,16 +4,18 @@ import { Header } from "@/components/layout/header"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { AppointmentTable } from "@/components/appointments/appointment-table"
 import { DoctorsActivity } from "@/components/dashboard/doctors-activity"
+import { RecentReports } from "@/components/dashboard/recent-reports"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Filter } from "lucide-react"
-import { getDashboardStats, getRecentAppointments, getDoctorsActivity } from "@/lib/actions/dashboard"
+import { getDashboardStats, getRecentAppointments, getDoctorsActivity, getRecentReports } from "@/lib/actions/dashboard"
 
 export default async function DashboardPage() {
-  const [stats, appointments, doctorsActivity] = await Promise.all([
+  const [stats, appointments, doctorsActivity, recentReports] = await Promise.all([
     getDashboardStats(),
     getRecentAppointments(),
-    getDoctorsActivity()
+    getDoctorsActivity(),
+    getRecentReports()
   ])
 
   return (
@@ -63,16 +65,21 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mt-8 lg:mt-[50px]">
-            {/* Appointments Table */}
-            <div className="xl:col-span-1">
-              <AppointmentTable appointments={appointments} />
-            </div>
+          {/* Appointments Table - Full Width */}
+          <div className="mt-8 lg:mt-[50px]">
+            <AppointmentTable appointments={appointments} />
+          </div>
 
+          {/* Bottom Section: Doctor's Activity and Recent Reports */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mt-8">
             {/* Doctor's Activity */}
             <div className="xl:col-span-1">
               <DoctorsActivity doctors={doctorsActivity} />
+            </div>
+
+            {/* Recent Reports */}
+            <div className="xl:col-span-1">
+              <RecentReports reports={recentReports} />
             </div>
           </div>
         </div>
