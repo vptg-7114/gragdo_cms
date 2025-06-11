@@ -4,6 +4,7 @@ import { Search, Calendar, Bell, ChevronDown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { formatDate } from "@/lib/utils"
+import Link from "next/link"
 
 interface HeaderProps {
   clinicName?: string
@@ -43,24 +44,26 @@ export function Header({ clinicName = "Vishnu Clinic", location = "Location" }: 
           <Bell className="w-6 h-6 md:w-[33px] md:h-[33px] text-[#7165e1]" />
         </div>
 
-        {/* Profile */}
-        <div className="w-[200px] sm:w-[250px] md:w-[327px] h-[50px] md:h-[66px] bg-[#f4f3ff] rounded-[20px] flex items-center px-3 md:px-4">
-          <Avatar className="w-[35px] h-[35px] md:w-[50px] md:h-[50px] rounded-xl md:rounded-2xl flex-shrink-0">
-            <AvatarImage src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2" />
-            <AvatarFallback className="bg-[#7165e1] text-white font-sf-pro font-semibold text-sm md:text-base">
-              {clinicName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="ml-3 md:ml-[22px] flex-1 min-w-0">
-            <p className="text-sm md:text-xl text-black font-sf-pro font-semibold truncate">
-              {clinicName}
-            </p>
-            <p className="text-xs md:text-base text-black font-sf-pro truncate">
-              {location}
-            </p>
+        {/* Profile - Now clickable */}
+        <Link href="/profile">
+          <div className="w-[200px] sm:w-[250px] md:w-[327px] h-[50px] md:h-[66px] bg-[#f4f3ff] rounded-[20px] flex items-center px-3 md:px-4 hover:bg-[#eeebff] transition-colors cursor-pointer">
+            <Avatar className="w-[35px] h-[35px] md:w-[50px] md:h-[50px] rounded-xl md:rounded-2xl flex-shrink-0">
+              <AvatarImage src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2" />
+              <AvatarFallback className="bg-[#7165e1] text-white font-sf-pro font-semibold text-sm md:text-base">
+                {clinicName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="ml-3 md:ml-[22px] flex-1 min-w-0">
+              <p className="text-sm md:text-xl text-black font-sf-pro font-semibold truncate">
+                {clinicName}
+              </p>
+              <p className="text-xs md:text-base text-black font-sf-pro truncate">
+                {location}
+              </p>
+            </div>
+            <ChevronDown className="ml-auto w-[15px] h-[8px] md:w-[17px] md:h-[9px] flex-shrink-0" />
           </div>
-          <ChevronDown className="ml-auto w-[15px] h-[8px] md:w-[17px] md:h-[9px] flex-shrink-0" />
-        </div>
+        </Link>
       </div>
     </header>
   )
