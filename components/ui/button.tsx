@@ -18,7 +18,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        digigo: "bg-[#7165e1] dark:bg-[#9b8ff5] text-white hover:bg-[#5f52d1] dark:hover:bg-[#8a7ef0] rounded-2xl font-sf-pro font-semibold transition-all duration-200",
+        digigo: "bg-[#7165e1] text-white hover:bg-[#5f52d1] rounded-2xl font-sf-pro font-semibold",
       },
       size: {
         default: "h-10 px-4 py-2",

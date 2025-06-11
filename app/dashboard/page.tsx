@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   ])
 
   return (
-    <div className="flex h-screen digigo-bg">
+    <div className="flex h-screen bg-[#f4f3ff]">
       <Sidebar userRole="USER" />
       
       <main className="flex-1 overflow-auto ml-0 md:ml-0">
@@ -28,22 +28,22 @@ export default async function DashboardPage() {
           {/* Time Filter and Add Patient */}
           <div className="flex flex-col lg:flex-row justify-between gap-4 mt-6 lg:mt-[30px]">
             <Tabs defaultValue="today" className="w-full lg:w-[561px]">
-              <TabsList className="w-full h-[50px] md:h-[54px] p-0 digigo-card rounded-2xl grid grid-cols-3">
+              <TabsList className="w-full h-[50px] md:h-[54px] p-0 bg-white rounded-2xl grid grid-cols-3">
                 <TabsTrigger
                   value="today"
-                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] dark:data-[state=active]:bg-[#9b8ff5] data-[state=active]:text-white text-base md:text-xl rounded-2xl font-sf-pro font-semibold digigo-text-muted"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   Today
                 </TabsTrigger>
                 <TabsTrigger
                   value="yesterday"
-                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] dark:data-[state=active]:bg-[#9b8ff5] data-[state=active]:text-white digigo-text-muted text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   Yesterday
                 </TabsTrigger>
                 <TabsTrigger
                   value="month"
-                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] dark:data-[state=active]:bg-[#9b8ff5] data-[state=active]:text-white digigo-text-muted text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   This Month
                 </TabsTrigger>
@@ -51,8 +51,8 @@ export default async function DashboardPage() {
             </Tabs>
 
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-[50px] md:w-[54px] h-[50px] md:h-[54px] digigo-card rounded-[10.8px] flex items-center justify-center">
-                <Filter className="w-[20px] h-[23px] md:w-[23px] md:h-[26px] text-[#7165e1] dark:text-[#9b8ff5]" />
+              <div className="w-[50px] md:w-[54px] h-[50px] md:h-[54px] bg-white rounded-[10.8px] flex items-center justify-center">
+                <Filter className="w-[20px] h-[23px] md:w-[23px] md:h-[26px] text-[#7165e1]" />
               </div>
               <Button variant="digigo" size="digigo" className="w-full sm:w-[180px] md:w-[200px] h-[50px] md:h-[54px] text-sm md:text-base">
                 <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />

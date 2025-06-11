@@ -73,15 +73,15 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
   }
 
   return (
-    <Card className="rounded-[20px] border-none shadow-sm digigo-card">
+    <Card className="rounded-[20px] border-none shadow-sm">
       <CardContent className="p-4 md:p-6 lg:p-[34px]">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl md:text-2xl digigo-text font-sf-pro font-semibold">
+          <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold">
             Appointments
           </h2>
           <Button
             variant="link"
-            className="text-[#7165e1] dark:text-[#9b8ff5] text-sm md:text-base font-sf-pro font-medium"
+            className="text-[#7165e1] text-sm md:text-base font-sf-pro font-medium"
           >
             View All
           </Button>
@@ -90,14 +90,14 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
         {/* Mobile Card View */}
         <div className="block lg:hidden space-y-4">
           {appointments.map((appointment, index) => (
-            <Card key={appointment.id} className="border border-gray-200 dark:border-gray-700 digigo-card">
+            <Card key={appointment.id} className="border border-gray-200">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-[#7165e1] dark:text-[#9b8ff5]">
+                    <h3 className="font-semibold text-[#7165e1]">
                       {appointment.patient.name}
                     </h3>
-                    <p className="text-sm digigo-text-muted">
+                    <p className="text-sm text-gray-600">
                       ID: {appointment.patient.patientId}
                     </p>
                   </div>
@@ -111,24 +111,24 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="digigo-text-muted">Phone:</span>
-                    <span className="digigo-text">{appointment.patient.phone}</span>
+                    <span className="text-gray-600">Phone:</span>
+                    <span>{appointment.patient.phone}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="digigo-text-muted">Age:</span>
-                    <span className="digigo-text">{appointment.patient.age}</span>
+                    <span className="text-gray-600">Age:</span>
+                    <span>{appointment.patient.age}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="digigo-text-muted">Doctor:</span>
-                    <span className="digigo-text">{appointment.doctor.name}</span>
+                    <span className="text-gray-600">Doctor:</span>
+                    <span>{appointment.doctor.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="digigo-text-muted">Time:</span>
-                    <span className="digigo-text">{formatTime(appointment.appointmentDate)}</span>
+                    <span className="text-gray-600">Time:</span>
+                    <span>{formatTime(appointment.appointmentDate)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="digigo-text-muted">Concern:</span>
-                    <span className="text-right digigo-text">{appointment.concern}</span>
+                    <span className="text-gray-600">Concern:</span>
+                    <span className="text-right">{appointment.concern}</span>
                   </div>
                 </div>
 
@@ -139,7 +139,7 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="digigo-card">
+                    <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onEdit?.(appointment.id)}>
                         <PenSquare className="w-4 h-4 mr-2" />
                         Edit
@@ -160,39 +160,39 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
         <div className="hidden lg:block">
           <ScrollArea className="h-[350px]">
             <Table>
-              <TableHeader className="bg-[#f4f3ff] dark:bg-[#2a2a3a] rounded-[10px]">
+              <TableHeader className="bg-[#f4f3ff] rounded-[10px]">
                 <TableRow>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     S.No
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Patient's ID
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Name
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Phone
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Gender
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Age
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Concern
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Doctor name
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Time
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Status
                   </TableHead>
-                  <TableHead className="digigo-text-muted text-lg font-sf-pro font-medium">
+                  <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                     Action
                   </TableHead>
                 </TableRow>
@@ -201,33 +201,33 @@ export function AppointmentTable({ appointments, onEdit, onDelete }: Appointment
                 {appointments.map((appointment, index) => (
                   <TableRow
                     key={appointment.id}
-                    className="bg-[#f4f3ff] dark:bg-[#2a2a3a] rounded-[10px] my-[10px]"
+                    className="bg-[#f4f3ff] rounded-[10px] my-[10px]"
                   >
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {index + 1}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.patient.patientId}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.patient.name}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.patient.phone}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.patient.gender}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.patient.age}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.concern}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {appointment.doctor.name}
                     </TableCell>
-                    <TableCell className="text-base digigo-text font-sf-pro">
+                    <TableCell className="text-base text-black font-sf-pro">
                       {formatTime(appointment.appointmentDate)}
                     </TableCell>
                     <TableCell>
