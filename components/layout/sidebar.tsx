@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { 
@@ -27,6 +27,23 @@ export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (mobile) {
+        setIsCollapsed(false)
+        setIsOpen(false)
+      }
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -37,10 +54,19 @@ export function Sidebar({ userRole }: SidebarProps) {
   }
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed)
-    // Close all expanded items when collapsing
-    if (!isCollapsed) {
-      setExpandedItems([])
+    if (isMobile) {
+      setIsOpen(!isOpen)
+    } else {
+      setIsCollapsed(!isCollapsed)
+      if (!isCollapsed) {
+        setExpandedItems([])
+      }
+    }
+  }
+
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setIsOpen(false)
     }
   }
 
@@ -110,9 +136,120 @@ export function Sidebar({ userRole }: SidebarProps) {
     item.roles.includes(userRole)
   )
 
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 md:hidden h-10 w-10 bg-white shadow-md border hover:bg-gray-50"
+        >
+          <Menu className="h-5 w-5 text-[#7165e1]" />
+        </Button>
+
+        {/* Mobile Overlay */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={closeMobileSidebar}
+          />
+        )}
+
+        {/* Mobile Sidebar */}
+        <aside className={cn(
+          "fixed left-0 top-0 h-full w-[280px] bg-white shadow-lg z-50 transform transition-transform duration-300 md:hidden",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
+          {/* Close Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={closeMobileSidebar}
+            className="absolute right-4 top-4 h-8 w-8"
+          >
+            <X className="h-4 w-4 text-[#7165e1]" />
+          </Button>
+
+          {/* Logo */}
+          <div className="flex items-center px-6 py-6 mt-8">
+            <div className="w-[40px] h-[40px] bg-[#7165e1] rounded-lg flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="ml-3 font-extrabold text-[#7165e1] text-[20px] tracking-[-0.22px] font-tt-tricks">
+              DigiGo Care
+            </h1>
+          </div>
+
+          {/* Navigation */}
+          <nav className="px-6 space-y-2 flex-1 overflow-y-auto">
+            {filteredMenuItems.map((item) => (
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10",
+                    pathname === item.href ? "bg-[#7165e1]" : ""
+                  )}
+                  onClick={() => {
+                    if (item.hasSubmenu) {
+                      toggleExpanded(item.name)
+                    } else {
+                      closeMobileSidebar()
+                    }
+                  }}
+                >
+                  <item.icon className="w-[24px] h-[24px]" />
+                  <span
+                    className={cn(
+                      "ml-4 text-base font-sf-pro font-semibold",
+                      pathname === item.href ? "text-white" : "text-[#888888]"
+                    )}
+                  >
+                    {item.name}
+                  </span>
+                  {item.hasSubmenu && (
+                    <ChevronDown 
+                      className={cn(
+                        "ml-auto w-[20px] h-[20px] transition-transform",
+                        expandedItems.includes(item.name) ? "rotate-180" : "",
+                        pathname === item.href ? "text-white" : "text-[#888888]"
+                      )}
+                    />
+                  )}
+                </Link>
+                
+                {item.hasSubmenu && expandedItems.includes(item.name) && (
+                  <div className="ml-8 mt-2 space-y-1">
+                    {item.submenu?.map((subItem) => (
+                      <Link
+                        key={subItem.name}
+                        href={subItem.href}
+                        className={cn(
+                          "block p-2 rounded-lg text-sm font-sf-pro transition-colors",
+                          pathname === subItem.href 
+                            ? "bg-[#7165e1] text-white" 
+                            : "text-[#888888] hover:bg-[#7165e1]/10"
+                        )}
+                        onClick={closeMobileSidebar}
+                      >
+                        {subItem.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </aside>
+      </>
+    )
+  }
+
   return (
     <aside className={cn(
-      "bg-white h-full flex flex-col shadow-lg transition-all duration-300 ease-in-out relative",
+      "bg-white h-full flex flex-col shadow-lg transition-all duration-300 ease-in-out relative hidden md:flex",
       isCollapsed ? "w-[80px]" : "w-[300px]"
     )}>
       {/* Toggle Button */}

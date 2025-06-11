@@ -4,8 +4,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, MoreHorizontal } from "lucide-react"
 import { createPatient, updatePatient, deletePatient } from "@/lib/actions/patients"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Patient {
   id: string
@@ -37,20 +43,21 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-sf-pro font-bold text-[#7165e1]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-sf-pro font-bold text-[#7165e1]">
           Patients Management
         </h1>
         
-        <Button variant="digigo" size="digigo">
-          <Plus className="mr-2 h-6 w-6" />
-          Add New Patient
+        <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
+          <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+          <span className="hidden sm:inline">Add New Patient</span>
+          <span className="sm:hidden">Add Patient</span>
         </Button>
       </div>
 
       <Card className="rounded-[20px] border-none shadow-sm">
-        <CardContent className="p-[34px]">
-          <div className="flex items-center gap-4 mb-6">
+        <CardContent className="p-4 md:p-6 lg:p-[34px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -60,7 +67,7 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="h-12 px-6">
+            <Button variant="outline" className="h-12 px-6 w-full sm:w-auto">
               Filter
             </Button>
           </div>
@@ -69,22 +76,37 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
             <div className="space-y-4">
               {filteredPatients.map((patient) => (
                 <div key={patient.id} className="p-4 bg-[#f4f3ff] rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-sf-pro font-semibold text-lg text-[#7165e1]">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-sf-pro font-semibold text-lg text-[#7165e1] truncate">
                         {patient.name}
                       </h3>
-                      <p className="text-gray-600">ID: {patient.patientId}</p>
-                      <p className="text-gray-600">Phone: {patient.phone}</p>
-                      <p className="text-gray-600">Age: {patient.age} | Gender: {patient.gender}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm text-gray-600">
+                        <p>ID: {patient.patientId}</p>
+                        <p>Phone: {patient.phone}</p>
+                        <p>Age: {patient.age}</p>
+                        <p>Gender: {patient.gender}</p>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                         View
                       </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="sm:hidden">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>View</DropdownMenuItem>
+                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

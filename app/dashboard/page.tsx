@@ -18,51 +18,51 @@ export default async function DashboardPage() {
     <div className="flex h-screen bg-[#f4f3ff]">
       <Sidebar userRole="USER" />
       
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto ml-0 md:ml-0">
         <Header />
         
-        <div className="p-[34px]">
+        <div className="p-4 md:p-6 lg:p-[34px]">
           {/* Stats Cards */}
           <StatsCards stats={stats} />
 
           {/* Time Filter and Add Patient */}
-          <div className="flex justify-between mt-[30px]">
-            <Tabs defaultValue="today" className="w-[561px]">
-              <TabsList className="w-full h-[54px] p-0 bg-white rounded-2xl">
+          <div className="flex flex-col lg:flex-row justify-between gap-4 mt-6 lg:mt-[30px]">
+            <Tabs defaultValue="today" className="w-full lg:w-[561px]">
+              <TabsList className="w-full h-[50px] md:h-[54px] p-0 bg-white rounded-2xl grid grid-cols-3">
                 <TabsTrigger
                   value="today"
-                  className="w-[187px] h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-xl rounded-2xl font-sf-pro font-semibold"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   Today
                 </TabsTrigger>
                 <TabsTrigger
                   value="yesterday"
-                  className="w-[187px] h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-xl rounded-2xl font-sf-pro font-semibold"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   Yesterday
                 </TabsTrigger>
                 <TabsTrigger
                   value="month"
-                  className="w-[187px] h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-xl rounded-2xl font-sf-pro font-semibold"
+                  className="h-[50px] md:h-[54px] data-[state=active]:bg-[#7165e1] data-[state=active]:text-white text-[#888888] text-base md:text-xl rounded-2xl font-sf-pro font-semibold"
                 >
                   This Month
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            <div className="flex items-center gap-4">
-              <div className="w-[54px] h-[54px] bg-white rounded-[10.8px] flex items-center justify-center">
-                <Filter className="w-[23px] h-[26px] text-[#7165e1]" />
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-[50px] md:w-[54px] h-[50px] md:h-[54px] bg-white rounded-[10.8px] flex items-center justify-center">
+                <Filter className="w-[20px] h-[23px] md:w-[23px] md:h-[26px] text-[#7165e1]" />
               </div>
-              <Button variant="digigo" size="digigo" className="w-[200px]">
-                <Plus className="mr-2 h-6 w-6" />
+              <Button variant="digigo" size="digigo" className="w-full sm:w-[180px] md:w-[200px] h-[50px] md:h-[54px] text-sm md:text-base">
+                <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
                 Add Patient
               </Button>
             </div>
           </div>
 
           {/* Appointments Table */}
-          <div className="mt-[50px]">
+          <div className="mt-8 lg:mt-[50px]">
             <AppointmentTable appointments={appointments} />
           </div>
         </div>

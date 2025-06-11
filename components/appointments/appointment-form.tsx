@@ -55,19 +55,19 @@ export function AppointmentForm({
   })
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-sf-pro font-semibold text-[#7165e1]">
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-none">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl md:text-2xl font-sf-pro font-semibold text-[#7165e1]">
           {initialData ? "Edit Appointment" : "Schedule New Appointment"}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+      <CardContent className="px-4 md:px-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="patientId">Patient</Label>
+              <Label htmlFor="patientId" className="text-sm md:text-base">Patient</Label>
               <Select onValueChange={(value) => setValue("patientId", value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 md:h-12">
                   <SelectValue placeholder="Select patient" />
                 </SelectTrigger>
                 <SelectContent>
@@ -79,14 +79,14 @@ export function AppointmentForm({
                 </SelectContent>
               </Select>
               {errors.patientId && (
-                <p className="text-sm text-red-500">{errors.patientId.message}</p>
+                <p className="text-xs md:text-sm text-red-500">{errors.patientId.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="doctorId">Doctor</Label>
+              <Label htmlFor="doctorId" className="text-sm md:text-base">Doctor</Label>
               <Select onValueChange={(value) => setValue("doctorId", value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 md:h-12">
                   <SelectValue placeholder="Select doctor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -98,64 +98,69 @@ export function AppointmentForm({
                 </SelectContent>
               </Select>
               {errors.doctorId && (
-                <p className="text-sm text-red-500">{errors.doctorId.message}</p>
+                <p className="text-xs md:text-sm text-red-500">{errors.doctorId.message}</p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="appointmentDate">Date</Label>
+              <Label htmlFor="appointmentDate" className="text-sm md:text-base">Date</Label>
               <Input
                 id="appointmentDate"
                 type="date"
+                className="h-10 md:h-12"
                 {...register("appointmentDate")}
               />
               {errors.appointmentDate && (
-                <p className="text-sm text-red-500">{errors.appointmentDate.message}</p>
+                <p className="text-xs md:text-sm text-red-500">{errors.appointmentDate.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="appointmentTime">Time</Label>
+              <Label htmlFor="appointmentTime" className="text-sm md:text-base">Time</Label>
               <Input
                 id="appointmentTime"
                 type="time"
+                className="h-10 md:h-12"
                 {...register("appointmentTime")}
               />
               {errors.appointmentTime && (
-                <p className="text-sm text-red-500">{errors.appointmentTime.message}</p>
+                <p className="text-xs md:text-sm text-red-500">{errors.appointmentTime.message}</p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="concern">Concern</Label>
+            <Label htmlFor="concern" className="text-sm md:text-base">Concern</Label>
             <Input
               id="concern"
               placeholder="Enter patient's concern"
+              className="h-10 md:h-12"
               {...register("concern")}
             />
             {errors.concern && (
-              <p className="text-sm text-red-500">{errors.concern.message}</p>
+              <p className="text-xs md:text-sm text-red-500">{errors.concern.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes" className="text-sm md:text-base">Notes (Optional)</Label>
             <Textarea
               id="notes"
               placeholder="Additional notes..."
+              className="min-h-[80px] md:min-h-[100px]"
               {...register("notes")}
             />
           </div>
 
-          <div className="flex gap-4 justify-end">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
+              className="w-full sm:w-auto h-10 md:h-12"
             >
               Cancel
             </Button>
@@ -164,6 +169,7 @@ export function AppointmentForm({
               variant="digigo"
               size="digigo"
               disabled={isSubmitting}
+              className="w-full sm:w-auto h-10 md:h-12"
             >
               {isSubmitting ? "Saving..." : initialData ? "Update" : "Schedule"}
             </Button>

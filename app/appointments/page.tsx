@@ -67,9 +67,9 @@ export default function AppointmentsPage() {
     return (
       <div className="flex h-screen bg-[#f4f3ff]">
         <Sidebar userRole="USER" />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto ml-0 md:ml-0">
           <Header />
-          <div className="p-[34px]">
+          <div className="p-4 md:p-6 lg:p-[34px]">
             <div className="text-center py-12">
               <p className="text-lg text-gray-500 font-sf-pro">Loading...</p>
             </div>
@@ -83,23 +83,24 @@ export default function AppointmentsPage() {
     <div className="flex h-screen bg-[#f4f3ff]">
       <Sidebar userRole="USER" />
       
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto ml-0 md:ml-0">
         <Header />
         
-        <div className="p-[34px]">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-sf-pro font-bold text-[#7165e1]">
+        <div className="p-4 md:p-6 lg:p-[34px]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 className="text-2xl md:text-3xl font-sf-pro font-bold text-[#7165e1]">
               Appointments Management
             </h1>
             
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
-                <Button variant="digigo" size="digigo">
-                  <Plus className="mr-2 h-6 w-6" />
-                  Schedule Appointment
+                <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+                  <span className="hidden sm:inline">Schedule Appointment</span>
+                  <span className="sm:hidden">Schedule</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl">
+              <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
                 <AppointmentForm
                   patients={patients}
                   doctors={doctors}

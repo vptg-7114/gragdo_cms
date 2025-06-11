@@ -43,18 +43,18 @@ export function StatsCards({ stats }: StatsCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {statsData.map((stat, index) => (
         <Card key={index} className="rounded-[20px] border-none shadow-sm">
-          <CardContent className="p-6 flex items-center">
-            <div className={`w-[72px] h-[72px] ${stat.bgColor} rounded-[14.4px] flex items-center justify-center`}>
-              <stat.icon className={`w-12 h-12 ${stat.iconColor}`} />
+          <CardContent className="p-4 md:p-6 flex items-center">
+            <div className={`w-[50px] h-[50px] md:w-[72px] md:h-[72px] ${stat.bgColor} rounded-[12px] md:rounded-[14.4px] flex items-center justify-center flex-shrink-0`}>
+              <stat.icon className={`w-8 h-8 md:w-12 md:h-12 ${stat.iconColor}`} />
             </div>
-            <div className="ml-[38px]">
-              <p className="text-xl text-[#888888] font-sf-pro font-medium">
+            <div className="ml-4 md:ml-[38px] min-w-0 flex-1">
+              <p className="text-sm md:text-xl text-[#888888] font-sf-pro font-medium truncate">
                 {stat.title}
               </p>
-              <p className="text-[40px] text-[#7165e1] font-sf-pro font-bold">
+              <p className="text-2xl md:text-[40px] text-[#7165e1] font-sf-pro font-bold">
                 {stat.value}
               </p>
             </div>
