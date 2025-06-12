@@ -37,7 +37,9 @@ import {
   Search,
   PenSquare,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Phone,
+  Mail
 } from "lucide-react"
 import { formatTime } from "@/lib/utils"
 
@@ -298,65 +300,103 @@ export function DoctorProfileClient({ doctor }: DoctorProfileClientProps) {
         <span className="text-[#7165e1]">Doctor's Profile</span>
       </div>
 
-      {/* Doctor Profile Header */}
+      {/* Doctor Profile Header - Using same card design as doctors management */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Doctor Info Card */}
+        {/* Doctor Info Card - Same design as doctors management page */}
         <Card className="lg:col-span-1 rounded-[20px] border-none shadow-sm">
-          <CardContent className="p-6 text-center">
-            <Avatar className="w-24 h-24 md:w-32 md:h-32 rounded-2xl mx-auto mb-4">
-              <AvatarImage 
-                src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2" 
-                alt={doctor.name}
-              />
-              <AvatarFallback className="bg-[#7165e1] text-white font-sf-pro font-semibold text-xl rounded-2xl">
-                {doctor.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            
-            <h2 className="text-xl md:text-2xl font-sf-pro font-bold text-black mb-2">
-              {doctor.name}
-            </h2>
-            
-            <p className="text-sm text-gray-600 mb-4">
-              {doctor.experience} Years of Experience
-            </p>
-            
-            <div className="flex items-center justify-center mb-2">
-              {renderStars(mockRating)}
-              <span className="ml-2 text-sm text-gray-600">{mockStats.reviews} Reviews</span>
+          <CardContent className="p-4 md:p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg md:text-xl font-sf-pro font-semibold text-[#7165e1] mb-1 truncate">
+                  {doctor.name}
+                </h3>
+                <p className="text-gray-600 font-sf-pro text-sm md:text-base truncate">
+                  {doctor.specialization}
+                </p>
+              </div>
+              <Badge 
+                variant={doctor.isAvailable ? "completed" : "pending"}
+                className="rounded-full text-xs"
+              >
+                {doctor.isAvailable ? "Available" : "Unavailable"}
+              </Badge>
+            </div>
+
+            <div className="space-y-2 mb-4 text-xs md:text-sm">
+              {doctor.qualification && (
+                <p className="text-gray-600">
+                  <strong>Qualification:</strong> {doctor.qualification}
+                </p>
+              )}
+              {doctor.experience && (
+                <p className="text-gray-600">
+                  <strong>Experience:</strong> {doctor.experience} years
+                </p>
+              )}
+              {doctor.consultationFee && (
+                <p className="text-gray-600">
+                  <strong>Consultation Fee:</strong> ₹{doctor.consultationFee}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 mb-4 text-xs md:text-sm">
+              <div className="flex items-center text-gray-600">
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">{doctor.phone}</span>
+              </div>
+              {doctor.email && (
+                <div className="flex items-center text-gray-600">
+                  <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{doctor.email}</span>
+                </div>
+              )}
+              <div className="flex items-center text-gray-600">
+                <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span>{doctor.appointments?.length || 0} upcoming appointments</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 text-xs md:text-sm">
+                Edit
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 text-xs md:text-sm">
+                Schedule
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Reduced padding */}
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-blue-600" />
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
               <p className="text-sm text-gray-600 mb-1">Patients</p>
-              <p className="text-2xl md:text-3xl font-bold text-[#7165e1]">{mockStats.patients}</p>
+              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.patients}</p>
             </CardContent>
           </Card>
 
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Stethoscope className="w-8 h-8 text-green-600" />
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <Stethoscope className="w-6 h-6 text-green-600" />
               </div>
               <p className="text-sm text-gray-600 mb-1">Surgeries</p>
-              <p className="text-2xl md:text-3xl font-bold text-[#7165e1]">{mockStats.surgeries}</p>
+              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.surgeries}</p>
             </CardContent>
           </Card>
 
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-yellow-600" />
+            <CardContent className="p-4 text-center">
+              <div className="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <Star className="w-6 h-6 text-yellow-600" />
               </div>
               <p className="text-sm text-gray-600 mb-1">Reviews</p>
-              <p className="text-2xl md:text-3xl font-bold text-[#7165e1]">{mockStats.reviews}</p>
+              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.reviews}</p>
             </CardContent>
           </Card>
         </div>
