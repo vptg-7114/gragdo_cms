@@ -16,17 +16,21 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Calendar } from "lucide-react"
 
 const invoiceSchema = z.object({
-  patientId: z.string().min(1, "Patient is required"),
+  doctorName: z.string().min(1, "Doctor name is required"),
+  patientName: z.string().min(1, "Patient name is required"),
+  invoiceNumber: z.string().min(1, "Invoice number is required"),
   dueDate: z.string().min(1, "Due date is required"),
-  notes: z.string().optional(),
+  remarks: z.string().optional(),
   items: z.array(z.object({
-    description: z.string().min(1, "Description is required"),
+    service: z.string().min(1, "Service is required"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
-    rate: z.number().min(0, "Rate must be positive"),
+    cost: z.number().min(0, "Cost must be positive"),
+    amount: z.number().min(0, "Amount must be positive"),
   })).min(1, "At least one item is required"),
+  discountPercent: z.number().min(0).max(100).optional(),
 })
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>
@@ -43,8 +47,9 @@ export function InvoiceForm({
   initialData,
 }: InvoiceFormProps) {
   const [items, setItems] = useState([
-    { description: "", quantity: 1, rate: 0 }
+    { service: "", quantity: 1, cost: 0, amount: 0 }
   ])
+  const [discountPercent, setDiscountPercent] = useState(0)
 
   const {
     register,
@@ -60,38 +65,65 @@ export function InvoiceForm({
     },
   })
 
-  // Mock data for patients
+  // Mock data for dropdowns
+  const mockDoctors = [
+    { id: '1', name: 'Ch. Asritha' },
+    { id: '2', name: 'K. Ranganath' },
+    { id: '3', name: 'L. Satya' },
+  ]
+
   const mockPatients = [
-    { id: '1', name: 'K. Vijay', patientId: '123456' },
-    { id: '2', name: 'P. Sandeep', patientId: '454575' },
-    { id: '3', name: 'Ch. Asritha', patientId: '787764' },
+    { id: '1', name: 'K. Vijay' },
+    { id: '2', name: 'P. Sandeep' },
+    { id: '3', name: 'Ch. Asritha' },
   ]
 
   const addItem = () => {
-    const newItems = [...items, { description: "", quantity: 1, rate: 0 }]
+    const newItems = [...items, { service: "", quantity: 1, cost: 0, amount: 0 }]
     setItems(newItems)
     setValue("items", newItems)
   }
 
   const removeItem = (index: number) => {
-    const newItems = items.filter((_, i) => i !== index)
-    setItems(newItems)
-    setValue("items", newItems)
+    if (items.length > 1) {
+      const newItems = items.filter((_, i) => i !== index)
+      setItems(newItems)
+      setValue("items", newItems)
+    }
   }
 
   const updateItem = (index: number, field: string, value: any) => {
     const newItems = [...items]
     newItems[index] = { ...newItems[index], [field]: value }
+    
+    // Auto-calculate amount when quantity or cost changes
+    if (field === 'quantity' || field === 'cost') {
+      newItems[index].amount = newItems[index].quantity * newItems[index].cost
+    }
+    
     setItems(newItems)
     setValue("items", newItems)
   }
 
+  const calculateSubTotal = () => {
+    return items.reduce((total, item) => total + item.amount, 0)
+  }
+
+  const calculateDiscount = () => {
+    return (calculateSubTotal() * discountPercent) / 100
+  }
+
+  const calculateTax = () => {
+    const afterDiscount = calculateSubTotal() - calculateDiscount()
+    return afterDiscount * 0.18 // 18% GST
+  }
+
   const calculateTotal = () => {
-    return items.reduce((total, item) => total + (item.quantity * item.rate), 0)
+    return calculateSubTotal() - calculateDiscount() + calculateTax()
   }
 
   const handleFormSubmit = (data: InvoiceFormData) => {
-    onSubmit({ ...data, items })
+    onSubmit({ ...data, items, discountPercent })
   }
 
   return (
@@ -103,26 +135,62 @@ export function InvoiceForm({
       </CardHeader>
       <CardContent className="px-6 md:px-8">
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          {/* Row 1: Patient, Due Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Row 1: Doctor Name, Patient Name, Invoice Number, Due Date */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="patientId" className="text-sm font-medium text-black">
-                Patient<span className="text-red-500">*</span>
+              <Label htmlFor="doctorName" className="text-sm font-medium text-black">
+                Doctor Name<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("patientId", value)}>
+              <Select onValueChange={(value) => setValue("doctorName", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
-                  <SelectValue placeholder="Select Patient" />
+                  <SelectValue placeholder="Ch. Asritha" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockPatients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name} - {patient.patientId}
+                  {mockDoctors.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.name}>
+                      {doctor.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.patientId && (
-                <p className="text-xs text-red-500">{errors.patientId.message}</p>
+              {errors.doctorName && (
+                <p className="text-xs text-red-500">{errors.doctorName.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="patientName" className="text-sm font-medium text-black">
+                Patient Name<span className="text-red-500">*</span>
+              </Label>
+              <Select onValueChange={(value) => setValue("patientName", value)}>
+                <SelectTrigger className="h-12 rounded-lg border-gray-300">
+                  <SelectValue placeholder="K. Vijay" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockPatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.name}>
+                      {patient.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.patientName && (
+                <p className="text-xs text-red-500">{errors.patientName.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invoiceNumber" className="text-sm font-medium text-black">
+                Invoice Number
+              </Label>
+              <Input
+                id="invoiceNumber"
+                placeholder="#123456"
+                className="h-12 rounded-lg border-gray-300 focus:border-[#7165e1] focus:ring-[#7165e1]"
+                {...register("invoiceNumber")}
+              />
+              {errors.invoiceNumber && (
+                <p className="text-xs text-red-500">{errors.invoiceNumber.message}</p>
               )}
             </div>
 
@@ -130,84 +198,92 @@ export function InvoiceForm({
               <Label htmlFor="dueDate" className="text-sm font-medium text-black">
                 Due Date<span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="dueDate"
-                type="date"
-                className="h-12 rounded-lg border-gray-300 focus:border-[#7165e1] focus:ring-[#7165e1]"
-                {...register("dueDate")}
-              />
+              <div className="relative">
+                <Input
+                  id="dueDate"
+                  type="date"
+                  placeholder="Select Due Date"
+                  className="h-12 rounded-lg border-gray-300 focus:border-[#7165e1] focus:ring-[#7165e1] pl-4"
+                  {...register("dueDate")}
+                />
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              </div>
               {errors.dueDate && (
                 <p className="text-xs text-red-500">{errors.dueDate.message}</p>
               )}
             </div>
           </div>
 
-          {/* Invoice Items */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label className="text-sm font-medium text-black">
-                Invoice Items<span className="text-red-500">*</span>
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Item
-              </Button>
-            </div>
+          {/* Remarks/Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="remarks" className="text-sm font-medium text-black">
+              Remarks/Notes
+            </Label>
+            <Textarea
+              id="remarks"
+              placeholder="Enter your notes here"
+              className="min-h-[100px] rounded-lg border-gray-300 focus:border-[#7165e1] focus:ring-[#7165e1]"
+              {...register("remarks")}
+            />
+          </div>
 
-            <div className="space-y-3">
+          {/* Service Items Table */}
+          <div className="space-y-4">
+            <div className="bg-[#f4f3ff] rounded-lg p-4">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 mb-4 text-sm font-medium text-gray-700">
+                <div className="col-span-4">Service/Items/Products</div>
+                <div className="col-span-2">Quantity</div>
+                <div className="col-span-2">Cost</div>
+                <div className="col-span-3">Amount</div>
+                <div className="col-span-1"></div>
+              </div>
+
+              {/* Table Rows */}
               {items.map((item, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 border border-gray-200 rounded-lg">
-                  <div className="md:col-span-5">
-                    <Label className="text-xs text-gray-600">Description</Label>
+                <div key={index} className="grid grid-cols-12 gap-4 mb-3">
+                  <div className="col-span-4">
                     <Input
-                      placeholder="Item description"
-                      value={item.description}
-                      onChange={(e) => updateItem(index, 'description', e.target.value)}
-                      className="h-10 mt-1"
+                      placeholder="Enter Item"
+                      value={item.service}
+                      onChange={(e) => updateItem(index, 'service', e.target.value)}
+                      className="h-10 rounded-lg border-gray-300"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs text-gray-600">Quantity</Label>
+                  <div className="col-span-2">
                     <Input
                       type="number"
-                      placeholder="1"
+                      placeholder="Enter Quantity"
                       value={item.quantity}
                       onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                      className="h-10 mt-1"
+                      className="h-10 rounded-lg border-gray-300"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs text-gray-600">Rate</Label>
+                  <div className="col-span-2">
                     <Input
                       type="number"
-                      placeholder="0.00"
-                      value={item.rate}
-                      onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                      className="h-10 mt-1"
+                      placeholder="Enter Cost"
+                      value={item.cost}
+                      onChange={(e) => updateItem(index, 'cost', parseFloat(e.target.value) || 0)}
+                      className="h-10 rounded-lg border-gray-300"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs text-gray-600">Amount</Label>
+                  <div className="col-span-3">
                     <Input
-                      value={`₹${(item.quantity * item.rate).toFixed(2)}`}
+                      placeholder="Enter Amount"
+                      value={item.amount.toFixed(2)}
                       disabled
-                      className="h-10 mt-1 bg-gray-50"
+                      className="h-10 rounded-lg border-gray-300 bg-gray-50"
                     />
                   </div>
-                  <div className="md:col-span-1 flex items-end">
+                  <div className="col-span-1 flex items-center">
                     {items.length > 1 && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(index)}
-                        className="h-10 w-10 text-red-500 hover:text-red-700"
+                        className="h-8 w-8 text-red-500 hover:text-red-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -215,36 +291,57 @@ export function InvoiceForm({
                   </div>
                 </div>
               ))}
-            </div>
 
-            {/* Total */}
-            <div className="flex justify-end">
-              <div className="w-64 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-800">Total:</span>
-                  <span className="text-xl font-bold text-[#7165e1]">
-                    ₹{calculateTotal().toFixed(2)}
-                  </span>
+              {/* Add New Row Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addItem}
+                className="mt-2 text-[#7165e1] border-[#7165e1] hover:bg-[#7165e1] hover:text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Row
+              </Button>
+
+              {/* Discount */}
+              <div className="flex justify-end mt-6">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-black">
+                    Discount % of total amount
+                  </Label>
+                  <Input
+                    type="number"
+                    placeholder="%"
+                    value={discountPercent}
+                    onChange={(e) => setDiscountPercent(parseFloat(e.target.value) || 0)}
+                    className="w-20 h-8 rounded-lg border-gray-300"
+                  />
+                  <span className="text-sm text-gray-600">%</span>
                 </div>
               </div>
             </div>
-
-            {errors.items && (
-              <p className="text-xs text-red-500">{errors.items.message}</p>
-            )}
           </div>
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm font-medium text-black">
-              Notes
-            </Label>
-            <Textarea
-              id="notes"
-              placeholder="Additional notes or terms..."
-              className="min-h-[100px] rounded-lg border-gray-300 focus:border-[#7165e1] focus:ring-[#7165e1]"
-              {...register("notes")}
-            />
+          {/* Totals Section */}
+          <div className="flex justify-end">
+            <div className="w-80 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Sub Total</span>
+                <span className="font-medium">₹ {calculateSubTotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Discount</span>
+                <span className="font-medium">₹ {calculateDiscount().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tax</span>
+                <span className="font-medium">₹ {calculateTax().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold border-t pt-3">
+                <span className="text-[#7165e1]">Total Amount</span>
+                <span className="text-[#7165e1]">₹ {calculateTotal().toFixed(2)}</span>
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}
