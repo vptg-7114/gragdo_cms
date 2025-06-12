@@ -11,7 +11,8 @@ import {
   Eye, 
   X,
   File,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Printer
 } from "lucide-react"
 
 interface Document {
@@ -75,11 +76,234 @@ export function PrescriptionViewer({
     setSelectedDocument(document)
   }
 
+  const handlePrint = () => {
+    window.print()
+  }
+
+  // Mock prescription data for the professional layout
+  const mockPrescriptionData = {
+    doctor: {
+      name: "Dr. Ch. Asritha",
+      qualification: "MBBS, MS - Gynecology",
+      clinic: "Clinic Name",
+      email: "sample@gmail.com",
+      phone: "9876543210"
+    },
+    patient: {
+      name: "K. Vijay Kumar",
+      age: 22,
+      sex: "M",
+      bloodGroup: "O +ve",
+      date: "05-06-2025",
+      time: "10:00 AM"
+    },
+    medications: [
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      },
+      {
+        medicine: "Amoxicillin",
+        content: "500mg",
+        price: "1000",
+        dosage: "1 Tab",
+        usage: "1-0-1",
+        days: "3",
+        qty: "9",
+        advice: "After Food"
+      }
+    ]
+  }
+
+  const renderPrescriptionDocument = () => {
+    return (
+      <div className="w-full h-full bg-white p-8 overflow-auto">
+        {/* Header with Doctor Info and Logo */}
+        <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-200">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-[#7165e1] mb-2">
+              {mockPrescriptionData.doctor.name}
+            </h1>
+            <p className="text-gray-600 mb-1">{mockPrescriptionData.doctor.qualification}</p>
+            <p className="text-gray-600 mb-1">{mockPrescriptionData.doctor.clinic}</p>
+            <p className="text-gray-600 mb-1">Email: {mockPrescriptionData.doctor.email}</p>
+            <p className="text-gray-600">Phone No: {mockPrescriptionData.doctor.phone}</p>
+          </div>
+          
+          <div className="text-right">
+            <div className="flex items-center gap-2 text-2xl font-bold text-[#7165e1]">
+              <div className="w-8 h-8 bg-[#7165e1] rounded-lg flex items-center justify-center">
+                <span className="text-white text-sm">D</span>
+              </div>
+              DigiGo Care
+            </div>
+          </div>
+        </div>
+
+        {/* Patient Information */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">Patient Name</h2>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">{mockPrescriptionData.patient.name}</h3>
+          
+          <div className="grid grid-cols-5 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Age</span>
+              <p className="font-semibold">{mockPrescriptionData.patient.age}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Sex</span>
+              <p className="font-semibold">{mockPrescriptionData.patient.sex}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Blood Group</span>
+              <p className="font-semibold">{mockPrescriptionData.patient.bloodGroup}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Date</span>
+              <p className="font-semibold">{mockPrescriptionData.patient.date}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">Time</span>
+              <p className="font-semibold">{mockPrescriptionData.patient.time}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Prescription Table */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-[#7165e1] mb-4">Rx</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Medicine</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Content</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Price</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Dosage</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Usage</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Days</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Qty</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Advice</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockPrescriptionData.medications.map((medication, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.medicine}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.content}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.price}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.dosage}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.usage}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.days}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.qty}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">{medication.advice}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+          <Button 
+            variant="outline" 
+            onClick={handlePrint}
+            className="flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
+          <Button 
+            onClick={() => handleDownload(selectedDocument!)}
+            className="bg-[#7165e1] hover:bg-[#5f52d1] flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const renderDocumentPreview = () => {
     if (!selectedDocument) return null
 
     const fileType = selectedDocument.type.toLowerCase()
     
+    // For prescription documents, show the professional prescription layout
+    if (type === 'prescriptions') {
+      return renderPrescriptionDocument()
+    }
+    
+    // For reports, show the original preview logic
     if (fileType.includes('pdf')) {
       return (
         <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
@@ -145,7 +369,7 @@ export function PrescriptionViewer({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-6xl h-[90vh] p-0">
+      <DialogContent className="w-[95vw] max-w-7xl h-[90vh] p-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="text-xl md:text-2xl font-sf-pro font-semibold text-[#7165e1]">
             {type === 'reports' ? 'Patient Reports' : 'Prescriptions'} - {patientName}
@@ -154,7 +378,7 @@ export function PrescriptionViewer({
 
         <div className="flex h-full">
           {/* Document List Sidebar */}
-          <div className="w-1/3 border-r bg-gray-50">
+          <div className="w-1/4 border-r bg-gray-50">
             <div className="p-4 border-b bg-white">
               <h3 className="font-semibold text-gray-800">
                 {type === 'reports' ? 'Reports' : 'Prescription Documents'} ({documents.length})
@@ -246,38 +470,46 @@ export function PrescriptionViewer({
           </div>
 
           {/* Document Preview Area */}
-          <div className="flex-1 p-6">
+          <div className="flex-1">
             {selectedDocument ? (
               <div className="h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-800">{selectedDocument.name}</h4>
-                    <p className="text-sm text-gray-500">
-                      {selectedDocument.type} • {selectedDocument.size || 'Unknown size'}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(selectedDocument)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedDocument(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="h-[calc(100%-80px)]">
-                  {renderDocumentPreview()}
-                </div>
+                {type === 'prescriptions' ? (
+                  // For prescriptions, show full-width professional layout
+                  renderDocumentPreview()
+                ) : (
+                  // For reports, show with header
+                  <>
+                    <div className="flex items-center justify-between p-6 border-b">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-800">{selectedDocument.name}</h4>
+                        <p className="text-sm text-gray-500">
+                          {selectedDocument.type} • {selectedDocument.size || 'Unknown size'}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(selectedDocument)}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedDocument(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="h-[calc(100%-80px)] p-6">
+                      {renderDocumentPreview()}
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center">
