@@ -276,7 +276,6 @@ export function DoctorProfileClient({ doctor }: DoctorProfileClientProps) {
 
   const getAvailabilitySchedule = () => {
     const today = new Date().getDay() // 0 = Sunday, 1 = Monday, etc.
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     
     return [
       { day: 'Mon', time: '9 AM - 2 PM', isToday: today === 1 },
@@ -300,37 +299,50 @@ export function DoctorProfileClient({ doctor }: DoctorProfileClientProps) {
         <span className="text-[#7165e1]">Doctor's Profile</span>
       </div>
 
-      {/* Doctor Profile Header - Using same card design as doctors management */}
+      {/* Doctor Profile Header - Updated with image on left */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Doctor Info Card - Same design as doctors management page */}
+        {/* Doctor Info Card - Updated with image layout */}
         <Card className="lg:col-span-1 rounded-[20px] border-none shadow-sm">
           <CardContent className="p-4 md:p-6">
-            <div className="flex justify-between items-start mb-4">
+            {/* Doctor Image and Basic Info */}
+            <div className="flex items-start gap-4 mb-4">
+              <Avatar className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex-shrink-0">
+                <AvatarImage 
+                  src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2" 
+                  alt={doctor.name}
+                />
+                <AvatarFallback className="bg-[#7165e1] text-white font-sf-pro font-semibold text-lg rounded-2xl">
+                  {doctor.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg md:text-xl font-sf-pro font-semibold text-[#7165e1] mb-1 truncate">
                   {doctor.name}
                 </h3>
-                <p className="text-gray-600 font-sf-pro text-sm md:text-base truncate">
+                <p className="text-gray-600 font-sf-pro text-sm md:text-base truncate mb-2">
                   {doctor.specialization}
                 </p>
+                <p className="text-xs text-gray-500 mb-2">
+                  {doctor.experience} Years of Experience
+                </p>
+                <div className="flex items-center gap-1 mb-2">
+                  {renderStars(mockRating)}
+                  <span className="text-xs text-gray-600 ml-1">{mockStats.reviews} Reviews</span>
+                </div>
+                <Badge 
+                  variant={doctor.isAvailable ? "completed" : "pending"}
+                  className="rounded-full text-xs"
+                >
+                  {doctor.isAvailable ? "Available" : "Unavailable"}
+                </Badge>
               </div>
-              <Badge 
-                variant={doctor.isAvailable ? "completed" : "pending"}
-                className="rounded-full text-xs"
-              >
-                {doctor.isAvailable ? "Available" : "Unavailable"}
-              </Badge>
             </div>
 
             <div className="space-y-2 mb-4 text-xs md:text-sm">
               {doctor.qualification && (
                 <p className="text-gray-600">
                   <strong>Qualification:</strong> {doctor.qualification}
-                </p>
-              )}
-              {doctor.experience && (
-                <p className="text-gray-600">
-                  <strong>Experience:</strong> {doctor.experience} years
                 </p>
               )}
               {doctor.consultationFee && (
@@ -371,32 +383,32 @@ export function DoctorProfileClient({ doctor }: DoctorProfileClientProps) {
         {/* Stats Cards - Reduced padding */}
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Users className="w-6 h-6 text-blue-600" />
+            <CardContent className="p-3 text-center">
+              <div className="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
-              <p className="text-sm text-gray-600 mb-1">Patients</p>
-              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.patients}</p>
+              <p className="text-xs text-gray-600 mb-1">Patients</p>
+              <p className="text-xl font-bold text-[#7165e1]">{mockStats.patients}</p>
             </CardContent>
           </Card>
 
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Stethoscope className="w-6 h-6 text-green-600" />
+            <CardContent className="p-3 text-center">
+              <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                <Stethoscope className="w-5 h-5 text-green-600" />
               </div>
-              <p className="text-sm text-gray-600 mb-1">Surgeries</p>
-              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.surgeries}</p>
+              <p className="text-xs text-gray-600 mb-1">Surgeries</p>
+              <p className="text-xl font-bold text-[#7165e1]">{mockStats.surgeries}</p>
             </CardContent>
           </Card>
 
           <Card className="rounded-[20px] border-none shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <Star className="w-6 h-6 text-yellow-600" />
+            <CardContent className="p-3 text-center">
+              <div className="w-10 h-10 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                <Star className="w-5 h-5 text-yellow-600" />
               </div>
-              <p className="text-sm text-gray-600 mb-1">Reviews</p>
-              <p className="text-2xl font-bold text-[#7165e1]">{mockStats.reviews}</p>
+              <p className="text-xs text-gray-600 mb-1">Reviews</p>
+              <p className="text-xl font-bold text-[#7165e1]">{mockStats.reviews}</p>
             </CardContent>
           </Card>
         </div>
@@ -422,28 +434,41 @@ export function DoctorProfileClient({ doctor }: DoctorProfileClientProps) {
           </CardContent>
         </Card>
 
-        {/* Availability Section */}
+        {/* Availability Section - Updated design to match image */}
         <Card className="rounded-[20px] border-none shadow-sm">
           <CardContent className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-sf-pro font-semibold text-black">Availability</h3>
-              <Button variant="digigo" size="sm" className="rounded-xl">
-                Book Appointment
-              </Button>
-            </div>
+            <h3 className="text-xl font-sf-pro font-semibold text-black mb-6">Availability</h3>
             
-            <div className="space-y-3">
-              {availabilitySchedule.map((schedule, index) => (
-                <div key={index} className="flex justify-between items-center py-2">
-                  <span className={`text-sm font-medium ${schedule.isToday ? 'text-[#7165e1]' : 'text-gray-700'}`}>
-                    {schedule.day}
-                  </span>
-                  <span className={`text-sm ${schedule.isToday ? 'text-[#7165e1] font-medium' : 'text-gray-600'}`}>
-                    {schedule.time}
-                  </span>
+            {/* Availability Grid - Matching the image layout */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {availabilitySchedule.slice(0, 6).map((schedule, index) => (
+                <div 
+                  key={index} 
+                  className={`p-3 rounded-lg text-center text-sm font-medium ${
+                    schedule.time === 'NA' 
+                      ? 'bg-gray-100 text-gray-500' 
+                      : 'bg-[#f4f3ff] text-gray-700'
+                  }`}
+                >
+                  <div className="font-semibold mb-1">{schedule.day}-</div>
+                  <div className="text-xs">{schedule.time}</div>
                 </div>
               ))}
+              
+              {/* Sunday - NA with different styling */}
+              <div className="p-3 rounded-lg text-center text-sm font-medium bg-gray-100 text-gray-500">
+                <div className="font-semibold mb-1">Sun-</div>
+                <div className="text-xs text-red-500">NA</div>
+              </div>
             </div>
+            
+            {/* Book Appointment Button */}
+            <Button 
+              variant="digigo" 
+              className="w-full h-12 rounded-xl text-base font-semibold"
+            >
+              Book Appointment
+            </Button>
           </CardContent>
         </Card>
       </div>
