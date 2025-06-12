@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -27,82 +28,104 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, PenSquare, Trash2, MoreHorizontal } from "lucide-react"
-import { createDoctor, updateDoctor, deleteDoctor } from "@/lib/actions/doctors"
-import Link from "next/link"
+import { Plus, Search, PenSquare, Trash2, MoreHorizontal, Eye, FileText, Download } from "lucide-react"
+import { PrescriptionForm } from "./prescription-form"
+import { PrescriptionViewer } from "./prescription-viewer"
 
-interface Doctor {
+interface Prescription {
   id: string
-  name: string
-  email?: string
-  phone: string
-  specialization: string
-  qualification?: string
-  experience?: number
-  consultationFee?: number
-  isAvailable: boolean
-  schedules?: any[]
-  appointments?: any[]
+  patientId: string
+  patientName: string
+  doctorName: string
+  concern: string
+  gender: string
+  age: number
+  reports: {
+    id: string
+    name: string
+    type: string
+    url: string
+  }[]
+  prescriptions: {
+    id: string
+    name: string
+    type: string
+    url: string
+  }[]
+  createdAt: Date
 }
 
-interface DoctorsClientProps {
-  initialDoctors: Doctor[]
+interface PrescriptionsClientProps {
+  initialPrescriptions: Prescription[]
 }
 
-export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
-  // Add mock data for table display
-  const doctorsWithScheduleData = initialDoctors.map((doctor, index) => ({
-    ...doctor,
-    doctorId: `${123456 + index}`,
-    appointmentCount: 10,
-    weeklySchedule: {
-      sun: "NA",
-      mon: "9AM-2PM",
-      tue: "9AM-2PM", 
-      wed: "9AM-2PM",
-      thu: "9AM-2PM",
-      fri: "9AM-2PM",
-      sat: "9AM-2PM"
-    }
-  }))
-
-  const [doctors, setDoctors] = useState(doctorsWithScheduleData)
-  const [filteredDoctors, setFilteredDoctors] = useState(doctorsWithScheduleData)
+export function PrescriptionsClient({ initialPrescriptions }: PrescriptionsClientProps) {
+  const [prescriptions, setPrescriptions] = useState(initialPrescriptions)
+  const [filteredPrescriptions, setFilteredPrescriptions] = useState(initialPrescriptions)
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingPrescription, setEditingPrescription] = useState<string | null>(null)
+  const [viewingDocument, setViewingDocument] = useState<{
+    type: 'reports' | 'prescriptions'
+    documents: any[]
+    patientName: string
+  } | null>(null)
 
   useEffect(() => {
-    // Filter doctors based on search term
-    const filtered = doctors.filter((doctor) =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.doctorId.includes(searchTerm) ||
-      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filter prescriptions based on search term
+    const filtered = prescriptions.filter((prescription) =>
+      prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prescription.patientId.includes(searchTerm) ||
+      prescription.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prescription.concern.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prescription.gender.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    setFilteredDoctors(filtered)
+    setFilteredPrescriptions(filtered)
     setCurrentPage(1) // Reset to first page when searching
-  }, [searchTerm, doctors])
+  }, [searchTerm, prescriptions])
+
+  const handleSubmit = async (data: any) => {
+    console.log("Prescription data:", data)
+    setIsFormOpen(false)
+    setEditingPrescription(null)
+    // Here you would typically refresh the data or add the new prescription to the list
+  }
 
   const handleEdit = (id: string) => {
-    console.log('Edit doctor:', id)
+    setEditingPrescription(id)
+    setIsFormOpen(true)
   }
 
   const handleDelete = async (id: string) => {
-    const result = await deleteDoctor(id)
-    if (result.success) {
-      setDoctors(prev => prev.filter(d => d.id !== id))
-    } else {
-      console.error('Failed to delete doctor:', result.error)
-    }
+    // Implement delete functionality
+    setPrescriptions(prev => prev.filter(p => p.id !== id))
+  }
+
+  const handleViewReports = (prescription: Prescription) => {
+    setViewingDocument({
+      type: 'reports',
+      documents: prescription.reports,
+      patientName: prescription.patientName
+    })
+  }
+
+  const handleViewPrescriptions = (prescription: Prescription) => {
+    setViewingDocument({
+      type: 'prescriptions',
+      documents: prescription.prescriptions,
+      patientName: prescription.patientName
+    })
   }
 
   // Pagination logic
-  const totalRecords = filteredDoctors.length
+  const totalRecords = filteredPrescriptions.length
   const recordsPerPageNum = parseInt(recordsPerPage)
   const totalPages = Math.ceil(totalRecords / recordsPerPageNum)
   const startIndex = (currentPage - 1) * recordsPerPageNum
   const endIndex = startIndex + recordsPerPageNum
-  const paginatedDoctors = filteredDoctors.slice(startIndex, endIndex)
+  const paginatedPrescriptions = filteredPrescriptions.slice(startIndex, endIndex)
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -117,23 +140,33 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl md:text-3xl font-sf-pro font-bold text-[#7165e1]">
-          Doctors Management
+          Prescriptions Management
         </h1>
         
-        <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
-          <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-          <span className="hidden sm:inline">Add New Doctor</span>
-          <span className="sm:hidden">Add Doctor</span>
-        </Button>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
+              <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+              <span className="hidden sm:inline">Add New Prescription</span>
+              <span className="sm:hidden">Add Prescription</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+            <PrescriptionForm
+              onSubmit={handleSubmit}
+              onCancel={() => setIsFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Doctors Container with integrated search and pagination */}
+      {/* Prescriptions Container with integrated search and pagination */}
       <div className="bg-white rounded-[20px] shadow-sm">
         <div className="p-4 md:p-6 lg:p-[34px]">
           {/* Header with Search and Records Per Page */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
             <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold">
-              Doctors List
+              Prescriptions
             </h2>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
@@ -170,145 +203,143 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
 
           {/* Mobile Card View */}
           <div className="block lg:hidden space-y-4">
-            {paginatedDoctors.map((doctor, index) => (
-              <Card key={doctor.id} className="border border-gray-200">
+            {paginatedPrescriptions.map((prescription, index) => (
+              <Card key={prescription.id} className="border border-gray-200">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold text-[#7165e1]">
-                        {doctor.name}
+                        {prescription.patientName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        ID: {doctor.doctorId}
+                        ID: {prescription.patientId}
                       </p>
                     </div>
-                    <Badge
-                      variant={doctor.isAvailable ? "completed" : "pending"}
-                      className="rounded-[20px] text-xs"
-                    >
-                      {doctor.isAvailable ? "Available" : "Unavailable"}
-                    </Badge>
                   </div>
                   
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Designation:</span>
-                      <span>{doctor.specialization}</span>
+                      <span className="text-gray-600">Doctor:</span>
+                      <span>{prescription.doctorName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Appointments:</span>
-                      <span>{doctor.appointmentCount}</span>
+                      <span className="text-gray-600">Concern:</span>
+                      <span className="text-right">{prescription.concern}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Schedule:</span>
-                      <span className="text-right">Mon-Sat: 9AM-2PM</span>
+                      <span className="text-gray-600">Gender:</span>
+                      <span>{prescription.gender}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Age:</span>
+                      <span>{prescription.age}</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(doctor.id)}>
-                          <PenSquare className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(doctor.id)}>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <div className="flex gap-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleViewReports(prescription)}
+                    >
+                      View Reports
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleViewPrescriptions(prescription)}
+                    >
+                      View Prescriptions
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Desktop Table View - Matching the image layout exactly */}
+          {/* Desktop Table View */}
           <div className="hidden lg:block">
             <ScrollArea className="h-[500px]">
               <Table>
                 <TableHeader className="bg-[#f4f3ff] rounded-[10px]">
                   <TableRow>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      ID
+                      S.No
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Doctor Name
+                      Patient's ID
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Designation
+                      Name
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Appointments
+                      Doctor name
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Sun
+                      Concern
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Mon
+                      Gender
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Tue
+                      Age
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Wed
+                      Reports
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Thu
-                    </TableHead>
-                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Fri
-                    </TableHead>
-                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Sat
+                      Prescriptions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedDoctors.map((doctor, index) => (
+                  {paginatedPrescriptions.map((prescription, index) => (
                     <TableRow
-                      key={doctor.id}
-                      className="bg-[#f4f3ff] rounded-[10px] my-[10px] hover:bg-[#eeebff] cursor-pointer"
-                      onClick={() => window.location.href = `/doctors/${doctor.id}`}
+                      key={prescription.id}
+                      className="bg-[#f4f3ff] rounded-[10px] my-[10px]"
                     >
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.doctorId}
+                        {startIndex + index + 1}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.name}
+                        {prescription.patientId}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.specialization}
+                        {prescription.patientName}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.appointmentCount}
-                      </TableCell>
-                      <TableCell className="text-base font-sf-pro">
-                        <span className="text-red-500 font-medium">NA</span>
+                        {prescription.doctorName}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        {prescription.concern}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        {prescription.gender}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        {prescription.age}
                       </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                      <TableCell>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-[#7165e1] p-0 h-auto font-sf-pro"
+                          onClick={() => handleViewReports(prescription)}
+                        >
+                          View Reports
+                        </Button>
                       </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
-                      </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                      <TableCell>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="text-[#7165e1] p-0 h-auto font-sf-pro"
+                          onClick={() => handleViewPrescriptions(prescription)}
+                        >
+                          View Prescriptions
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -321,7 +352,7 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-6">
             <p className="text-sm text-gray-600">
               Showing page {currentPage} of {totalPages}
-              {searchTerm && ` (filtered from ${doctors.length} total)`}
+              {searchTerm && ` (filtered from ${prescriptions.length} total)`}
             </p>
             
             {/* Pagination Controls */}
@@ -407,15 +438,26 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
           )}
 
           {/* No Results Message */}
-          {filteredDoctors.length === 0 && (
+          {filteredPrescriptions.length === 0 && (
             <div className="text-center py-12">
               <p className="text-lg text-gray-500 font-sf-pro">
-                {searchTerm ? "No doctors found matching your search." : "No doctors found. Add your first doctor to get started."}
+                {searchTerm ? "No prescriptions found matching your search." : "No prescriptions found. Add your first prescription to get started."}
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Document Viewer Dialog */}
+      {viewingDocument && (
+        <PrescriptionViewer
+          isOpen={!!viewingDocument}
+          onClose={() => setViewingDocument(null)}
+          documents={viewingDocument.documents}
+          patientName={viewingDocument.patientName}
+          type={viewingDocument.type}
+        />
+      )}
     </>
   )
 }

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -27,82 +28,81 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, PenSquare, Trash2, MoreHorizontal } from "lucide-react"
-import { createDoctor, updateDoctor, deleteDoctor } from "@/lib/actions/doctors"
-import Link from "next/link"
+import { Plus, Search, Eye, Edit, Trash2, MoreHorizontal, ExternalLink } from "lucide-react"
+import { InvoiceForm } from "./invoice-form"
+import { InvoiceViewer } from "./invoice-viewer"
 
-interface Doctor {
+interface Invoice {
   id: string
-  name: string
-  email?: string
+  invoiceNo: string
+  patientName: string
   phone: string
-  specialization: string
-  qualification?: string
-  experience?: number
-  consultationFee?: number
-  isAvailable: boolean
-  schedules?: any[]
-  appointments?: any[]
+  createdDate: string
+  dueDate: string
+  amount: number
+  status: 'Paid' | 'Pending' | 'Overdue'
+  items: {
+    description: string
+    quantity: number
+    rate: number
+    amount: number
+  }[]
 }
 
-interface DoctorsClientProps {
-  initialDoctors: Doctor[]
+interface InvoicesClientProps {
+  initialInvoices: Invoice[]
 }
 
-export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
-  // Add mock data for table display
-  const doctorsWithScheduleData = initialDoctors.map((doctor, index) => ({
-    ...doctor,
-    doctorId: `${123456 + index}`,
-    appointmentCount: 10,
-    weeklySchedule: {
-      sun: "NA",
-      mon: "9AM-2PM",
-      tue: "9AM-2PM", 
-      wed: "9AM-2PM",
-      thu: "9AM-2PM",
-      fri: "9AM-2PM",
-      sat: "9AM-2PM"
-    }
-  }))
-
-  const [doctors, setDoctors] = useState(doctorsWithScheduleData)
-  const [filteredDoctors, setFilteredDoctors] = useState(doctorsWithScheduleData)
+export function InvoicesClient({ initialInvoices }: InvoicesClientProps) {
+  const [invoices, setInvoices] = useState(initialInvoices)
+  const [filteredInvoices, setFilteredInvoices] = useState(initialInvoices)
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingInvoice, setEditingInvoice] = useState<string | null>(null)
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null)
 
   useEffect(() => {
-    // Filter doctors based on search term
-    const filtered = doctors.filter((doctor) =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.doctorId.includes(searchTerm) ||
-      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filter invoices based on search term
+    const filtered = invoices.filter((invoice) =>
+      invoice.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.invoiceNo.includes(searchTerm) ||
+      invoice.phone.includes(searchTerm) ||
+      invoice.status.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    setFilteredDoctors(filtered)
+    setFilteredInvoices(filtered)
     setCurrentPage(1) // Reset to first page when searching
-  }, [searchTerm, doctors])
+  }, [searchTerm, invoices])
+
+  const handleSubmit = async (data: any) => {
+    console.log("Invoice data:", data)
+    setIsFormOpen(false)
+    setEditingInvoice(null)
+    // Here you would typically refresh the data or add the new invoice to the list
+  }
 
   const handleEdit = (id: string) => {
-    console.log('Edit doctor:', id)
+    setEditingInvoice(id)
+    setIsFormOpen(true)
   }
 
   const handleDelete = async (id: string) => {
-    const result = await deleteDoctor(id)
-    if (result.success) {
-      setDoctors(prev => prev.filter(d => d.id !== id))
-    } else {
-      console.error('Failed to delete doctor:', result.error)
-    }
+    // Implement delete functionality
+    setInvoices(prev => prev.filter(i => i.id !== id))
+  }
+
+  const handleView = (invoice: Invoice) => {
+    setViewingInvoice(invoice)
   }
 
   // Pagination logic
-  const totalRecords = filteredDoctors.length
+  const totalRecords = filteredInvoices.length
   const recordsPerPageNum = parseInt(recordsPerPage)
   const totalPages = Math.ceil(totalRecords / recordsPerPageNum)
   const startIndex = (currentPage - 1) * recordsPerPageNum
   const endIndex = startIndex + recordsPerPageNum
-  const paginatedDoctors = filteredDoctors.slice(startIndex, endIndex)
+  const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex)
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -113,27 +113,63 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
     setCurrentPage(1) // Reset to first page when changing records per page
   }
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'Paid':
+        return 'completed'
+      case 'Pending':
+        return 'pending'
+      case 'Overdue':
+        return 'destructive'
+      default:
+        return 'pending'
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Paid':
+        return 'bg-green-100 text-green-700'
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-700'
+      case 'Overdue':
+        return 'bg-red-100 text-red-700'
+      default:
+        return 'bg-gray-100 text-gray-700'
+    }
+  }
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl md:text-3xl font-sf-pro font-bold text-[#7165e1]">
-          Doctors Management
+          Billing & Invoice Management
         </h1>
         
-        <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
-          <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-          <span className="hidden sm:inline">Add New Doctor</span>
-          <span className="sm:hidden">Add Doctor</span>
-        </Button>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
+              <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+              <span className="hidden sm:inline">Create Invoice</span>
+              <span className="sm:hidden">Create</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+            <InvoiceForm
+              onSubmit={handleSubmit}
+              onCancel={() => setIsFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Doctors Container with integrated search and pagination */}
+      {/* Invoices Container with integrated search and pagination */}
       <div className="bg-white rounded-[20px] shadow-sm">
         <div className="p-4 md:p-6 lg:p-[34px]">
           {/* Header with Search and Records Per Page */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
             <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold">
-              Doctors List
+              Invoices
             </h2>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
@@ -165,64 +201,92 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              {/* Create Invoice Button */}
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="digigo" size="sm" className="h-10 px-4 rounded-xl">
+                    Create Invoice
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+                  <InvoiceForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setIsFormOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
           {/* Mobile Card View */}
           <div className="block lg:hidden space-y-4">
-            {paginatedDoctors.map((doctor, index) => (
-              <Card key={doctor.id} className="border border-gray-200">
+            {paginatedInvoices.map((invoice, index) => (
+              <Card key={invoice.id} className="border border-gray-200">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold text-[#7165e1]">
-                        {doctor.name}
+                        {invoice.invoiceNo}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        ID: {doctor.doctorId}
+                        {invoice.patientName}
                       </p>
                     </div>
                     <Badge
-                      variant={doctor.isAvailable ? "completed" : "pending"}
-                      className="rounded-[20px] text-xs"
+                      className={`rounded-full text-xs ${getStatusColor(invoice.status)}`}
                     >
-                      {doctor.isAvailable ? "Available" : "Unavailable"}
+                      {invoice.status}
                     </Badge>
                   </div>
                   
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Designation:</span>
-                      <span>{doctor.specialization}</span>
+                      <span className="text-gray-600">Phone:</span>
+                      <span>{invoice.phone}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Appointments:</span>
-                      <span>{doctor.appointmentCount}</span>
+                      <span className="text-gray-600">Created:</span>
+                      <span>{invoice.createdDate}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Schedule:</span>
-                      <span className="text-right">Mon-Sat: 9AM-2PM</span>
+                      <span className="text-gray-600">Due:</span>
+                      <span>{invoice.dueDate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amount:</span>
+                      <span className="font-semibold">Rs. {invoice.amount.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(doctor.id)}>
-                          <PenSquare className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(doctor.id)}>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <div className="flex gap-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleView(invoice)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      View
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleEdit(invoice.id)}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs"
+                      onClick={() => handleDelete(invoice.id)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -235,80 +299,96 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
               <Table>
                 <TableHeader className="bg-[#f4f3ff] rounded-[10px]">
                   <TableRow>
-                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      ID
+                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium w-4">
+                      <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Doctor Name
+                      Invoice No.
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Designation
+                      Patient Name
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Appointments
+                      Phone
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Sun
+                      Created date
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Mon
+                      Due date
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Tue
+                      Amount
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Wed
+                      Status
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Thu
-                    </TableHead>
-                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Fri
-                    </TableHead>
-                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Sat
+                      Action
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedDoctors.map((doctor, index) => (
+                  {paginatedInvoices.map((invoice, index) => (
                     <TableRow
-                      key={doctor.id}
-                      className="bg-[#f4f3ff] rounded-[10px] my-[10px] hover:bg-[#eeebff] cursor-pointer"
-                      onClick={() => window.location.href = `/doctors/${doctor.id}`}
+                      key={invoice.id}
+                      className="bg-[#f4f3ff] rounded-[10px] my-[10px] hover:bg-[#eeebff]"
                     >
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.doctorId}
+                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.name}
+                        {invoice.invoiceNo}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.specialization}
+                        {invoice.patientName}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {doctor.appointmentCount}
-                      </TableCell>
-                      <TableCell className="text-base font-sf-pro">
-                        <span className="text-red-500 font-medium">NA</span>
+                        {invoice.phone}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        {invoice.createdDate}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        {invoice.dueDate}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                        Rs. {invoice.amount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                      <TableCell>
+                        <Badge
+                          className={`rounded-full text-sm font-sf-pro ${getStatusColor(invoice.status)}`}
+                        >
+                          {invoice.status}
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
-                      </TableCell>
-                      <TableCell className="text-base text-black font-sf-pro">
-                        9AM-2PM
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleView(invoice)}
+                          >
+                            <ExternalLink className="w-4 h-4 text-[#7165e1]" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(invoice.id)}
+                          >
+                            <Edit className="w-4 h-4 text-[#7165e1]" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(invoice.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -321,7 +401,7 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-6">
             <p className="text-sm text-gray-600">
               Showing page {currentPage} of {totalPages}
-              {searchTerm && ` (filtered from ${doctors.length} total)`}
+              {searchTerm && ` (filtered from ${invoices.length} total)`}
             </p>
             
             {/* Pagination Controls */}
@@ -407,15 +487,24 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
           )}
 
           {/* No Results Message */}
-          {filteredDoctors.length === 0 && (
+          {filteredInvoices.length === 0 && (
             <div className="text-center py-12">
               <p className="text-lg text-gray-500 font-sf-pro">
-                {searchTerm ? "No doctors found matching your search." : "No doctors found. Add your first doctor to get started."}
+                {searchTerm ? "No invoices found matching your search." : "No invoices found. Create your first invoice to get started."}
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Invoice Viewer Dialog */}
+      {viewingInvoice && (
+        <InvoiceViewer
+          isOpen={!!viewingInvoice}
+          onClose={() => setViewingInvoice(null)}
+          invoice={viewingInvoice}
+        />
+      )}
     </>
   )
 }
