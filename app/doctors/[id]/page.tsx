@@ -26,7 +26,13 @@ export default async function DoctorProfilePage({ params }: DoctorProfilePagePro
         <Header />
         
         <div className="p-4 md:p-6 lg:p-[34px]">
-          <DoctorProfileClient doctor={doctor} />
+          <Suspense fallback={
+            <div className="text-center py-12">
+              <p className="text-lg text-gray-500 font-sf-pro">Loading doctor profile...</p>
+            </div>
+          }>
+            <DoctorProfileClient doctor={doctor} />
+          </Suspense>
         </div>
       </main>
     </div>
