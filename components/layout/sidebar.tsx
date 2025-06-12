@@ -14,7 +14,10 @@ import {
   ChevronDown,
   Building2,
   Menu,
-  X
+  X,
+  Users2,
+  Receipt,
+  Activity
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -70,7 +73,66 @@ export function Sidebar({ userRole }: SidebarProps) {
     }
   }
 
-  const menuItems = [
+  // Admin menu items
+  const adminMenuItems = [
+    {
+      name: "Dashboard",
+      href: "/admin/dashboard",
+      icon: LayoutDashboard,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Patients",
+      href: "/admin/patients",
+      icon: Users,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Doctors",
+      href: "/admin/doctors",
+      icon: UserCheck,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Staffs",
+      href: "/admin/staffs",
+      icon: Users2,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Appointments",
+      href: "/admin/appointments",
+      icon: Calendar,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Transactions",
+      href: "/admin/transactions",
+      icon: Receipt,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Prescription",
+      href: "/admin/prescriptions",
+      icon: FileText,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Treatment",
+      href: "/admin/treatment",
+      icon: Activity,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Analytics",
+      href: "/admin/analytics",
+      icon: FileText,
+      roles: ['ADMIN']
+    }
+  ]
+
+  // Staff menu items (existing)
+  const staffMenuItems = [
     {
       name: "Dashboard",
       href: "/dashboard",
@@ -132,6 +194,10 @@ export function Sidebar({ userRole }: SidebarProps) {
     }
   ]
 
+  // Determine which menu items to show based on current path
+  const isAdminPath = pathname.startsWith('/admin')
+  const menuItems = isAdminPath ? adminMenuItems : staffMenuItems
+  
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(userRole)
   )

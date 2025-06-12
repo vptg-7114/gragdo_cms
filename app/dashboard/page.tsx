@@ -27,7 +27,15 @@ export default async function DashboardPage() {
         
         <div className="p-4 md:p-6 lg:p-[34px]">
           {/* Stats Cards */}
-          <StatsCards stats={stats} />
+          <Suspense fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 bg-gray-200 animate-pulse rounded-[16px]" />
+              ))}
+            </div>
+          }>
+            <StatsCards stats={stats} />
+          </Suspense>
 
           {/* Time Filter and Add Patient */}
           <div className="flex flex-col lg:flex-row justify-between gap-4 mt-6 lg:mt-[30px]">
@@ -67,19 +75,37 @@ export default async function DashboardPage() {
 
           {/* Appointments Table - Full Width */}
           <div className="mt-8 lg:mt-[50px]">
-            <AppointmentTable appointments={appointments} />
+            <Suspense fallback={
+              <div className="bg-white rounded-[20px] shadow-sm p-6">
+                <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
+              </div>
+            }>
+              <AppointmentTable appointments={appointments} />
+            </Suspense>
           </div>
 
           {/* Bottom Section: Doctor's Activity and Recent Reports */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mt-8">
             {/* Doctor's Activity */}
             <div className="xl:col-span-1">
-              <DoctorsActivity doctors={doctorsActivity} />
+              <Suspense fallback={
+                <div className="bg-white rounded-[20px] shadow-sm p-6">
+                  <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
+                </div>
+              }>
+                <DoctorsActivity doctors={doctorsActivity} />
+              </Suspense>
             </div>
 
             {/* Recent Reports */}
             <div className="xl:col-span-1">
-              <RecentReports reports={recentReports} />
+              <Suspense fallback={
+                <div className="bg-white rounded-[20px] shadow-sm p-6">
+                  <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
+                </div>
+              }>
+                <RecentReports reports={recentReports} />
+              </Suspense>
             </div>
           </div>
         </div>
