@@ -56,32 +56,68 @@ export async function getAdminDoctors() {
 
 export async function getAdminStaff() {
   try {
-    // Mock data for staff list
+    // Mock data for staff list - expanded to match the image
     return [
       {
         id: '1',
-        name: 'K. Rohini',
-        role: 'Head nurse',
+        name: 'K. Vijay',
+        role: 'Apprentice',
         isAvailable: true,
         avatar: 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=2'
       },
       {
         id: '2',
-        name: 'P. Priyanka',
-        role: 'Nurse',
+        name: 'P. Sandeep',
+        role: 'Compounder',
         isAvailable: true
       },
       {
         id: '3',
-        name: 'J. Rajesh',
-        role: 'Compounder',
+        name: 'Ch. Asritha',
+        role: 'Nurse',
         isAvailable: true
       },
       {
         id: '4',
-        name: 'D. Dhanush',
+        name: 'P. Ravi',
         role: 'Compounder',
-        isAvailable: false
+        isAvailable: true
+      },
+      {
+        id: '5',
+        name: 'A. Srikanth',
+        role: 'Intern',
+        isAvailable: true
+      },
+      {
+        id: '6',
+        name: 'P. Ravi',
+        role: 'Compounder',
+        isAvailable: true
+      },
+      {
+        id: '7',
+        name: 'A. Srikanth',
+        role: 'Compounder',
+        isAvailable: true
+      },
+      {
+        id: '8',
+        name: 'P. Ravi',
+        role: 'Compounder',
+        isAvailable: true
+      },
+      {
+        id: '9',
+        name: 'A. Srikanth',
+        role: 'Intern',
+        isAvailable: true
+      },
+      {
+        id: '10',
+        name: 'P. Ravi',
+        role: 'Intern',
+        isAvailable: true
       }
     ]
   } catch (error) {
