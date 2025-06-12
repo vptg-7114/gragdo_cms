@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function PatientsOverview() {
-  // Mock data for the pie chart
+  // Data matching the image exactly
   const data = {
     male: 660,
-    female: 940,
+    female: 949,
     children: 818
   }
 
@@ -14,6 +14,11 @@ export function PatientsOverview() {
   const malePercentage = (data.male / total) * 100
   const femalePercentage = (data.female / total) * 100
   const childrenPercentage = (data.children / total) * 100
+
+  // Calculate angles for SVG paths
+  const maleAngle = (malePercentage / 100) * 360
+  const femaleAngle = (femalePercentage / 100) * 360
+  const childrenAngle = (childrenPercentage / 100) * 360
 
   return (
     <Card className="rounded-[20px] border-none shadow-sm h-[400px]">
@@ -26,56 +31,55 @@ export function PatientsOverview() {
         {/* Pie Chart */}
         <div className="relative w-48 h-48 mb-6">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            {/* Male segment */}
+            {/* Male segment (top-left) */}
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#7165e1"
-              strokeWidth="20"
-              strokeDasharray={`${malePercentage * 2.51} 251.2`}
+              strokeWidth="15"
+              strokeDasharray={`${malePercentage * 2.199} 219.9`}
               strokeDashoffset="0"
+              strokeLinecap="round"
             />
-            {/* Female segment */}
+            {/* Female segment (right side - largest) */}
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#a855f7"
-              strokeWidth="20"
-              strokeDasharray={`${femalePercentage * 2.51} 251.2`}
-              strokeDashoffset={`-${malePercentage * 2.51}`}
+              strokeWidth="15"
+              strokeDasharray={`${femalePercentage * 2.199} 219.9`}
+              strokeDashoffset={`-${malePercentage * 2.199}`}
+              strokeLinecap="round"
             />
-            {/* Children segment */}
+            {/* Children segment (bottom-left) */}
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#c4b5fd"
-              strokeWidth="20"
-              strokeDasharray={`${childrenPercentage * 2.51} 251.2`}
-              strokeDashoffset={`-${(malePercentage + femalePercentage) * 2.51}`}
+              strokeWidth="15"
+              strokeDasharray={`${childrenPercentage * 2.199} 219.9`}
+              strokeDashoffset={`-${(malePercentage + femalePercentage) * 2.199}`}
+              strokeLinecap="round"
             />
           </svg>
           
-          {/* Center labels */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-black">{data.female}</span>
-            <span className="text-sm text-gray-600">Female</span>
+          {/* Data labels positioned around the chart */}
+          <div className="absolute top-2 left-4 text-center">
+            <span className="text-lg font-bold text-black">{data.male}</span>
           </div>
           
-          {/* Side labels */}
-          <div className="absolute top-4 right-0 text-right">
-            <span className="text-lg font-semibold text-black">{data.male}</span>
-            <div className="text-xs text-gray-600">Male</div>
+          <div className="absolute top-4 right-0 text-center">
+            <span className="text-lg font-bold text-black">{data.female}</span>
           </div>
           
-          <div className="absolute bottom-4 left-0">
-            <span className="text-lg font-semibold text-black">{data.children}</span>
-            <div className="text-xs text-gray-600">Children</div>
+          <div className="absolute bottom-4 left-0 text-center">
+            <span className="text-lg font-bold text-black">{data.children}</span>
           </div>
         </div>
 

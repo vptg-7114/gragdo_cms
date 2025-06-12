@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function AppointmentOverview() {
-  // Mock data for the pie chart
+  // Data matching the image exactly
   const data = {
     generalCheckup: 660,
     surgery: 949,
@@ -30,52 +30,51 @@ export function AppointmentOverview() {
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#7165e1"
-              strokeWidth="20"
-              strokeDasharray={`${generalPercentage * 2.51} 251.2`}
+              strokeWidth="15"
+              strokeDasharray={`${generalPercentage * 2.199} 219.9`}
               strokeDashoffset="0"
+              strokeLinecap="round"
             />
-            {/* Surgery segment */}
+            {/* Surgery segment (largest) */}
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#a855f7"
-              strokeWidth="20"
-              strokeDasharray={`${surgeryPercentage * 2.51} 251.2`}
-              strokeDashoffset={`-${generalPercentage * 2.51}`}
+              strokeWidth="15"
+              strokeDasharray={`${surgeryPercentage * 2.199} 219.9`}
+              strokeDashoffset={`-${generalPercentage * 2.199}`}
+              strokeLinecap="round"
             />
             {/* Diagnosis segment */}
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#c4b5fd"
-              strokeWidth="20"
-              strokeDasharray={`${diagnosisPercentage * 2.51} 251.2`}
-              strokeDashoffset={`-${(generalPercentage + surgeryPercentage) * 2.51}`}
+              strokeWidth="15"
+              strokeDasharray={`${diagnosisPercentage * 2.199} 219.9`}
+              strokeDashoffset={`-${(generalPercentage + surgeryPercentage) * 2.199}`}
+              strokeLinecap="round"
             />
           </svg>
           
-          {/* Center labels */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-black">{data.surgery}</span>
-            <span className="text-sm text-gray-600">Surgery</span>
+          {/* Data labels positioned around the chart */}
+          <div className="absolute top-2 left-4 text-center">
+            <span className="text-lg font-bold text-black">{data.generalCheckup}</span>
           </div>
           
-          {/* Side labels */}
-          <div className="absolute top-4 right-0 text-right">
-            <span className="text-lg font-semibold text-black">{data.generalCheckup}</span>
-            <div className="text-xs text-gray-600">General Checkup</div>
+          <div className="absolute top-4 right-0 text-center">
+            <span className="text-lg font-bold text-black">{data.surgery}</span>
           </div>
           
-          <div className="absolute bottom-4 left-0">
-            <span className="text-lg font-semibold text-black">{data.diagnosis}</span>
-            <div className="text-xs text-gray-600">Diagnosis</div>
+          <div className="absolute bottom-4 left-0 text-center">
+            <span className="text-lg font-bold text-black">{data.diagnosis}</span>
           </div>
         </div>
 
