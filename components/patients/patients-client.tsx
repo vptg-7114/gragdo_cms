@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Plus, Search, PenSquare, Trash2, MoreHorizontal } from "lucide-react"
 import { createPatient, updatePatient, deletePatient } from "@/lib/actions/patients"
+import { PatientForm } from "./patient-form"
 
 interface Patient {
   id: string
@@ -68,6 +70,8 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingPatient, setEditingPatient] = useState<string | null>(null)
 
   useEffect(() => {
     // Filter patients based on search term
@@ -83,8 +87,16 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
     setCurrentPage(1) // Reset to first page when searching
   }, [searchTerm, patients])
 
+  const handleSubmit = async (data: any) => {
+    console.log("Patient data:", data)
+    setIsFormOpen(false)
+    setEditingPatient(null)
+    // Here you would typically refresh the data or add the new patient to the list
+  }
+
   const handleEdit = (id: string) => {
-    console.log("Edit patient:", id)
+    setEditingPatient(id)
+    setIsFormOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -135,11 +147,21 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
           Patients Management
         </h1>
         
-        <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
-          <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-          <span className="hidden sm:inline">Add New Patient</span>
-          <span className="sm:hidden">Add Patient</span>
-        </Button>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button variant="digigo" size="digigo" className="w-full sm:w-auto">
+              <Plus className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+              <span className="hidden sm:inline">Add New Patient</span>
+              <span className="sm:hidden">Add Patient</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+            <PatientForm
+              onSubmit={handleSubmit}
+              onCancel={() => setIsFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Patients Container with integrated search and pagination */}
@@ -182,10 +204,20 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
               </div>
 
               {/* Add Patient Button */}
-              <Button variant="digigo" size="sm" className="h-10 px-4 rounded-xl">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Patient
-              </Button>
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="digigo" size="sm" className="h-10 px-4 rounded-xl">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Patient
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+                  <PatientForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setIsFormOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
