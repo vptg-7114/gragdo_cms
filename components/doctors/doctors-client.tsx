@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 interface Doctor {
   id: string
@@ -51,84 +52,96 @@ export function DoctorsClient({ initialDoctors }: DoctorsClientProps) {
       {doctors.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
           {doctors.map((doctor) => (
-            <Card key={doctor.id} className="rounded-[20px] border-none shadow-sm">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg md:text-xl font-sf-pro font-semibold text-[#7165e1] mb-1 truncate">
-                      {doctor.name}
-                    </h3>
-                    <p className="text-gray-600 font-sf-pro text-sm md:text-base truncate">
-                      {doctor.specialization}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={doctor.isAvailable ? "completed" : "pending"}
-                      className="rounded-full text-xs"
-                    >
-                      {doctor.isAvailable ? "Available" : "Unavailable"}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Schedule</DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-
-                <div className="space-y-2 mb-4 text-xs md:text-sm">
-                  {doctor.qualification && (
-                    <p className="text-gray-600">
-                      <strong>Qualification:</strong> {doctor.qualification}
-                    </p>
-                  )}
-                  {doctor.experience && (
-                    <p className="text-gray-600">
-                      <strong>Experience:</strong> {doctor.experience} years
-                    </p>
-                  )}
-                  {doctor.consultationFee && (
-                    <p className="text-gray-600">
-                      <strong>Consultation Fee:</strong> ₹{doctor.consultationFee}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2 mb-4 text-xs md:text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{doctor.phone}</span>
-                  </div>
-                  {doctor.email && (
-                    <div className="flex items-center text-gray-600">
-                      <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">{doctor.email}</span>
+            <Link key={doctor.id} href={`/doctors/${doctor.id}`}>
+              <Card className="rounded-[20px] border-none shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg md:text-xl font-sf-pro font-semibold text-[#7165e1] mb-1 truncate">
+                        {doctor.name}
+                      </h3>
+                      <p className="text-gray-600 font-sf-pro text-sm md:text-base truncate">
+                        {doctor.specialization}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex items-center text-gray-600">
-                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{doctor.appointments?.length || 0} upcoming appointments</span>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={doctor.isAvailable ? "completed" : "pending"}
+                        className="rounded-full text-xs"
+                      >
+                        {doctor.isAvailable ? "Available" : "Unavailable"}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem>Schedule</DropdownMenuItem>
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs md:text-sm">
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-xs md:text-sm">
-                    Schedule
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="space-y-2 mb-4 text-xs md:text-sm">
+                    {doctor.qualification && (
+                      <p className="text-gray-600">
+                        <strong>Qualification:</strong> {doctor.qualification}
+                      </p>
+                    )}
+                    {doctor.experience && (
+                      <p className="text-gray-600">
+                        <strong>Experience:</strong> {doctor.experience} years
+                      </p>
+                    )}
+                    {doctor.consultationFee && (
+                      <p className="text-gray-600">
+                        <strong>Consultation Fee:</strong> ₹{doctor.consultationFee}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 mb-4 text-xs md:text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{doctor.phone}</span>
+                    </div>
+                    {doctor.email && (
+                      <div className="flex items-center text-gray-600">
+                        <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">{doctor.email}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span>{doctor.appointments?.length || 0} upcoming appointments</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs md:text-sm"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-xs md:text-sm"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Schedule
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       ) : (
