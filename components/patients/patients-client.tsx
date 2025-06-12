@@ -42,6 +42,11 @@ interface Patient {
   medicalHistory?: string
   allergies?: string
   createdAt: Date
+  // Adding appointment-related fields for display
+  lastConcern?: string
+  lastDoctorName?: string
+  lastDuration?: string
+  status?: string
 }
 
 interface PatientsClientProps {
@@ -49,8 +54,17 @@ interface PatientsClientProps {
 }
 
 export function PatientsClient({ initialPatients }: PatientsClientProps) {
-  const [patients, setPatients] = useState(initialPatients)
-  const [filteredPatients, setFilteredPatients] = useState(initialPatients)
+  // Add mock appointment data to patients for display purposes
+  const patientsWithAppointmentData = initialPatients.map(patient => ({
+    ...patient,
+    lastConcern: patient.medicalHistory || "General checkup",
+    lastDoctorName: "Dr. K. Ranganath", // This would come from actual appointment data
+    lastDuration: "30 Min",
+    status: "Active"
+  }))
+
+  const [patients, setPatients] = useState(patientsWithAppointmentData)
+  const [filteredPatients, setFilteredPatients] = useState(patientsWithAppointmentData)
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
@@ -61,7 +75,9 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.patientId.includes(searchTerm) ||
       patient.phone.includes(searchTerm) ||
-      patient.gender.toLowerCase().includes(searchTerm.toLowerCase())
+      patient.gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.lastConcern && patient.lastConcern.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (patient.lastDoctorName && patient.lastDoctorName.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     setFilteredPatients(filtered)
     setCurrentPage(1) // Reset to first page when searching
@@ -95,6 +111,21 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
   const handleRecordsPerPageChange = (value: string) => {
     setRecordsPerPage(value)
     setCurrentPage(1) // Reset to first page when changing records per page
+  }
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'Completed':
+        return 'completed'
+      case 'In Progress':
+        return 'inProgress'
+      case 'Pending':
+        return 'pending'
+      case 'Active':
+        return 'completed'
+      default:
+        return 'completed'
+    }
   }
 
   return (
@@ -173,10 +204,10 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
                       </p>
                     </div>
                     <Badge
-                      variant="completed"
+                      variant={getStatusVariant(patient.status || 'Active')}
                       className="rounded-[20px] text-xs"
                     >
-                      Active
+                      {patient.status || 'Active'}
                     </Badge>
                   </div>
                   
@@ -192,6 +223,18 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Age:</span>
                       <span>{patient.age}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Concern:</span>
+                      <span className="text-right">{patient.lastConcern}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Doctor:</span>
+                      <span>{patient.lastDoctorName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Duration:</span>
+                      <span>{patient.lastDuration}</span>
                     </div>
                   </div>
 
@@ -244,7 +287,13 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
                       Age
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
-                      Medical History
+                      Concern
+                    </TableHead>
+                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
+                      Doctor name
+                    </TableHead>
+                    <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
+                      Duration
                     </TableHead>
                     <TableHead className="text-[#888888] text-lg font-sf-pro font-medium">
                       Status
@@ -279,14 +328,20 @@ export function PatientsClient({ initialPatients }: PatientsClientProps) {
                         {patient.age}
                       </TableCell>
                       <TableCell className="text-base text-black font-sf-pro">
-                        {patient.medicalHistory || 'None'}
+                        {patient.lastConcern}
+                      </TableCell>
+                      <TableCell className="text-base text-black font-sf-pro">
+                        {patient.lastDoctorName}
+                      </TableCell>
+                      <TableCell className="text-base text-black font-sf-pro">
+                        {patient.lastDuration}
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant="completed"
+                          variant={getStatusVariant(patient.status || 'Active')}
                           className="rounded-[40px] text-base font-sf-pro"
                         >
-                          Active
+                          {patient.status || 'Active'}
                         </Badge>
                       </TableCell>
                       <TableCell>
