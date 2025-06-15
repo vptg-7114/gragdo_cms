@@ -51,6 +51,15 @@ export function Sidebar({ userRole }: SidebarProps) {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
+  useEffect(() => {
+    // Check if the current path is a submenu item and expand its parent
+    const treatmentsSubmenuPaths = ['/admin/treatment', '/admin/medicine', '/medicine']
+    
+    if (treatmentsSubmenuPaths.some(path => pathname.startsWith(path))) {
+      setExpandedItems(prev => prev.includes('Treatments') ? prev : [...prev, 'Treatments'])
+    }
+  }, [pathname])
+
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
       prev.includes(item) 
