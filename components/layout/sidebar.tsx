@@ -17,7 +17,9 @@ import {
   X,
   Users2,
   Receipt,
-  Activity
+  Activity,
+  Bed,
+  Pill
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -106,6 +108,18 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['ADMIN']
     },
     {
+      name: "Rooms",
+      href: "/admin/rooms",
+      icon: Bed,
+      roles: ['ADMIN']
+    },
+    {
+      name: "Medicine",
+      href: "/admin/medicine",
+      icon: Pill,
+      roles: ['ADMIN']
+    },
+    {
       name: "Transactions",
       href: "/admin/transactions",
       icon: Receipt,
@@ -160,6 +174,18 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Doctors",
       href: "/doctors",
       icon: UserCheck,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+    },
+    {
+      name: "Rooms",
+      href: "/rooms",
+      icon: Bed,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+    },
+    {
+      name: "Medicine",
+      href: "/medicine",
+      icon: Pill,
       roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
     },
     {

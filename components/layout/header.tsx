@@ -1,9 +1,13 @@
 "use client"
 
-import { Search, Calendar, Bell, ChevronDown } from "lucide-react"
+import { useState } from "react"
+import { Search, Calendar, Bell, ChevronDown, Crown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
+import { PlanDetailsModal } from "@/components/layout/plan-details-modal"
 import Link from "next/link"
 
 interface HeaderProps {
@@ -11,8 +15,9 @@ interface HeaderProps {
   location?: string
 }
 
-export function Header({ clinicName = "Vishnu Clinic", location = "Location" }: HeaderProps) {
+export function Header({ clinicName = "ABC Clinic", location = "Ongole" }: HeaderProps) {
   const currentDate = new Date()
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 
   return (
     <header className="h-[60px] md:h-[80px] bg-white shadow-[0px_1px_30px_#7165e114] flex items-center px-3 md:px-[20px] justify-between">
@@ -31,6 +36,24 @@ export function Header({ clinicName = "Vishnu Clinic", location = "Location" }: 
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
+        {/* Plan Selector */}
+        <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-[40px] md:h-[50px] px-3 md:px-4 bg-[#7165e1] text-white border-none rounded-[16px] hover:bg-[#5f52d1] flex items-center gap-2"
+            >
+              <Crown className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-sm md:text-base font-sf-pro font-medium">
+                Starter Plan
+              </span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto p-0">
+            <PlanDetailsModal onClose={() => setIsPlanModalOpen(false)} />
+          </DialogContent>
+        </Dialog>
+
         {/* Date - Hidden on small mobile */}
         <div className="hidden xs:flex w-[120px] sm:w-[160px] md:w-[180px] h-[40px] md:h-[50px] bg-[#f4f3ff] rounded-[16px] items-center justify-center px-2">
           <Calendar className="w-5 h-5 md:w-[28px] md:h-[28px] mr-1 md:mr-[8px] text-[#7165e1] flex-shrink-0" />
