@@ -19,7 +19,8 @@ import {
   Receipt,
   Activity,
   Bed,
-  Pill
+  Pill,
+  Flask
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -114,10 +115,14 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['ADMIN']
     },
     {
-      name: "Medicine",
-      href: "/admin/medicine",
-      icon: Pill,
-      roles: ['ADMIN']
+      name: "Treatments",
+      icon: Flask,
+      roles: ['ADMIN'],
+      hasSubmenu: true,
+      submenu: [
+        { name: "Treatments list", href: "/admin/treatment" },
+        { name: "Medicine", href: "/admin/medicine" }
+      ]
     },
     {
       name: "Transactions",
@@ -132,15 +137,9 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['ADMIN']
     },
     {
-      name: "Treatment",
-      href: "/admin/treatment",
-      icon: Activity,
-      roles: ['ADMIN']
-    },
-    {
       name: "Analytics",
       href: "/admin/analytics",
-      icon: FileText,
+      icon: Activity,
       roles: ['ADMIN']
     }
   ]
@@ -183,10 +182,14 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
     },
     {
-      name: "Medicine",
-      href: "/medicine",
-      icon: Pill,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      name: "Treatments",
+      icon: Flask,
+      roles: ['SUPER_ADMIN', 'ADMIN', 'USER'],
+      hasSubmenu: true,
+      submenu: [
+        { name: "Treatments list", href: "/admin/treatment" },
+        { name: "Medicine", href: "/medicine" }
+      ]
     },
     {
       name: "Prescriptions",
@@ -209,7 +212,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     {
       name: "Analytics",
       href: "/analytics",
-      icon: FileText,
+      icon: Activity,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
@@ -278,58 +281,66 @@ export function Sidebar({ userRole }: SidebarProps) {
           <nav className="px-6 space-y-2 flex-1 overflow-y-auto">
             {filteredMenuItems.map((item) => (
               <div key={item.name}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10",
-                    pathname === item.href ? "bg-[#7165e1]" : ""
-                  )}
-                  onClick={() => {
-                    if (item.hasSubmenu) {
-                      toggleExpanded(item.name)
-                    } else {
-                      closeMobileSidebar()
-                    }
-                  }}
-                >
-                  <item.icon className="w-[24px] h-[24px]" />
-                  <span
-                    className={cn(
-                      "ml-4 text-base font-sf-pro font-semibold",
-                      pathname === item.href ? "text-white" : "text-[#888888]"
-                    )}
-                  >
-                    {item.name}
-                  </span>
-                  {item.hasSubmenu && (
-                    <ChevronDown 
+                {item.hasSubmenu ? (
+                  <div>
+                    <button
                       className={cn(
-                        "ml-auto w-[20px] h-[20px] transition-transform",
-                        expandedItems.includes(item.name) ? "rotate-180" : "",
+                        "flex items-center w-full p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10",
+                        expandedItems.includes(item.name) ? "bg-[#7165e1]/10" : ""
+                      )}
+                      onClick={() => toggleExpanded(item.name)}
+                    >
+                      <item.icon className="w-[24px] h-[24px] text-[#888888]" />
+                      <span className="ml-4 text-base font-sf-pro font-semibold text-[#888888]">
+                        {item.name}
+                      </span>
+                      <ChevronDown 
+                        className={cn(
+                          "ml-auto w-[20px] h-[20px] text-[#888888] transition-transform",
+                          expandedItems.includes(item.name) ? "rotate-180" : ""
+                        )}
+                      />
+                    </button>
+                    
+                    {expandedItems.includes(item.name) && (
+                      <div className="ml-8 mt-2 space-y-1">
+                        {item.submenu?.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href}
+                            className={cn(
+                              "block p-2 rounded-lg text-sm font-sf-pro transition-colors",
+                              pathname === subItem.href 
+                                ? "bg-[#7165e1] text-white" 
+                                : "text-[#888888] hover:bg-[#7165e1]/10"
+                            )}
+                            onClick={closeMobileSidebar}
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center p-3 rounded-[12px] transition-all duration-200 hover:bg-[#7165e1]/10",
+                      pathname === item.href ? "bg-[#7165e1]" : ""
+                    )}
+                    onClick={closeMobileSidebar}
+                  >
+                    <item.icon className="w-[24px] h-[24px]" />
+                    <span
+                      className={cn(
+                        "ml-4 text-base font-sf-pro font-semibold",
                         pathname === item.href ? "text-white" : "text-[#888888]"
                       )}
-                    />
-                  )}
-                </Link>
-                
-                {item.hasSubmenu && expandedItems.includes(item.name) && (
-                  <div className="ml-8 mt-2 space-y-1">
-                    {item.submenu?.map((subItem) => (
-                      <Link
-                        key={subItem.name}
-                        href={subItem.href}
-                        className={cn(
-                          "block p-2 rounded-lg text-sm font-sf-pro transition-colors",
-                          pathname === subItem.href 
-                            ? "bg-[#7165e1] text-white" 
-                            : "text-[#888888] hover:bg-[#7165e1]/10"
-                        )}
-                        onClick={closeMobileSidebar}
-                      >
-                        {subItem.name}
-                      </Link>
-                    ))}
-                  </div>
+                    >
+                      {item.name}
+                    </span>
+                  </Link>
                 )}
               </div>
             ))}
@@ -383,18 +394,70 @@ export function Sidebar({ userRole }: SidebarProps) {
       )}>
         {filteredMenuItems.map((item) => (
           <div key={item.name}>
-            <Link
-              href={item.href}
-              className={cn(
-                "flex items-center p-3 rounded-[16px] transition-all duration-200 hover:bg-[#7165e1]/10 group",
-                pathname === item.href ? "bg-[#7165e1]" : "",
-                isCollapsed && "justify-center"
-              )}
-              onClick={() => item.hasSubmenu && !isCollapsed && toggleExpanded(item.name)}
-            >
-              <item.icon className="w-[28px] h-[28px] flex-shrink-0" />
-              {!isCollapsed && (
-                <>
+            {item.hasSubmenu ? (
+              <div>
+                <button
+                  className={cn(
+                    "flex items-center w-full p-3 rounded-[16px] transition-all duration-200 hover:bg-[#7165e1]/10 group",
+                    expandedItems.includes(item.name) ? "bg-[#7165e1]/10" : "",
+                    isCollapsed && "justify-center"
+                  )}
+                  onClick={() => !isCollapsed && toggleExpanded(item.name)}
+                >
+                  <item.icon className="w-[28px] h-[28px] flex-shrink-0 text-[#888888]" />
+                  {!isCollapsed && (
+                    <>
+                      <span className="ml-[24px] text-lg font-sf-pro font-semibold text-[#888888] transition-opacity duration-300">
+                        {item.name}
+                      </span>
+                      <ChevronDown 
+                        className={cn(
+                          "ml-auto w-[24px] h-[24px] text-[#888888] transition-transform duration-200",
+                          expandedItems.includes(item.name) ? "rotate-180" : ""
+                        )}
+                      />
+                    </>
+                  )}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {isCollapsed && (
+                    <div className="absolute left-[90px] bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      {item.name}
+                    </div>
+                  )}
+                </button>
+                
+                {/* Submenu */}
+                {item.hasSubmenu && !isCollapsed && expandedItems.includes(item.name) && (
+                  <div className="ml-[52px] mt-2 space-y-2 transition-all duration-300">
+                    {item.submenu?.map((subItem) => (
+                      <Link
+                        key={subItem.name}
+                        href={subItem.href}
+                        className={cn(
+                          "block p-2 rounded-lg text-base font-sf-pro transition-colors duration-200",
+                          pathname === subItem.href 
+                            ? "bg-[#7165e1] text-white" 
+                            : "text-[#888888] hover:bg-[#7165e1]/10"
+                        )}
+                      >
+                        {subItem.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center p-3 rounded-[16px] transition-all duration-200 hover:bg-[#7165e1]/10 group",
+                  pathname === item.href ? "bg-[#7165e1]" : "",
+                  isCollapsed && "justify-center"
+                )}
+              >
+                <item.icon className="w-[28px] h-[28px] flex-shrink-0" />
+                {!isCollapsed && (
                   <span
                     className={cn(
                       "ml-[24px] text-lg font-sf-pro font-semibold transition-opacity duration-300",
@@ -403,44 +466,15 @@ export function Sidebar({ userRole }: SidebarProps) {
                   >
                     {item.name}
                   </span>
-                  {item.hasSubmenu && (
-                    <ChevronDown 
-                      className={cn(
-                        "ml-auto w-[24px] h-[24px] transition-transform duration-200",
-                        expandedItems.includes(item.name) ? "rotate-180" : "",
-                        pathname === item.href ? "text-white" : "text-[#888888]"
-                      )}
-                    />
-                  )}
-                </>
-              )}
-              
-              {/* Tooltip for collapsed state */}
-              {isCollapsed && (
-                <div className="absolute left-[90px] bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                  {item.name}
-                </div>
-              )}
-            </Link>
-            
-            {/* Submenu */}
-            {item.hasSubmenu && !isCollapsed && expandedItems.includes(item.name) && (
-              <div className="ml-[52px] mt-2 space-y-2 transition-all duration-300">
-                {item.submenu?.map((subItem) => (
-                  <Link
-                    key={subItem.name}
-                    href={subItem.href}
-                    className={cn(
-                      "block p-2 rounded-lg text-base font-sf-pro transition-colors duration-200",
-                      pathname === subItem.href 
-                        ? "bg-[#7165e1] text-white" 
-                        : "text-[#888888] hover:bg-[#7165e1]/10"
-                    )}
-                  >
-                    {subItem.name}
-                  </Link>
-                ))}
-              </div>
+                )}
+                
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <div className="absolute left-[90px] bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.name}
+                  </div>
+                )}
+              </Link>
             )}
           </div>
         ))}
