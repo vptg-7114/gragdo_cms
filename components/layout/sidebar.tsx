@@ -149,6 +149,12 @@ export function Sidebar({ userRole }: SidebarProps) {
     //   icon: Building2,
     //   roles: ['SUPER_ADMIN','ADMIN']
     // },
+    {
+      name: "Settings",
+      href: "/admin/settings",
+      icon: Settings,
+      roles: ['SUPER_ADMIN', 'ADMIN']
+    }
   ]
 
   // Staff menu items (existing)
