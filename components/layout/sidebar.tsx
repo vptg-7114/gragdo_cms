@@ -142,7 +142,13 @@ export function Sidebar({ userRole }: SidebarProps) {
       href: "/admin/analytics",
       icon: FileText,
       roles: ['ADMIN']
-    }
+    },
+    //   {
+    //   name: "Clinics",
+    //   href: "/admin/clinics",
+    //   icon: Building2,
+    //   roles: ['SUPER_ADMIN','ADMIN']
+    // },
   ]
 
   // Staff menu items (existing)
@@ -164,11 +170,11 @@ export function Sidebar({ userRole }: SidebarProps) {
       href: "/patients",
       icon: Users,
       roles: ['SUPER_ADMIN', 'ADMIN', 'USER'],
-      hasSubmenu: true,
-      submenu: [
-        { name: "All Patients", href: "/patients" },
-        { name: "Add Patient", href: "/patients/add" }
-      ]
+      // hasSubmenu: true,
+      // submenu: [
+      //   { name: "All Patients", href: "/patients" },
+      //   { name: "Add Patient", href: "/patients/add" }
+      // ]
     },
     {
       name: "Doctors",
@@ -201,16 +207,10 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
     },
     {
-      name: "Clinics",
-      href: "/clinics",
-      icon: Building2,
-      roles: ['SUPER_ADMIN']
-    },
-    {
       name: "Analytics",
       href: "/analytics",
       icon: FileText,
-      roles: ['SUPER_ADMIN', 'ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
     },
     {
       name: "Settings",
