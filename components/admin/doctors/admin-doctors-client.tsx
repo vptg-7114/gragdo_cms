@@ -23,8 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Plus, Search, PenSquare, Trash2, Eye } from "lucide-react"
-import { DoctorForm } from "./doctor-form"
 import { deleteDoctor } from "@/lib/actions/doctors"
+import { DoctorForm } from "./doctor-form"
 
 interface Doctor {
   id: string
@@ -64,7 +64,7 @@ export function AdminDoctorsClient({ initialDoctors }: AdminDoctorsClientProps) 
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null)
+  const [editingDoctor, setEditingDoctor] = useState<string | null>(null)
 
   useEffect(() => {
     const filtered = doctors.filter((doctor) =>
@@ -78,42 +78,14 @@ export function AdminDoctorsClient({ initialDoctors }: AdminDoctorsClientProps) 
 
   const handleSubmit = async (data: any) => {
     console.log("Doctor data:", data)
-    
-    // Create a new doctor object from form data
-    const newDoctor = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.emailId || undefined,
-      phone: data.mobileNumber,
-      specialization: data.specialization,
-      qualification: data.qualification,
-      experience: parseInt(data.experience),
-      isAvailable: true,
-      doctorId: data.createId,
-      appointmentCount: 0,
-      weeklySchedule: {
-        sun: "NA",
-        mon: "9AM-2PM",
-        tue: "9AM-2PM", 
-        wed: "9AM-2PM",
-        thu: "9AM-2PM",
-        fri: "9AM-2PM",
-        sat: "9AM-2PM"
-      }
-    }
-    
-    // Add the new doctor to the list
-    setDoctors(prev => [...prev, newDoctor])
     setIsFormOpen(false)
     setEditingDoctor(null)
+    // In a real app, you would refresh the doctors data here
   }
 
   const handleEdit = (id: string) => {
-    const doctor = doctors.find(d => d.id === id)
-    if (doctor) {
-      setEditingDoctor(doctor)
-      setIsFormOpen(true)
-    }
+    setEditingDoctor(id)
+    setIsFormOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -164,7 +136,10 @@ export function AdminDoctorsClient({ initialDoctors }: AdminDoctorsClientProps) 
           <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
             <DoctorForm
               onSubmit={handleSubmit}
-              onCancel={() => setIsFormOpen(false)}
+              onCancel={() => {
+                setIsFormOpen(false)
+                setEditingDoctor(null)
+              }}
             />
           </DialogContent>
         </Dialog>

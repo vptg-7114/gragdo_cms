@@ -37,18 +37,6 @@ const doctorSchema = z.object({
 
 type DoctorFormData = z.infer<typeof doctorSchema>
 
-interface Doctor {
-  id: string
-  name: string
-  email?: string
-  phone: string
-  specialization: string
-  qualification?: string
-  experience?: number
-  consultationFee?: number
-  isAvailable: boolean
-}
-
 interface DoctorFormProps {
   onSubmit: (data: DoctorFormData) => void
   onCancel: () => void
@@ -133,7 +121,7 @@ export function DoctorForm({
               <Label htmlFor="age" className="text-sm font-medium text-black">
                 Age<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("age", value)} defaultValue="35">
+              <Select onValueChange={(value) => setValue("age", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select Age" />
                 </SelectTrigger>
@@ -160,7 +148,6 @@ export function DoctorForm({
                     type="radio"
                     value="Male"
                     {...register("gender")}
-                    defaultChecked
                     className="w-4 h-4 text-[#7165e1] border-gray-300 focus:ring-[#7165e1]"
                   />
                   <span className="text-sm">Male</span>
@@ -248,7 +235,6 @@ export function DoctorForm({
                     type="radio"
                     value="Married"
                     {...register("maritalStatus")}
-                    defaultChecked
                     className="w-4 h-4 text-[#7165e1] border-gray-300 focus:ring-[#7165e1]"
                   />
                   <span className="text-sm">Married</span>
@@ -275,7 +261,7 @@ export function DoctorForm({
               <Label htmlFor="qualification" className="text-sm font-medium text-black">
                 Qualification<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("qualification", value)} defaultValue="MBBS">
+              <Select onValueChange={(value) => setValue("qualification", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select Qualification" />
                 </SelectTrigger>
@@ -287,9 +273,9 @@ export function DoctorForm({
                   <SelectItem value="BHMS">BHMS</SelectItem>
                   <SelectItem value="BAMS">BAMS</SelectItem>
                   <SelectItem value="BUMS">BUMS</SelectItem>
-                  <SelectItem value="BYNS">BYNS</SelectItem>
                   <SelectItem value="DM">DM</SelectItem>
                   <SelectItem value="MCh">MCh</SelectItem>
+                  <SelectItem value="DNB">DNB</SelectItem>
                 </SelectContent>
               </Select>
               {errors.qualification && (
@@ -301,22 +287,26 @@ export function DoctorForm({
               <Label htmlFor="specialization" className="text-sm font-medium text-black">
                 Specialization<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("specialization", value)} defaultValue="Cardiology">
+              <Select onValueChange={(value) => setValue("specialization", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select Specialization" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cardiology">Cardiology</SelectItem>
-                  <SelectItem value="Neurology">Neurology</SelectItem>
-                  <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                  <SelectItem value="Gynecology">Gynecology</SelectItem>
-                  <SelectItem value="Pediatrics">Pediatrics</SelectItem>
                   <SelectItem value="Dermatology">Dermatology</SelectItem>
-                  <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
-                  <SelectItem value="ENT">ENT</SelectItem>
-                  <SelectItem value="Dentistry">Dentistry</SelectItem>
+                  <SelectItem value="Endocrinology">Endocrinology</SelectItem>
+                  <SelectItem value="Gastroenterology">Gastroenterology</SelectItem>
                   <SelectItem value="General Medicine">General Medicine</SelectItem>
-                  <SelectItem value="General Surgery">General Surgery</SelectItem>
+                  <SelectItem value="Gynecology">Gynecology</SelectItem>
+                  <SelectItem value="Neurology">Neurology</SelectItem>
+                  <SelectItem value="Oncology">Oncology</SelectItem>
+                  <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
+                  <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                  <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                  <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                  <SelectItem value="Pulmonology">Pulmonology</SelectItem>
+                  <SelectItem value="Radiology">Radiology</SelectItem>
+                  <SelectItem value="Urology">Urology</SelectItem>
                 </SelectContent>
               </Select>
               {errors.specialization && (
@@ -328,7 +318,7 @@ export function DoctorForm({
               <Label htmlFor="designation" className="text-sm font-medium text-black">
                 Designation<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("designation", value)} defaultValue="Doctor">
+              <Select onValueChange={(value) => setValue("designation", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select Designation" />
                 </SelectTrigger>
@@ -353,7 +343,7 @@ export function DoctorForm({
               <Label htmlFor="experience" className="text-sm font-medium text-black">
                 Experience<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("experience", value)} defaultValue="3 Years">
+              <Select onValueChange={(value) => setValue("experience", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select Years" />
                 </SelectTrigger>
@@ -367,6 +357,7 @@ export function DoctorForm({
                   <SelectItem value="7 Years">7 Years</SelectItem>
                   <SelectItem value="8 Years">8 Years</SelectItem>
                   <SelectItem value="9 Years">9 Years</SelectItem>
+                  <SelectItem value="10 Years">10 Years</SelectItem>
                   <SelectItem value="10+ Years">10+ Years</SelectItem>
                   <SelectItem value="15+ Years">15+ Years</SelectItem>
                   <SelectItem value="20+ Years">20+ Years</SelectItem>
@@ -414,7 +405,7 @@ export function DoctorForm({
               <Label htmlFor="state" className="text-sm font-medium text-black">
                 State<span className="text-red-500">*</span>
               </Label>
-              <Select onValueChange={(value) => setValue("state", value)} defaultValue="Andhra Pradesh">
+              <Select onValueChange={(value) => setValue("state", value)}>
                 <SelectTrigger className="h-12 rounded-lg border-gray-300">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
