@@ -1,3 +1,5 @@
+"use client"
+
 import { DataTable } from "@/components/shared/data-table"
 import { Button } from "@/components/ui/button"
 
