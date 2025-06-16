@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export function PatientsChart() {
   // Data matching the image exactly
   const chartData = [
-    { day: 'Jun 1', newPatients: 200, returnPatients: 150 },
-    { day: 'Jun 2', newPatients: 180, returnPatients: 200 },
-    { day: 'Jun 3', newPatients: 220, returnPatients: 180 },
-    { day: 'Jun 4', newPatients: 190, returnPatients: 220 },
-    { day: 'Jun 5', newPatients: 250, returnPatients: 200 },
-    { day: 'Jun 6', newPatients: 230, returnPatients: 240 },
-    { day: 'Jun 7', newPatients: 280, returnPatients: 260 },
+    { day: 'Jun 1', newPatients: 120, returnPatients: 150 },
+    { day: 'Jun 2', newPatients: 18, returnPatients: 200 },
+    { day: 'Jun 3', newPatients: 22, returnPatients: 180 },
+    { day: 'Jun 4', newPatients: 60, returnPatients: 220 },
+    { day: 'Jun 5', newPatients: 25, returnPatients: 200 },
+    { day: 'Jun 6', newPatients: 23, returnPatients: 240 },
+    { day: 'Jun 7', newPatients: 28, returnPatients: 260 },
   ]
 
   const maxValue = 400

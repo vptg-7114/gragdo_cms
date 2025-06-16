@@ -30,10 +30,10 @@ export function RevenueOverview() {
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#7165e1"
-              strokeWidth="20"
+              strokeWidth="15"
               strokeDasharray={`${cashPercentage * 2.51} 251.2`}
               strokeDashoffset="0"
             />
@@ -41,10 +41,10 @@ export function RevenueOverview() {
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#a855f7"
-              strokeWidth="20"
+              strokeWidth="15"
               strokeDasharray={`${cardsPercentage * 2.51} 251.2`}
               strokeDashoffset={`-${cashPercentage * 2.51}`}
             />
@@ -52,10 +52,10 @@ export function RevenueOverview() {
             <circle
               cx="50"
               cy="50"
-              r="40"
+              r="35"
               fill="none"
               stroke="#c4b5fd"
-              strokeWidth="20"
+              strokeWidth="15"
               strokeDasharray={`${upiPercentage * 2.51} 251.2`}
               strokeDashoffset={`-${(cashPercentage + cardsPercentage) * 2.51}`}
             />
@@ -66,18 +66,20 @@ export function RevenueOverview() {
             <span className="text-2xl font-bold text-black">{data.cards}</span>
             <span className="text-sm text-gray-600">Cards</span>
           </div>
-          
-          {/* Side labels */}
-          <div className="absolute top-4 right-0 text-right">
-            <span className="text-lg font-semibold text-black">{data.cash}</span>
-            <div className="text-xs text-gray-600">Cash</div>
+                    {/* Data labels positioned around the chart */}
+                    <div className="absolute top-2 left-4 text-center">
+            <span className="text-lg font-bold text-black">{data.upi}</span>
           </div>
           
-          <div className="absolute bottom-4 left-0">
-            <span className="text-lg font-semibold text-black">{data.upi}</span>
-            <div className="text-xs text-gray-600">UPI</div>
+          <div className="absolute top-4 right-0 text-center">
+            <span className="text-lg font-bold text-black">{data.cards}</span>
+          </div>
+          
+          <div className="absolute bottom-4 left-0 text-center">
+            <span className="text-lg font-bold text-black">{data.cash}</span>
           </div>
         </div>
+        
 
         {/* Legend */}
         <div className="flex gap-6 text-sm">

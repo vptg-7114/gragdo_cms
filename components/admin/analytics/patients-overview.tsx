@@ -41,7 +41,6 @@ export function PatientsOverview() {
               strokeWidth="15"
               strokeDasharray={`${malePercentage * 2.199} 219.9`}
               strokeDashoffset="0"
-              strokeLinecap="round"
             />
             {/* Female segment (right side - largest) */}
             <circle
@@ -53,7 +52,6 @@ export function PatientsOverview() {
               strokeWidth="15"
               strokeDasharray={`${femalePercentage * 2.199} 219.9`}
               strokeDashoffset={`-${malePercentage * 2.199}`}
-              strokeLinecap="round"
             />
             {/* Children segment (bottom-left) */}
             <circle
@@ -65,9 +63,12 @@ export function PatientsOverview() {
               strokeWidth="15"
               strokeDasharray={`${childrenPercentage * 2.199} 219.9`}
               strokeDashoffset={`-${(malePercentage + femalePercentage) * 2.199}`}
-              strokeLinecap="round"
             />
           </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-black">{data.male+data.female+data.children}</span>
+            <span className="text-sm text-gray-600">Total</span>
+          </div>
           
           {/* Data labels positioned around the chart */}
           <div className="absolute top-2 left-4 text-center">
