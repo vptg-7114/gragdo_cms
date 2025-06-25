@@ -1,30 +1,8 @@
 "use server";
 
-import { findById, readData, createItem, updateItem, deleteItem } from "@/lib/db";
-
-// Define the appointment status enum
-export enum AppointmentStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED"
-}
-
-// Define the appointment interface
-interface Appointment {
-  id: string;
-  patientId: string;
-  doctorId: string;
-  clinicId: string;
-  appointmentDate: string; // ISO string
-  duration: number;
-  concern: string;
-  notes?: string;
-  status: AppointmentStatus;
-  createdById: string;
-  createdAt: string; // ISO string
-  updatedAt: string; // ISO string
-}
+import { readData, writeData } from "@/lib/db";
+import { AppointmentStatus, Appointment } from "@/lib/types";
+import { generateId } from "@/lib/utils";
 
 export async function createAppointment(data: {
   patientId: string;
@@ -38,23 +16,32 @@ export async function createAppointment(data: {
   try {
     const now = new Date().toISOString();
     
-    const appointment = await createItem<Appointment>("appointments", {
+    const appointments = await readData<Appointment>("appointments");
+    
+    const newAppointment: Appointment = {
+      id: generateId(),
       ...data,
       appointmentDate: data.appointmentDate.toISOString(),
       status: AppointmentStatus.PENDING,
       duration: 30,
       createdAt: now,
       updatedAt: now
-    });
+    };
+    
+    appointments.push(newAppointment);
+    await writeData("appointments", appointments);
 
     // Get patient and doctor details for the response
-    const patient = await findById("patients", data.patientId);
-    const doctor = await findById("doctors", data.doctorId);
+    const patients = await readData("patients");
+    const doctors = await readData("doctors");
+    
+    const patient = patients.find(p => p.id === data.patientId);
+    const doctor = doctors.find(d => d.id === data.doctorId);
 
     return { 
       success: true, 
       appointment: {
-        ...appointment,
+        ...newAppointment,
         patient,
         doctor
       }
@@ -72,9 +59,10 @@ export async function updateAppointment(id: string, data: {
   status?: AppointmentStatus;
 }) {
   try {
-    const appointment = await findById<Appointment>("appointments", id);
+    const appointments = await readData<Appointment>("appointments");
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
     
-    if (!appointment) {
+    if (appointmentIndex === -1) {
       return { success: false, error: 'Appointment not found' };
     }
     
@@ -84,15 +72,20 @@ export async function updateAppointment(id: string, data: {
       updatedAt: new Date().toISOString()
     };
     
-    const updatedAppointment = await updateItem<Appointment>("appointments", id, updatedData);
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      ...updatedData
+    };
     
-    if (!updatedAppointment) {
-      return { success: false, error: 'Failed to update appointment' };
-    }
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
     
     // Get patient and doctor details for the response
-    const patient = await findById("patients", updatedAppointment.patientId);
-    const doctor = await findById("doctors", updatedAppointment.doctorId);
+    const patients = await readData("patients");
+    const doctors = await readData("doctors");
+    
+    const patient = patients.find(p => p.id === updatedAppointment.patientId);
+    const doctor = doctors.find(d => d.id === updatedAppointment.doctorId);
 
     return { 
       success: true, 
@@ -110,12 +103,14 @@ export async function updateAppointment(id: string, data: {
 
 export async function deleteAppointment(id: string) {
   try {
-    const success = await deleteItem<Appointment>("appointments", id);
+    const appointments = await readData<Appointment>("appointments");
+    const updatedAppointments = appointments.filter(a => a.id !== id);
     
-    if (!success) {
+    if (updatedAppointments.length === appointments.length) {
       return { success: false, error: 'Appointment not found' };
     }
     
+    await writeData("appointments", updatedAppointments);
     return { success: true };
   } catch (error) {
     console.error('Error deleting appointment:', error);
@@ -138,19 +133,20 @@ export async function getAppointments(clinicId?: string) {
     );
     
     // Get patient and doctor details for each appointment
-    const appointmentsWithDetails = await Promise.all(
-      sortedAppointments.map(async (appointment) => {
-        const patient = await findById("patients", appointment.patientId);
-        const doctor = await findById("doctors", appointment.doctorId);
-        
-        return {
-          ...appointment,
-          patient,
-          doctor,
-          appointmentDate: new Date(appointment.appointmentDate)
-        };
-      })
-    );
+    const patients = await readData("patients");
+    const doctors = await readData("doctors");
+    
+    const appointmentsWithDetails = sortedAppointments.map((appointment) => {
+      const patient = patients.find(p => p.id === appointment.patientId);
+      const doctor = doctors.find(d => d.id === appointment.doctorId);
+      
+      return {
+        ...appointment,
+        patient,
+        doctor,
+        appointmentDate: new Date(appointment.appointmentDate)
+      };
+    });
     
     return appointmentsWithDetails;
   } catch (error) {

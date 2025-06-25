@@ -18,11 +18,20 @@ interface UserListProps {
   title: string
   users: User[]
   actionLabel?: string
+  actionUrl?: string
   onAction?: () => void
 }
 
-export function UserList({ title, users, actionLabel = "Manage", onAction }: UserListProps) {
+export function UserList({ title, users, actionLabel = "Manage", actionUrl, onAction }: UserListProps) {
   const router = useRouter();
+  
+  const handleAction = () => {
+    if (actionUrl) {
+      router.push(actionUrl);
+    } else if (onAction) {
+      onAction();
+    }
+  };
   
   return (
     <Card className="rounded-[20px] border-none shadow-sm">
@@ -34,7 +43,7 @@ export function UserList({ title, users, actionLabel = "Manage", onAction }: Use
           <Button 
             variant="link" 
             className="text-[#7165e1] text-sm font-sf-pro font-medium p-0"
-            onClick={onAction}
+            onClick={handleAction}
           >
             {actionLabel}
           </Button>

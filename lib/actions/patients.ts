@@ -1,32 +1,8 @@
 "use server";
 
-import { findById, readData, createItem, updateItem, deleteItem } from "@/lib/db";
+import { readData, writeData } from "@/lib/db";
+import { Gender, Patient } from "@/lib/types";
 import { generatePatientId } from "@/lib/utils";
-
-// Define the gender enum
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER"
-}
-
-// Define the patient interface
-interface Patient {
-  id: string;
-  patientId: string;
-  name: string;
-  email?: string;
-  phone: string;
-  gender: Gender;
-  age: number;
-  address?: string;
-  medicalHistory?: string;
-  allergies?: string;
-  clinicId: string;
-  createdById: string;
-  createdAt: string; // Store as ISO string
-  updatedAt: string; // Store as ISO string
-}
 
 export async function createPatient(data: {
   name: string;
@@ -44,14 +20,20 @@ export async function createPatient(data: {
     const patientId = generatePatientId();
     const now = new Date().toISOString();
     
-    const patient = await createItem<Patient>("patients", {
-      ...data,
+    const patients = await readData<Patient>("patients");
+    
+    const newPatient: Patient = {
+      id: Math.random().toString(36).substring(2, 15),
       patientId,
+      ...data,
       createdAt: now,
       updatedAt: now
-    });
+    };
+    
+    patients.push(newPatient);
+    await writeData("patients", patients);
 
-    return { success: true, patient };
+    return { success: true, patient: newPatient };
   } catch (error) {
     console.error('Error creating patient:', error);
     return { success: false, error: 'Failed to create patient' };
@@ -69,18 +51,27 @@ export async function updatePatient(id: string, data: {
   allergies?: string;
 }) {
   try {
+    const patients = await readData<Patient>("patients");
+    const patientIndex = patients.findIndex(p => p.id === id);
+    
+    if (patientIndex === -1) {
+      return { success: false, error: 'Patient not found' };
+    }
+    
     const updatedData = {
       ...data,
       updatedAt: new Date().toISOString()
     };
     
-    const patient = await updateItem<Patient>("patients", id, updatedData);
+    const updatedPatient = {
+      ...patients[patientIndex],
+      ...updatedData
+    };
     
-    if (!patient) {
-      return { success: false, error: 'Patient not found' };
-    }
+    patients[patientIndex] = updatedPatient;
+    await writeData("patients", patients);
     
-    return { success: true, patient };
+    return { success: true, patient: updatedPatient };
   } catch (error) {
     console.error('Error updating patient:', error);
     return { success: false, error: 'Failed to update patient' };
@@ -89,12 +80,14 @@ export async function updatePatient(id: string, data: {
 
 export async function deletePatient(id: string) {
   try {
-    const success = await deleteItem<Patient>("patients", id);
+    const patients = await readData<Patient>("patients");
+    const updatedPatients = patients.filter(p => p.id !== id);
     
-    if (!success) {
+    if (updatedPatients.length === patients.length) {
       return { success: false, error: 'Patient not found' };
     }
     
+    await writeData("patients", updatedPatients);
     return { success: true };
   } catch (error) {
     console.error('Error deleting patient:', error);
@@ -123,29 +116,30 @@ export async function getPatients(clinicId?: string) {
 
 export async function getPatientById(id: string) {
   try {
-    const patient = await findById<Patient>("patients", id);
+    const patients = await readData<Patient>("patients");
+    const patient = patients.find(p => p.id === id);
     
     if (!patient) {
       return null;
     }
     
     // Get appointments for this patient
-    const appointments = await readData<any>("appointments");
+    const appointments = await readData("appointments");
     const patientAppointments = appointments
       .filter(a => a.patientId === id)
       .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
     
     // Get doctor details for each appointment
-    const appointmentsWithDoctors = await Promise.all(
-      patientAppointments.map(async (appointment) => {
-        const doctor = await findById("doctors", appointment.doctorId);
-        return {
-          ...appointment,
-          doctor,
-          appointmentDate: new Date(appointment.appointmentDate)
-        };
-      })
-    );
+    const doctors = await readData("doctors");
+    
+    const appointmentsWithDoctors = patientAppointments.map((appointment) => {
+      const doctor = doctors.find(d => d.id === appointment.doctorId);
+      return {
+        ...appointment,
+        doctor,
+        appointmentDate: new Date(appointment.appointmentDate)
+      };
+    });
     
     return {
       ...patient,

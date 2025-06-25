@@ -58,3 +58,7 @@ export function formatCurrency(amount: number): string {
 export function generatePatientId(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
+
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 15);
+}

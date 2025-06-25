@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { AppointmentStatus } from "@/lib/types"
 
 interface Appointment {
   id: string
