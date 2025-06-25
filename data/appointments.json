@@ -1,0 +1,72 @@
+[
+  {
+    "id": "1",
+    "patientId": "1",
+    "doctorId": "1",
+    "clinicId": "1",
+    "appointmentDate": "2025-06-05T10:00:00.000Z",
+    "duration": 30,
+    "concern": "Heart problem",
+    "notes": "Regular checkup for heart condition",
+    "status": "PENDING",
+    "createdById": "3",
+    "createdAt": "2025-06-01T00:00:00.000Z",
+    "updatedAt": "2025-06-01T00:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "patientId": "2",
+    "doctorId": "2",
+    "clinicId": "1",
+    "appointmentDate": "2025-06-05T12:00:00.000Z",
+    "duration": 30,
+    "concern": "General checkup",
+    "notes": null,
+    "status": "IN_PROGRESS",
+    "createdById": "3",
+    "createdAt": "2025-06-01T00:00:00.000Z",
+    "updatedAt": "2025-06-01T00:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "patientId": "3",
+    "doctorId": "3",
+    "clinicId": "1",
+    "appointmentDate": "2025-06-04T14:00:00.000Z",
+    "duration": 30,
+    "concern": "PCOD consultation",
+    "notes": null,
+    "status": "COMPLETED",
+    "createdById": "3",
+    "createdAt": "2025-06-01T00:00:00.000Z",
+    "updatedAt": "2025-06-01T00:00:00.000Z"
+  },
+  {
+    "id": "4",
+    "patientId": "4",
+    "doctorId": "1",
+    "clinicId": "1",
+    "appointmentDate": "2025-06-06T09:00:00.000Z",
+    "duration": 30,
+    "concern": "Kidney disease",
+    "notes": "Follow-up appointment",
+    "status": "PENDING",
+    "createdById": "3",
+    "createdAt": "2025-06-02T00:00:00.000Z",
+    "updatedAt": "2025-06-02T00:00:00.000Z"
+  },
+  {
+    "id": "5",
+    "patientId": "5",
+    "doctorId": "1",
+    "clinicId": "1",
+    "appointmentDate": "2025-06-06T10:00:00.000Z",
+    "duration": 30,
+    "concern": "Heart problem",
+    "notes": "Regular checkup",
+    "status": "PENDING",
+    "createdById": "3",
+    "createdAt": "2025-06-02T00:00:00.000Z",
+    "updatedAt": "2025-06-02T00:00:00.000Z"
+  }
+]

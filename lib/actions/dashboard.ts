@@ -1,88 +1,92 @@
-import { prisma } from "@/lib/prisma"
+import { readData } from '@/lib/db';
 
 export async function getDashboardStats() {
   try {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    const [
-      totalAppointments,
-      totalPatients,
-      todayCheckIns,
-      availableDoctors
-    ] = await Promise.all([
-      prisma.appointment.count(),
-      prisma.patient.count(),
-      prisma.appointment.count({
-        where: {
-          appointmentDate: {
-            gte: today,
-            lt: tomorrow
-          },
-          status: 'COMPLETED'
-        }
-      }),
-      prisma.doctor.count({
-        where: { isAvailable: true }
-      })
-    ])
-
+    const appointments = await readData('appointments.json');
+    const patients = await readData('patients.json');
+    const doctors = await readData('doctors.json');
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayCheckIns = appointments.filter(
+      appointment => 
+        new Date(appointment.appointmentDate) >= today &&
+        new Date(appointment.appointmentDate) < tomorrow &&
+        appointment.status === 'COMPLETED'
+    ).length;
+    
+    const availableDoctors = doctors.filter(
+      doctor => doctor.isAvailable
+    ).length;
+    
     return {
-      appointments: totalAppointments,
-      totalPatients,
+      appointments: appointments.length,
+      totalPatients: patients.length,
       checkIns: todayCheckIns,
       availableDoctors
-    }
+    };
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error)
+    console.error('Error fetching dashboard stats:', error);
     return {
       appointments: 0,
       totalPatients: 0,
       checkIns: 0,
       availableDoctors: 0
-    }
+    };
   }
 }
 
 export async function getRecentAppointments() {
   try {
-    const appointments = await prisma.appointment.findMany({
-      take: 5,
-      orderBy: { appointmentDate: 'desc' },
-      include: {
-        patient: true,
-        doctor: true
-      }
-    })
-
-    return appointments
+    const appointments = await readData('appointments.json');
+    const patients = await readData('patients.json');
+    const doctors = await readData('doctors.json');
+    
+    // Get 5 most recent appointments
+    const recentAppointments = [...appointments]
+      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
+      .slice(0, 5);
+    
+    // Add patient and doctor details
+    return recentAppointments.map(appointment => {
+      const patient = patients.find(p => p.id === appointment.patientId);
+      const doctor = doctors.find(d => d.id === appointment.doctorId);
+      
+      return {
+        ...appointment,
+        patient: patient ? {
+          patientId: patient.patientId,
+          name: patient.name,
+          phone: patient.phone,
+          gender: patient.gender,
+          age: patient.age
+        } : null,
+        doctor: doctor ? {
+          name: doctor.name
+        } : null
+      };
+    });
   } catch (error) {
-    console.error('Error fetching recent appointments:', error)
-    return []
+    console.error('Error fetching recent appointments:', error);
+    return [];
   }
 }
 
 export async function getDoctorsActivity() {
   try {
-    const doctors = await prisma.doctor.findMany({
-      include: {
-        appointments: {
-          select: {
-            status: true
-          }
-        }
-      },
-      orderBy: { name: 'asc' }
-    })
-
-    const doctorsActivity = doctors.map(doctor => {
-      const appointments = doctor.appointments
-      const inProgress = appointments.filter(apt => apt.status === 'IN_PROGRESS').length
-      const completed = appointments.filter(apt => apt.status === 'COMPLETED').length
-      const pending = appointments.filter(apt => apt.status === 'PENDING').length
-
+    const doctors = await readData('doctors.json');
+    const appointments = await readData('appointments.json');
+    
+    return doctors.map(doctor => {
+      const doctorAppointments = appointments.filter(a => a.doctorId === doctor.id);
+      
+      const inProgress = doctorAppointments.filter(a => a.status === 'IN_PROGRESS').length;
+      const completed = doctorAppointments.filter(a => a.status === 'COMPLETED').length;
+      const pending = doctorAppointments.filter(a => a.status === 'PENDING').length;
+      
       return {
         id: doctor.id,
         name: doctor.name,
@@ -92,21 +96,19 @@ export async function getDoctorsActivity() {
           inProgress,
           completed,
           pending,
-          total: appointments.length
+          total: doctorAppointments.length
         }
-      }
-    })
-
-    return doctorsActivity
+      };
+    });
   } catch (error) {
-    console.error('Error fetching doctors activity:', error)
-    return []
+    console.error('Error fetching doctors activity:', error);
+    return [];
   }
 }
 
 export async function getRecentReports() {
   try {
-    // Mock data for recent reports - replace with actual report model when implemented
+    // Mock data for recent reports
     const reports = [
       {
         id: '1',
@@ -147,52 +149,12 @@ export async function getRecentReports() {
         generatedDate: new Date('2024-01-03'),
         size: '2.1 MB',
         format: 'Excel'
-      },
-      {
-        id: '6',
-        title: 'Patient Satisfaction Survey',
-        type: 'Quality Assurance',
-        generatedDate: new Date('2024-01-01'),
-        size: '4.3 MB',
-        format: 'PDF'
-      },
-      {
-        id: '7',
-        title: 'Staff Attendance Report',
-        type: 'HR Analytics',
-        generatedDate: new Date('2023-12-28'),
-        size: '1.2 MB',
-        format: 'Excel'
-      },
-      {
-        id: '8',
-        title: 'Equipment Maintenance Log',
-        type: 'Maintenance Report',
-        generatedDate: new Date('2023-12-25'),
-        size: '2.8 MB',
-        format: 'PDF'
-      },
-      {
-        id: '9',
-        title: 'Insurance Claims Report',
-        type: 'Financial Report',
-        generatedDate: new Date('2023-12-22'),
-        size: '3.5 MB',
-        format: 'Excel'
-      },
-      {
-        id: '10',
-        title: 'Medication Usage Analysis',
-        type: 'Pharmacy Report',
-        generatedDate: new Date('2023-12-20'),
-        size: '2.9 MB',
-        format: 'PDF'
       }
-    ]
-
-    return reports
+    ];
+    
+    return reports;
   } catch (error) {
-    console.error('Error fetching recent reports:', error)
-    return []
+    console.error('Error fetching recent reports:', error);
+    return [];
   }
 }

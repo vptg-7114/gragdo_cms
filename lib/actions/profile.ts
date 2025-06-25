@@ -1,19 +1,23 @@
-import { prisma } from "@/lib/prisma"
+import { readData, findById, updateItem } from '@/lib/db';
 
 export async function getUserProfile(userId?: string) {
   try {
     // For demo purposes, we'll get the first user
     // In a real app, you'd get the current authenticated user
-    const user = await prisma.user.findFirst({
-      include: {
-        clinic: true
-      }
-    })
-
+    const users = await readData('users.json');
+    const user = userId ? users.find(u => u.id === userId) : users[0];
+    
     if (!user) {
-      throw new Error('User not found')
+      throw new Error('User not found');
     }
-
+    
+    // Get clinic details if user has a clinicId
+    let clinic = null;
+    if (user.clinicId) {
+      const clinics = await readData('clinics.json');
+      clinic = clinics.find(c => c.id === user.clinicId);
+    }
+    
     return {
       id: user.id,
       name: user.name,
@@ -23,14 +27,14 @@ export async function getUserProfile(userId?: string) {
       address: undefined, // Add address field to User model if needed
       bio: undefined, // Add bio field to User model if needed
       profileImage: undefined, // Add profileImage field to User model if needed
-      clinic: user.clinic ? {
-        name: user.clinic.name,
-        address: user.clinic.address
+      clinic: clinic ? {
+        name: clinic.name,
+        address: clinic.address
       } : undefined,
       createdAt: user.createdAt
-    }
+    };
   } catch (error) {
-    console.error('Error fetching user profile:', error)
+    console.error('Error fetching user profile:', error);
     // Return mock data for demo
     return {
       id: '1',
@@ -45,8 +49,8 @@ export async function getUserProfile(userId?: string) {
         name: 'Vishnu Clinic',
         address: '123 Health Street, Medical District'
       },
-      createdAt: new Date('2024-01-01')
-    }
+      createdAt: new Date('2024-01-01').toISOString()
+    };
   }
 }
 
@@ -60,15 +64,33 @@ export async function updateUserProfile(userId: string, data: {
 }) {
   try {
     // In a real app, you would update the user in the database
-    // For now, we'll just simulate a successful update
-    console.log('Updating user profile:', userId, data)
+    const users = await readData('users.json');
+    const userIndex = users.findIndex(u => u.id === userId);
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    if (userIndex === -1) {
+      return { success: false, error: 'User not found' };
+    }
     
-    return { success: true }
+    // Update user data
+    const updatedUser = {
+      ...users[userIndex],
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    
+    users[userIndex] = updatedUser;
+    
+    // Write updated users back to file
+    const fs = require('fs/promises');
+    const path = require('path');
+    await fs.writeFile(
+      path.join(process.cwd(), 'data/users.json'),
+      JSON.stringify(users, null, 2)
+    );
+    
+    return { success: true };
   } catch (error) {
-    console.error('Error updating user profile:', error)
-    return { success: false, error: 'Failed to update profile' }
+    console.error('Error updating user profile:', error);
+    return { success: false, error: 'Failed to update profile' };
   }
 }

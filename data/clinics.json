@@ -1,0 +1,52 @@
+[
+  {
+    "id": "1",
+    "name": "Vishnu Clinic",
+    "address": "123 Health Street, Medical District",
+    "phone": "+91-9876543210",
+    "email": "info@vishnuclinic.com",
+    "description": "A modern healthcare facility providing comprehensive medical services",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "name": "City Health Center",
+    "address": "456 Medical Avenue, Downtown",
+    "phone": "+91-9876543211",
+    "email": "info@cityhealthcenter.com",
+    "description": "Providing quality healthcare services to urban communities",
+    "createdAt": "2024-01-02T00:00:00.000Z",
+    "updatedAt": "2024-01-02T00:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "name": "Rural Medical Clinic",
+    "address": "789 Village Road, Countryside",
+    "phone": "+91-9876543212",
+    "email": "info@ruralmedical.com",
+    "description": "Bringing healthcare services to rural communities",
+    "createdAt": "2024-01-03T00:00:00.000Z",
+    "updatedAt": "2024-01-03T00:00:00.000Z"
+  },
+  {
+    "id": "4",
+    "name": "Family Care Center",
+    "address": "321 Family Street, Residential Area",
+    "phone": "+91-9876543213",
+    "email": "info@familycare.com",
+    "description": "Comprehensive healthcare for the entire family",
+    "createdAt": "2024-01-04T00:00:00.000Z",
+    "updatedAt": "2024-01-04T00:00:00.000Z"
+  },
+  {
+    "id": "5",
+    "name": "Specialty Medical Center",
+    "address": "654 Specialist Road, Medical Hub",
+    "phone": "+91-9876543214",
+    "email": "info@specialtymedical.com",
+    "description": "Advanced care for specialized medical conditions",
+    "createdAt": "2024-01-05T00:00:00.000Z",
+    "updatedAt": "2024-01-05T00:00:00.000Z"
+  }
+]
