@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/shared/data-table"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 interface Appointment {
   id: string
@@ -17,8 +18,26 @@ interface AdminAppointmentsProps {
 }
 
 export function AdminAppointments({ appointments }: AdminAppointmentsProps) {
-  const handleAction = (appointmentId: string, action: 'Accept' | 'Decline') => {
-    console.log(`${action} appointment:`, appointmentId)
+  const [appointmentsList, setAppointmentsList] = useState(appointments)
+
+  const handleAccept = (appointmentId: string) => {
+    setAppointmentsList(prev => 
+      prev.map(appointment => 
+        appointment.id === appointmentId 
+          ? { ...appointment, action: 'Accept' as const } 
+          : appointment
+      )
+    )
+  }
+
+  const handleDecline = (appointmentId: string) => {
+    setAppointmentsList(prev => 
+      prev.map(appointment => 
+        appointment.id === appointmentId 
+          ? { ...appointment, action: 'Decline' as const } 
+          : appointment
+      )
+    )
   }
 
   const columns = [
@@ -38,7 +57,7 @@ export function AdminAppointments({ appointments }: AdminAppointmentsProps) {
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 h-7 rounded"
-            onClick={() => handleAction(item.id, 'Accept')}
+            onClick={() => handleAccept(item.id)}
           >
             Accept
           </Button>
@@ -46,7 +65,7 @@ export function AdminAppointments({ appointments }: AdminAppointmentsProps) {
             size="sm"
             variant="destructive"
             className="text-xs px-3 py-1 h-7 rounded"
-            onClick={() => handleAction(item.id, 'Decline')}
+            onClick={() => handleDecline(item.id)}
           >
             Decline
           </Button>
@@ -60,9 +79,9 @@ export function AdminAppointments({ appointments }: AdminAppointmentsProps) {
     <DataTable
       title="Appointments"
       columns={columns}
-      data={appointments}
+      data={appointmentsList}
       actionLabel="View All"
-      onAction={() => console.log('View all appointments')}
+      actionUrl="/admin/appointments"
       renderCell={renderCell}
     />
   )
