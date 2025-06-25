@@ -42,15 +42,25 @@ export async function getDashboardStats() {
 export async function getRecentAppointments() {
   try {
     const appointments = await readData('appointments', []);
+    const patients = await readData('patients', []);
+    const doctors = await readData('doctors', []);
     
     // Sort by date descending and take the first 5
     const recentAppointments = appointments
       .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
       .slice(0, 5)
-      .map(appointment => ({
-        ...appointment,
-        appointmentDate: new Date(appointment.appointmentDate)
-      }));
+      .map(appointment => {
+        // Find the corresponding patient and doctor
+        const patient = patients.find(p => p.id === appointment.patientId);
+        const doctor = doctors.find(d => d.id === appointment.doctorId);
+        
+        return {
+          ...appointment,
+          appointmentDate: new Date(appointment.appointmentDate),
+          patient: patient || { id: appointment.patientId, name: 'Unknown Patient' },
+          doctor: doctor || { id: appointment.doctorId, name: 'Unknown Doctor' }
+        };
+      });
       
     return recentAppointments;
   } catch (error) {
@@ -65,7 +75,7 @@ export async function getDoctorsActivity() {
     const appointments = await readData('appointments', []);
     
     const doctorsActivity = doctors.map(doctor => {
-      const doctorAppointments = appointments.filter(apt => apt.doctor.id === doctor.id);
+      const doctorAppointments = appointments.filter(apt => apt.doctorId === doctor.id);
       const inProgress = doctorAppointments.filter(apt => apt.status === 'IN_PROGRESS').length;
       const completed = doctorAppointments.filter(apt => apt.status === 'COMPLETED').length;
       const pending = doctorAppointments.filter(apt => apt.status === 'PENDING').length;
