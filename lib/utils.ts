@@ -6,6 +6,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+  
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'long',
@@ -14,6 +18,10 @@ export function formatDate(date: Date): string {
 }
 
 export function formatTime(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Invalid time';
+  }
+  
   return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
