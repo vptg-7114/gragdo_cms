@@ -82,7 +82,10 @@ export async function getDoctors(clinicId?: string) {
       const doctorAppointments = appointments.filter(
         appointment => appointment.doctorId === doctor.id && 
         new Date(appointment.appointmentDate) >= new Date()
-      );
+      ).map(appointment => ({
+        ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate)
+      }));
       
       return {
         ...doctor,
@@ -115,6 +118,7 @@ export async function getDoctorById(id: string) {
       const patient = patients.find(p => p.id === appointment.patientId);
       return {
         ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate),
         patient: patient || null
       };
     });

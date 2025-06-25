@@ -12,10 +12,12 @@ export async function getDashboardStats() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     
     const todayCheckIns = appointments.filter(
-      appointment => 
-        new Date(appointment.appointmentDate) >= today &&
-        new Date(appointment.appointmentDate) < tomorrow &&
-        appointment.status === 'COMPLETED'
+      appointment => {
+        const appointmentDate = new Date(appointment.appointmentDate);
+        return appointmentDate >= today &&
+               appointmentDate < tomorrow &&
+               appointment.status === 'COMPLETED';
+      }
     ).length;
     
     const availableDoctors = doctors.filter(
@@ -57,6 +59,7 @@ export async function getRecentAppointments() {
       
       return {
         ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate),
         patient: patient ? {
           patientId: patient.patientId,
           name: patient.name,

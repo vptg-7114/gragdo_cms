@@ -97,6 +97,7 @@ export async function getAdminAppointments() {
         email: patient?.email || patient?.phone || 'N/A',
         age: patient?.age || 0,
         gender: patient?.gender === 'MALE' ? 'M' : patient?.gender === 'FEMALE' ? 'F' : 'O',
+        appointmentDate: new Date(appointment.appointmentDate),
         action: 'Accept' as const
       };
     });

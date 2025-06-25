@@ -34,6 +34,7 @@ export async function createAppointment(data: {
       success: true, 
       appointment: {
         ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate),
         patient,
         doctor
       }
@@ -67,6 +68,7 @@ export async function updateAppointment(id: string, data: {
       success: true, 
       appointment: {
         ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate),
         patient,
         doctor
       }
@@ -108,6 +110,7 @@ export async function getAppointments(clinicId?: string) {
       
       return {
         ...appointment,
+        appointmentDate: new Date(appointment.appointmentDate),
         patient: patient ? {
           patientId: patient.patientId,
           name: patient.name,
