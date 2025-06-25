@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -37,7 +37,7 @@ interface TreatmentClientProps {
   initialTreatments: Treatment[]
 }
 
-export function TreatmentClient({ initialTreatments }: TreatmentClientProps) {
+export function TreatmentClient({ initialTreatments }: TreatmentClientProps)  {
   const [treatments, setTreatments] = useState(initialTreatments)
   const [filteredTreatments, setFilteredTreatments] = useState(initialTreatments)
   const [searchTerm, setSearchTerm] = useState("")
@@ -148,6 +148,9 @@ export function TreatmentClient({ initialTreatments }: TreatmentClientProps) {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add Treatment</DialogTitle>
+                  </DialogHeader>
                   <TreatmentForm
                     onSubmit={handleSubmit}
                     onCancel={() => setIsFormOpen(false)}

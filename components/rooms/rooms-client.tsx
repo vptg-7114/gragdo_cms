@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   TableRow,
   TableCell,
@@ -189,6 +189,9 @@ export function RoomsClient() {
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
+        </DialogHeader>
         <RoomForm
           initialData={editingRoom || undefined}
           onSubmit={handleSubmit}

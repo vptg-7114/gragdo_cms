@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -112,6 +112,9 @@ export function AppointmentsClient({
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Schedule Appointment</DialogTitle>
+            </DialogHeader>
             <AppointmentForm
               patients={patients}
               doctors={doctors}

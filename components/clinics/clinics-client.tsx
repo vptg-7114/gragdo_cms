@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Search, Building2, Users, Calendar, Stethoscope } from "lucide-react"
 import { ClinicForm } from "./clinic-form"
 
@@ -68,6 +68,9 @@ export function ClinicsClient({ initialClinics, userRole }: ClinicsClientProps) 
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Clinic</DialogTitle>
+              </DialogHeader>
               <ClinicForm
                 onSubmit={handleSubmit}
                 onCancel={() => setIsFormOpen(false)}

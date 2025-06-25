@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   TableRow,
   TableCell,
@@ -87,6 +87,9 @@ export function MedicineClient({ initialMedicines }: MedicineClientProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{editingMedicine ? 'Edit Medicine' : 'Add Medicine'}</DialogTitle>
+        </DialogHeader>
         <MedicineForm
           initialData={editingMedicine || undefined}
           onSubmit={handleSubmit}

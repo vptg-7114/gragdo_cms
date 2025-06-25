@@ -5,7 +5,7 @@ import { Search, Calendar, Bell, ChevronDown, Crown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { formatDate } from "@/lib/utils"
 import { PlanDetailsModal } from "@/components/layout/plan-details-modal"
 import Link from "next/link"
@@ -50,6 +50,9 @@ export function Header({ clinicName = "ABC Clinic", location = "Ongole" }: Heade
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto p-0">
+            <DialogHeader>
+              <DialogTitle>Plan Details</DialogTitle>
+            </DialogHeader>
             <PlanDetailsModal onClose={() => setIsPlanModalOpen(false)} />
           </DialogContent>
         </Dialog>

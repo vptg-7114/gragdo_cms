@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -128,6 +128,9 @@ export function AdminStaffsClient({ initialStaff }: AdminStaffsClientProps) {
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add Staff</DialogTitle>
+            </DialogHeader>
             <StaffForm
               onSubmit={handleSubmit}
               onCancel={() => setIsFormOpen(false)}
