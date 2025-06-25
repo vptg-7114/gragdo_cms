@@ -34,18 +34,8 @@ export function ClinicsClient({ initialClinics, userRole }: ClinicsClientProps) 
   const [searchTerm, setSearchTerm] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
 
-  // Add mock stats to clinics if they don't have them
-  const clinicsWithStats = clinics.map(clinic => ({
-    ...clinic,
-    stats: clinic.stats || {
-      patients: Math.floor(Math.random() * 1000) + 100,
-      appointments: Math.floor(Math.random() * 500) + 50,
-      doctors: Math.floor(Math.random() * 20) + 5
-    }
-  }))
-
   // Filter clinics based on search term
-  const filteredClinics = clinicsWithStats.filter(clinic =>
+  const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     clinic.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
     clinic.phone.includes(searchTerm)
@@ -131,31 +121,33 @@ export function ClinicsClient({ initialClinics, userRole }: ClinicsClientProps) 
                 )}
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-blue-50 rounded-xl p-3 text-center">
-                  <div className="flex justify-center mb-1">
-                    <Users className="w-5 h-5 text-blue-600" />
+              {clinic.stats && (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-blue-50 rounded-xl p-3 text-center">
+                    <div className="flex justify-center mb-1">
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-xs text-gray-600">Patients</p>
+                    <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.patients}</p>
                   </div>
-                  <p className="text-xs text-gray-600">Patients</p>
-                  <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.patients}</p>
-                </div>
-                
-                <div className="bg-green-50 rounded-xl p-3 text-center">
-                  <div className="flex justify-center mb-1">
-                    <Calendar className="w-5 h-5 text-green-600" />
+                  
+                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                    <div className="flex justify-center mb-1">
+                      <Calendar className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-xs text-gray-600">Appointments</p>
+                    <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.appointments}</p>
                   </div>
-                  <p className="text-xs text-gray-600">Appointments</p>
-                  <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.appointments}</p>
-                </div>
-                
-                <div className="bg-purple-50 rounded-xl p-3 text-center">
-                  <div className="flex justify-center mb-1">
-                    <Stethoscope className="w-5 h-5 text-purple-600" />
+                  
+                  <div className="bg-purple-50 rounded-xl p-3 text-center">
+                    <div className="flex justify-center mb-1">
+                      <Stethoscope className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <p className="text-xs text-gray-600">Doctors</p>
+                    <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.doctors}</p>
                   </div>
-                  <p className="text-xs text-gray-600">Doctors</p>
-                  <p className="text-lg font-bold text-[#7165e1]">{clinic.stats.doctors}</p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         ))}
