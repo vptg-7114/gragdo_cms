@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -21,6 +22,8 @@ interface UserListProps {
 }
 
 export function UserList({ title, users, actionLabel = "Manage", onAction }: UserListProps) {
+  const router = useRouter();
+  
   return (
     <Card className="rounded-[20px] border-none shadow-sm">
       <CardContent className="p-6">

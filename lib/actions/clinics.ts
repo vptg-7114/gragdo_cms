@@ -1,7 +1,8 @@
-'use server'
+"use server";
 
-import { readData, writeData } from '@/lib/db';
+import { findById, readData, createItem, updateItem, deleteItem } from "@/lib/db";
 
+// Define the clinic interface
 interface Clinic {
   id: string;
   name: string;
@@ -9,19 +10,84 @@ interface Clinic {
   phone: string;
   email?: string;
   description?: string;
-  stats?: {
-    patients: number;
-    appointments: number;
-    doctors: number;
-  };
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+export async function createClinic(data: {
+  name: string;
+  address: string;
+  phone: string;
+  email?: string;
+  description?: string;
+  createdById: string;
+}) {
+  try {
+    const now = new Date().toISOString();
+    
+    const clinic = await createItem<Clinic>("clinics", {
+      ...data,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    return { success: true, clinic };
+  } catch (error) {
+    console.error('Error creating clinic:', error);
+    return { success: false, error: 'Failed to create clinic' };
+  }
+}
+
+export async function updateClinic(id: string, data: {
+  name?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  description?: string;
+}) {
+  try {
+    const updatedData = {
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    
+    const clinic = await updateItem<Clinic>("clinics", id, updatedData);
+    
+    if (!clinic) {
+      return { success: false, error: 'Clinic not found' };
+    }
+    
+    return { success: true, clinic };
+  } catch (error) {
+    console.error('Error updating clinic:', error);
+    return { success: false, error: 'Failed to update clinic' };
+  }
+}
+
+export async function deleteClinic(id: string) {
+  try {
+    const success = await deleteItem<Clinic>("clinics", id);
+    
+    if (!success) {
+      return { success: false, error: 'Clinic not found' };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting clinic:', error);
+    return { success: false, error: 'Failed to delete clinic' };
+  }
 }
 
 export async function getClinics() {
   try {
-    const clinics = await readData<Clinic[]>('clinics', []);
+    const clinics = await readData<Clinic>("clinics");
     
-    // If no clinics found, return mock data
-    if (clinics.length === 0) {
+    // Sort by name in ascending order
+    const sortedClinics = clinics.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // If no clinics found, return mock data for demo purposes
+    if (sortedClinics.length === 0) {
       return [
         {
           id: '1',
@@ -90,8 +156,8 @@ export async function getClinics() {
         }
       ];
     }
-
-    return clinics;
+    
+    return sortedClinics;
   } catch (error) {
     console.error('Error fetching clinics:', error);
     return [];
@@ -100,8 +166,8 @@ export async function getClinics() {
 
 export async function getClinicById(id: string) {
   try {
-    const clinics = await readData<Clinic[]>('clinics', []);
-    return clinics.find(clinic => clinic.id === id) || null;
+    const clinic = await findById<Clinic>("clinics", id);
+    return clinic;
   } catch (error) {
     console.error('Error fetching clinic:', error);
     return null;
