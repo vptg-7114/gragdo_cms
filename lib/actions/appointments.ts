@@ -4,6 +4,21 @@ import { readData, writeData, findById } from "@/lib/db";
 import { AppointmentStatus, AppointmentType, Appointment } from "@/lib/models";
 import { createAppointment } from "@/lib/models";
 
+interface AppointmentWithDetails extends Appointment {
+  patient?: {
+    id: string;
+    patientId: string;
+    name: string;
+    phone: string;
+    gender: string;
+    age: number;
+  };
+  doctor?: {
+    id: string;
+    name: string;
+  };
+}
+
 export async function createAppointmentRecord(data: {
   patientId: string;
   doctorId: string;
@@ -237,7 +252,7 @@ export async function getAppointments(clinicId?: string, doctorId?: string, pati
       };
     });
     
-    return appointmentsWithDetails;
+    return appointmentsWithDetails as AppointmentWithDetails[];
   } catch (error) {
     console.error('Error fetching appointments:', error);
     return [];
@@ -273,7 +288,7 @@ export async function getAppointmentById(id: string) {
         id: doctor.id,
         name: doctor.name
       } : undefined
-    };
+    } as AppointmentWithDetails;
   } catch (error) {
     console.error('Error fetching appointment:', error);
     return null;

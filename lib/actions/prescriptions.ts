@@ -4,6 +4,27 @@ import { readData, writeData, findById } from '@/lib/db';
 import { Prescription, Patient, Doctor, DocumentType } from '@/lib/models';
 import { createPrescription } from '@/lib/models';
 import { uploadFile, deleteFile, generateFileKey } from '@/lib/services/s3';
+import { Document } from '@/lib/models';
+
+interface MedicationData {
+  name: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions?: string;
+  medicineId?: string;
+  quantity: number;
+}
+
+interface PrescriptionWithDetails extends Prescription {
+  patientName?: string;
+  doctorName?: string;
+  patientGender?: string;
+  patientAge?: number;
+  patient?: Patient;
+  doctor?: Doctor;
+  appointment?: any;
+}
 
 export async function createPrescriptionRecord(data: {
   patientId: string;
@@ -11,15 +32,7 @@ export async function createPrescriptionRecord(data: {
   clinicId: string;
   appointmentId: string;
   diagnosis: string;
-  medications: {
-    name: string;
-    dosage: string;
-    frequency: string;
-    duration: string;
-    instructions?: string;
-    medicineId?: string;
-    quantity: number;
-  }[];
+  medications: MedicationData[];
   instructions?: string;
   followUpDate?: string;
   document?: {
@@ -331,7 +344,7 @@ export async function getPrescriptions(clinicId?: string, doctorId?: string, pat
     // Sort by createdAt in descending order
     return enrichedPrescriptions.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    ) as PrescriptionWithDetails[];
   } catch (error) {
     console.error('Error fetching prescriptions:', error);
     return [];
@@ -358,7 +371,7 @@ export async function getPrescriptionById(id: string) {
       patient,
       doctor,
       appointment
-    };
+    } as PrescriptionWithDetails;
   } catch (error) {
     console.error('Error fetching prescription:', error);
     return null;

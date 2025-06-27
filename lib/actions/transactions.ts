@@ -5,6 +5,15 @@ import { Transaction, TransactionType, PaymentMethod, PaymentStatus } from '@/li
 import { createTransaction } from '@/lib/models';
 import { uploadFile, deleteFile, generateFileKey } from '@/lib/services/s3';
 
+interface TransactionWithDetails extends Transaction {
+  patientName?: string;
+  invoiceNumber?: string;
+  doctorName?: string;
+  patient?: any;
+  invoice?: any;
+  doctor?: any;
+}
+
 export async function createTransactionRecord(data: {
   amount: number;
   type: TransactionType;
@@ -266,7 +275,7 @@ export async function getTransactions(clinicId?: string, patientId?: string, typ
     // Sort by createdAt in descending order
     return transactionsWithDetails.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    ) as TransactionWithDetails[];
   } catch (error) {
     console.error('Error fetching transactions:', error);
     return [];
@@ -291,14 +300,24 @@ export async function getTransactionById(id: string) {
       patient,
       invoice,
       doctor
-    };
+    } as TransactionWithDetails;
   } catch (error) {
     console.error('Error fetching transaction:', error);
     return null;
   }
 }
 
-export async function getTransactionSummary(clinicId: string, period: 'day' | 'week' | 'month' | 'year' = 'month') {
+interface TransactionSummary {
+  period: 'day' | 'week' | 'month' | 'year';
+  income: number;
+  expense: number;
+  refund: number;
+  net: number;
+  paymentMethods: Record<string, number>;
+  transactionCount: number;
+}
+
+export async function getTransactionSummary(clinicId: string, period: 'day' | 'week' | 'month' | 'year' = 'month'): Promise<TransactionSummary> {
   try {
     const transactions = await readData<Transaction[]>("transactions", []);
     
@@ -349,7 +368,7 @@ export async function getTransactionSummary(clinicId: string, period: 'day' | 'w
     const net = income - expense - refund;
     
     // Group by payment method (for income only)
-    const paymentMethods = {};
+    const paymentMethods: Record<string, number> = {};
     periodTransactions
       .filter(t => t.type === TransactionType.INCOME)
       .forEach(t => {

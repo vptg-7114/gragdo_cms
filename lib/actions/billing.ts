@@ -5,6 +5,14 @@ import { Invoice, InvoiceStatus, InvoiceItem, InvoiceItemType, Transaction, Tran
 import { createInvoice, createTransaction } from '@/lib/models';
 import { uploadFile, deleteFile, generateFileKey } from '@/lib/services/s3';
 
+interface InvoiceWithDetails extends Invoice {
+  patientName?: string;
+  patientPhone?: string;
+  patient?: any;
+  appointment?: any;
+  transactions?: Transaction[];
+}
+
 export async function createInvoiceRecord(data: {
   patientId: string;
   clinicId: string;
@@ -261,7 +269,7 @@ export async function getInvoices(clinicId?: string, patientId?: string, status?
     // Sort by createdAt in descending order
     return invoicesWithPatients.sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    ) as InvoiceWithDetails[];
   } catch (error) {
     console.error('Error fetching invoices:', error);
     return [];
@@ -296,7 +304,7 @@ export async function getInvoiceById(id: string) {
       patient,
       appointment,
       transactions: invoiceTransactions
-    };
+    } as InvoiceWithDetails;
   } catch (error) {
     console.error('Error fetching invoice:', error);
     return null;

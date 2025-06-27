@@ -1,8 +1,18 @@
 'use server'
 
 import { readData, writeData, findById } from '@/lib/db';
-import { Room, RoomType } from '@/lib/models';
+import { Room, RoomType, BedStatus } from '@/lib/models';
 import { createRoom } from '@/lib/models';
+
+interface RoomWithBedCounts extends Room {
+  bedCounts?: {
+    total: number;
+    available: number;
+    occupied: number;
+    reserved: number;
+  };
+  beds?: any[];
+}
 
 export async function createRoomRecord(data: {
   roomNumber: string;
@@ -175,7 +185,7 @@ export async function getRooms(clinicId?: string, isActive?: boolean) {
         return a.floor - b.floor;
       }
       return a.roomNumber.localeCompare(b.roomNumber);
-    });
+    }) as RoomWithBedCounts[];
   } catch (error) {
     console.error('Error fetching rooms:', error);
     return [];
@@ -225,7 +235,7 @@ export async function getRoomById(id: string) {
         occupied: roomBeds.filter(b => b.status === BedStatus.OCCUPIED).length,
         reserved: roomBeds.filter(b => b.status === BedStatus.RESERVED).length
       }
-    };
+    } as RoomWithBedCounts;
   } catch (error) {
     console.error('Error fetching room:', error);
     return null;

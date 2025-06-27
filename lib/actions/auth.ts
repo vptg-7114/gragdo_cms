@@ -177,9 +177,9 @@ export async function getCurrentUser() {
       id: payload.id,
       name: payload.name,
       email: payload.email,
-      role: payload.role,
-      clinicId: payload.clinicId,
-      clinicIds: payload.clinicIds
+      role: payload.role as UserRole,
+      clinicId: payload.clinicId as string | undefined,
+      clinicIds: payload.clinicIds as string[] | undefined
     };
   } catch (error) {
     console.error('Error getting current user:', error);

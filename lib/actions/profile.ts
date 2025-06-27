@@ -10,7 +10,7 @@ export async function getUserProfile(userId?: string, token?: string) {
     if (!userId && token) {
       const payload = await verifyToken(token);
       if (payload) {
-        userId = payload.id;
+        userId = payload.id as string;
       }
     }
 

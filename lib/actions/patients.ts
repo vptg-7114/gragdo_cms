@@ -1,9 +1,27 @@
 "use server";
 
-import { readData, writeData, findById, createRecord, updateRecord, deleteRecord } from "@/lib/db";
+import { readData, writeData, findById } from "@/lib/db";
 import { Gender, Patient } from "@/lib/types";
 import { createPatient } from "@/lib/models";
 import { uploadFile, deleteFile, generateFileKey } from "@/lib/services/s3";
+import { Document, DocumentType } from "@/lib/models";
+
+interface PatientDocument {
+  id: string;
+  documentId: string;
+  name: string;
+  type: DocumentType;
+  url: string;
+  size: number;
+  patientId: string;
+  uploadedById: string;
+  clinicId: string;
+  appointmentId?: string;
+  tags?: string[];
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export async function createPatientRecord(data: {
   firstName: string;
@@ -49,7 +67,7 @@ export async function createPatientRecord(data: {
     const patientId = `PAT${Math.floor(100000 + Math.random() * 900000)}`;
     
     // Process documents if provided
-    const processedDocuments = [];
+    const processedDocuments: PatientDocument[] = [];
     if (data.documents && data.documents.length > 0) {
       for (const doc of data.documents) {
         const key = generateFileKey('patients', doc.name);
@@ -59,7 +77,7 @@ export async function createPatientRecord(data: {
           id: `doc-${Math.random().toString(36).substring(2, 10)}`,
           documentId: `DOC${Math.floor(100000 + Math.random() * 900000)}`,
           name: doc.name,
-          type: doc.type,
+          type: doc.type as DocumentType,
           url: url,
           size: doc.file.length,
           patientId: '', // Will be updated after patient creation
@@ -176,7 +194,7 @@ export async function updatePatientRecord(id: string, data: {
           id: `doc-${Math.random().toString(36).substring(2, 10)}`,
           documentId: `DOC${Math.floor(100000 + Math.random() * 900000)}`,
           name: doc.name,
-          type: doc.type,
+          type: doc.type as DocumentType,
           url: url,
           size: doc.file.length,
           patientId: id,
@@ -341,11 +359,11 @@ export async function addPatientDocument(patientId: string, document: {
     const url = await uploadFile(document.file, key, document.contentType);
     
     // Create document object
-    const newDocument = {
+    const newDocument: PatientDocument = {
       id: `doc-${Math.random().toString(36).substring(2, 10)}`,
       documentId: `DOC${Math.floor(100000 + Math.random() * 900000)}`,
       name: document.name,
-      type: document.type,
+      type: document.type as DocumentType,
       url: url,
       size: document.file.length,
       patientId: patientId,

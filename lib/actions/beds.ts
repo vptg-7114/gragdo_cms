@@ -4,6 +4,21 @@ import { readData, writeData, findById } from '@/lib/db';
 import { Bed, BedStatus, Room } from '@/lib/models';
 import { createBed } from '@/lib/models';
 
+interface BedWithDetails extends Bed {
+  patient?: {
+    id: string;
+    patientId: string;
+    name: string;
+    gender: string;
+    age: number;
+  };
+  room?: {
+    id: string;
+    roomNumber: string;
+    roomType: string;
+  };
+}
+
 export async function createBedRecord(data: {
   bedNumber: number;
   roomId: string;
@@ -259,7 +274,7 @@ export async function getBedsByRoom(roomId: string) {
     });
     
     // Sort by bed number
-    return bedsWithPatients.sort((a, b) => a.bedNumber - b.bedNumber);
+    return bedsWithPatients.sort((a, b) => a.bedNumber - b.bedNumber) as BedWithDetails[];
   } catch (error) {
     console.error('Error fetching beds:', error);
     return [];
@@ -297,7 +312,7 @@ export async function getBedById(id: string) {
         roomNumber: room.roomNumber,
         roomType: room.roomType
       } : undefined
-    };
+    } as BedWithDetails;
   } catch (error) {
     console.error('Error fetching bed:', error);
     return null;
