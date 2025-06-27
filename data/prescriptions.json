@@ -58,5 +58,29 @@
     "followUpDate": "2025-07-07T00:00:00.000Z",
     "createdAt": "2025-06-07T00:00:00.000Z",
     "updatedAt": "2025-06-07T00:00:00.000Z"
+  },
+  {
+    "id": "prs-006",
+    "patientId": "pat-009",
+    "doctorId": "doc-005",
+    "clinicId": "cli-003",
+    "diagnosis": "Osteoarthritis",
+    "medications": "Diclofenac 50mg twice daily, Glucosamine 500mg once daily",
+    "instructions": "Apply hot compress to affected joints. Avoid strenuous activities.",
+    "followUpDate": "2025-07-09T00:00:00.000Z",
+    "createdAt": "2025-06-09T00:00:00.000Z",
+    "updatedAt": "2025-06-09T00:00:00.000Z"
+  },
+  {
+    "id": "prs-007",
+    "patientId": "pat-010",
+    "doctorId": "doc-006",
+    "clinicId": "cli-003",
+    "diagnosis": "Hypothyroidism",
+    "medications": "Levothyroxine 50mcg once daily",
+    "instructions": "Take on empty stomach in the morning. Avoid calcium supplements within 4 hours.",
+    "followUpDate": "2025-07-09T00:00:00.000Z",
+    "createdAt": "2025-06-09T00:00:00.000Z",
+    "updatedAt": "2025-06-09T00:00:00.000Z"
   }
 ]

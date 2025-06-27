@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button"
 interface SidebarProps {
   userRole: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR'
   clinicId?: string
+  userId?: string
 }
 
-export function Sidebar({ userRole, clinicId }: SidebarProps) {
+export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -73,41 +74,52 @@ export function Sidebar({ userRole, clinicId }: SidebarProps) {
     }
   }
 
+  // Generate base paths for each role
+  const getBasePath = (role: string) => {
+    if (clinicId && userId && (role === 'STAFF' || role === 'DOCTOR')) {
+      return `/${clinicId}/${role.toLowerCase()}/${userId}`
+    } else if (clinicId) {
+      return `/${clinicId}/${role.toLowerCase()}`
+    } else {
+      return `/${role.toLowerCase()}`
+    }
+  }
+
   // Admin menu items
   const adminMenuItems = [
     {
       name: "Dashboard",
-      href: clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard",
+      href: `${getBasePath('ADMIN')}/dashboard`,
       icon: LayoutDashboard,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Patients",
-      href: clinicId ? `/${clinicId}/admin/patients` : "/admin/patients",
+      href: `${getBasePath('ADMIN')}/patients`,
       icon: Users,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Doctors",
-      href: clinicId ? `/${clinicId}/admin/doctors` : "/admin/doctors",
+      href: `${getBasePath('ADMIN')}/doctors`,
       icon: UserCheck,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Staffs",
-      href: clinicId ? `/${clinicId}/admin/staffs` : "/admin/staffs",
+      href: `${getBasePath('ADMIN')}/staffs`,
       icon: Users2,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Appointments",
-      href: clinicId ? `/${clinicId}/admin/appointments` : "/admin/appointments",
+      href: `${getBasePath('ADMIN')}/appointments`,
       icon: Calendar,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Rooms",
-      href: clinicId ? `/${clinicId}/admin/rooms` : "/admin/rooms",
+      href: `${getBasePath('ADMIN')}/rooms`,
       icon: Bed,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
@@ -119,29 +131,29 @@ export function Sidebar({ userRole, clinicId }: SidebarProps) {
       submenu: [
         { 
           name: "Treatments list", 
-          href: clinicId ? `/${clinicId}/admin/treatment` : "/admin/treatment" 
+          href: `${getBasePath('ADMIN')}/treatment` 
         },
         { 
           name: "Medicine", 
-          href: clinicId ? `/${clinicId}/admin/medicine` : "/admin/medicine" 
+          href: `${getBasePath('ADMIN')}/medicine` 
         }
       ]
     },
     {
       name: "Transactions",
-      href: clinicId ? `/${clinicId}/admin/transactions` : "/admin/transactions",
+      href: `${getBasePath('ADMIN')}/transactions`,
       icon: Receipt,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Prescription",
-      href: clinicId ? `/${clinicId}/admin/prescriptions` : "/admin/prescriptions",
+      href: `${getBasePath('ADMIN')}/prescriptions`,
       icon: FileText,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Analytics",
-      href: clinicId ? `/${clinicId}/admin/analytics` : "/admin/analytics",
+      href: `${getBasePath('ADMIN')}/analytics`,
       icon: Activity,
       roles: ['SUPER_ADMIN', 'ADMIN']
     }
@@ -151,37 +163,37 @@ export function Sidebar({ userRole, clinicId }: SidebarProps) {
   const doctorMenuItems = [
     {
       name: "Dashboard",
-      href: clinicId ? `/${clinicId}/doctor/dashboard` : "/doctor/dashboard",
+      href: `${getBasePath('DOCTOR')}/dashboard`,
       icon: LayoutDashboard,
       roles: ['DOCTOR']
     },
     {
       name: "Patients",
-      href: clinicId ? `/${clinicId}/doctor/patients` : "/doctor/patients",
+      href: `${getBasePath('DOCTOR')}/patients`,
       icon: Users,
       roles: ['DOCTOR']
     },
     {
       name: "Appointments",
-      href: clinicId ? `/${clinicId}/doctor/appointments` : "/doctor/appointments",
+      href: `${getBasePath('DOCTOR')}/appointments`,
       icon: Calendar,
       roles: ['DOCTOR']
     },
     {
       name: "Schedule",
-      href: clinicId ? `/${clinicId}/doctor/schedule` : "/doctor/schedule",
+      href: `${getBasePath('DOCTOR')}/schedule`,
       icon: Clock,
       roles: ['DOCTOR']
     },
     {
       name: "Prescriptions",
-      href: clinicId ? `/${clinicId}/doctor/prescriptions` : "/doctor/prescriptions",
+      href: `${getBasePath('DOCTOR')}/prescriptions`,
       icon: FileText,
       roles: ['DOCTOR']
     },
     {
       name: "Settings",
-      href: clinicId ? `/${clinicId}/doctor/settings` : "/doctor/settings",
+      href: `${getBasePath('DOCTOR')}/settings`,
       icon: Settings,
       roles: ['DOCTOR']
     }
@@ -191,49 +203,49 @@ export function Sidebar({ userRole, clinicId }: SidebarProps) {
   const staffMenuItems = [
     {
       name: "Dashboard",
-      href: clinicId ? `/${clinicId}/staff/dashboard` : "/staff/dashboard",
+      href: `${getBasePath('STAFF')}/dashboard`,
       icon: LayoutDashboard,
       roles: ['STAFF']
     },
     {
       name: "Appointments",
-      href: clinicId ? `/${clinicId}/staff/appointments` : "/staff/appointments",
+      href: `${getBasePath('STAFF')}/appointments`,
       icon: Calendar,
       roles: ['STAFF']
     },
     {
       name: "Patients",
-      href: clinicId ? `/${clinicId}/staff/patients` : "/staff/patients",
+      href: `${getBasePath('STAFF')}/patients`,
       icon: Users,
       roles: ['STAFF']
     },
     {
       name: "Doctors",
-      href: clinicId ? `/${clinicId}/staff/doctors` : "/staff/doctors",
+      href: `${getBasePath('STAFF')}/doctors`,
       icon: UserCheck,
       roles: ['STAFF']
     },
     {
       name: "Rooms",
-      href: clinicId ? `/${clinicId}/staff/rooms` : "/staff/rooms",
+      href: `${getBasePath('STAFF')}/rooms`,
       icon: Bed,
       roles: ['STAFF']
     },
     {
       name: "Prescriptions",
-      href: clinicId ? `/${clinicId}/staff/prescriptions` : "/staff/prescriptions",
+      href: `${getBasePath('STAFF')}/prescriptions`,
       icon: FileText,
       roles: ['STAFF']
     },
     {
       name: "Billing & Invoice",
-      href: clinicId ? `/${clinicId}/staff/billing` : "/staff/billing",
+      href: `${getBasePath('STAFF')}/billing`,
       icon: CreditCard,
       roles: ['STAFF']
     },
     {
       name: "Settings",
-      href: clinicId ? `/${clinicId}/staff/settings` : "/staff/settings",
+      href: `${getBasePath('STAFF')}/settings`,
       icon: Settings,
       roles: ['STAFF']
     }

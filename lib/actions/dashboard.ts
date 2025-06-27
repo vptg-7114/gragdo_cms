@@ -1,17 +1,26 @@
 'use server'
 
-import { readData } from '@/lib/db';
-import { Gender } from '@/lib/types';
+import { readData, getRelatedData } from '@/lib/db';
+import { Gender, Appointment, Patient, Doctor, User } from '@/lib/types';
 
-export async function getDashboardStats(clinicId: string, doctorId?: string) {
+export async function getDashboardStats(clinicId?: string, doctorId?: string) {
   try {
-    const appointments = await readData('appointments', []);
-    const patients = await readData('patients', []);
-    const doctors = await readData('doctors', []);
+    const appointments = await readData<Appointment[]>('appointments', []);
+    const patients = await readData<Patient[]>('patients', []);
+    const doctors = await readData<Doctor[]>('doctors', []);
     
-    // Filter by clinicId
-    const clinicAppointments = appointments.filter(a => a.clinicId === clinicId);
-    const clinicPatients = patients.filter(p => p.clinicId === clinicId);
+    // Filter by clinicId if provided
+    const clinicAppointments = clinicId 
+      ? appointments.filter(a => a.clinicId === clinicId)
+      : appointments;
+    
+    const clinicPatients = clinicId 
+      ? patients.filter(p => p.clinicId === clinicId)
+      : patients;
+    
+    const clinicDoctors = clinicId 
+      ? doctors.filter(d => d.clinicId === clinicId)
+      : doctors;
     
     // Further filter by doctorId if provided
     const filteredAppointments = doctorId 
@@ -38,7 +47,11 @@ export async function getDashboardStats(clinicId: string, doctorId?: string) {
     const childPatients = clinicPatients.filter(p => p.age < 18).length;
 
     // Get available doctors
-    const availableDoctors = doctors.filter(d => d.clinicId === clinicId && d.isAvailable).length;
+    const availableDoctors = clinicDoctors.filter(d => d.isAvailable).length;
+
+    // Get check-ins (patients who have arrived for their appointments)
+    // For demo purposes, we'll use a percentage of today's appointments
+    const checkIns = Math.floor(todayAppointments.length * 0.7);
 
     return {
       todayAppointments: todayAppointments.length,
@@ -47,7 +60,9 @@ export async function getDashboardStats(clinicId: string, doctorId?: string) {
       malePatients,
       femalePatients,
       childPatients,
-      availableDoctors
+      availableDoctors,
+      checkIns,
+      appointments: todayAppointments.length // For StatsCards component
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -58,19 +73,23 @@ export async function getDashboardStats(clinicId: string, doctorId?: string) {
       malePatients: 0,
       femalePatients: 0,
       childPatients: 0,
-      availableDoctors: 0
+      availableDoctors: 0,
+      checkIns: 0,
+      appointments: 0
     };
   }
 }
 
-export async function getRecentAppointments(clinicId: string, doctorId?: string) {
+export async function getRecentAppointments(clinicId?: string, doctorId?: string) {
   try {
-    const appointments = await readData('appointments', []);
-    const patients = await readData('patients', []);
-    const doctors = await readData('doctors', []);
+    const appointments = await readData<Appointment[]>('appointments', []);
+    const patients = await readData<Patient[]>('patients', []);
+    const doctors = await readData<Doctor[]>('doctors', []);
     
-    // Filter by clinicId
-    let filteredAppointments = appointments.filter(a => a.clinicId === clinicId);
+    // Filter by clinicId if provided
+    let filteredAppointments = clinicId 
+      ? appointments.filter(a => a.clinicId === clinicId)
+      : appointments;
     
     // Further filter by doctorId if provided
     if (doctorId) {
@@ -89,7 +108,7 @@ export async function getRecentAppointments(clinicId: string, doctorId?: string)
         return {
           ...appointment,
           appointmentDate: new Date(appointment.appointmentDate),
-          patient: patient || { id: appointment.patientId, name: 'Unknown Patient' },
+          patient: patient || { id: appointment.patientId, name: 'Unknown Patient', patientId: 'Unknown' },
           doctor: doctor || { id: appointment.doctorId, name: 'Unknown Doctor' }
         };
       });
@@ -101,14 +120,19 @@ export async function getRecentAppointments(clinicId: string, doctorId?: string)
   }
 }
 
-export async function getDoctorsActivity(clinicId: string) {
+export async function getDoctorsActivity(clinicId?: string) {
   try {
-    const doctors = await readData('doctors', []);
-    const appointments = await readData('appointments', []);
+    const doctors = await readData<Doctor[]>('doctors', []);
+    const appointments = await readData<Appointment[]>('appointments', []);
     
-    // Filter by clinicId
-    const clinicDoctors = doctors.filter(d => d.clinicId === clinicId);
-    const clinicAppointments = appointments.filter(a => a.clinicId === clinicId);
+    // Filter by clinicId if provided
+    const clinicDoctors = clinicId 
+      ? doctors.filter(d => d.clinicId === clinicId)
+      : doctors;
+    
+    const clinicAppointments = clinicId 
+      ? appointments.filter(a => a.clinicId === clinicId)
+      : appointments;
     
     const doctorsActivity = clinicDoctors.map(doctor => {
       const doctorAppointments = clinicAppointments.filter(apt => apt.doctorId === doctor.id);
@@ -137,7 +161,7 @@ export async function getDoctorsActivity(clinicId: string) {
   }
 }
 
-export async function getRecentReports(clinicId: string) {
+export async function getRecentReports(clinicId?: string) {
   try {
     // In a real app, you would fetch reports from the database
     // For demo purposes, we'll return mock data

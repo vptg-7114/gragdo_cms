@@ -1,7 +1,7 @@
 "use server"
 
 import { readData } from "@/lib/db"
-import { UserRole } from "@/lib/types"
+import { UserRole, User } from "@/lib/types"
 
 interface LoginCredentials {
   email: string
@@ -23,7 +23,7 @@ export async function login(credentials: LoginCredentials) {
   try {
     // In a real app, you would validate credentials against a database
     // For demo purposes, we'll just check if the user exists
-    const users = await readData("users", [])
+    const users = await readData<User[]>("users", [])
     const user = users.find(
       (u) => u.email === credentials.email && u.role === credentials.role
     )
@@ -86,16 +86,16 @@ export async function forgotPassword(email: string) {
   }
 }
 
-export async function getRedirectPathForRole(role: UserRole, clinicId?: string) {
+export async function getRedirectPathForRole(role: UserRole, clinicId?: string, userId?: string) {
   switch (role) {
-    case "SUPER_ADMIN":
+    case UserRole.SUPER_ADMIN:
       return "/clinics"
-    case "ADMIN":
+    case UserRole.ADMIN:
       return clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard"
-    case "STAFF":
-      return clinicId ? `/${clinicId}/staff/dashboard` : "/staff/dashboard"
-    case "DOCTOR":
-      return clinicId ? `/${clinicId}/doctor/dashboard` : "/doctor/dashboard"
+    case UserRole.STAFF:
+      return clinicId && userId ? `/${clinicId}/staff/${userId}/dashboard` : "/staff/dashboard"
+    case UserRole.DOCTOR:
+      return clinicId && userId ? `/${clinicId}/doctor/${userId}/dashboard` : "/doctor/dashboard"
     default:
       return "/"
   }

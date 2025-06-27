@@ -48,3 +48,33 @@ export async function ensureDataDir(): Promise<void> {
   // This is a no-op in the browser environment
   // In a real implementation with Node.js, you would create the directory
 }
+
+// Function to get related data with proper typing
+export async function getRelatedData<T, R>(
+  collection: string,
+  foreignKey: keyof T,
+  foreignValue: string,
+  defaultValue: R[] = []
+): Promise<R[]> {
+  try {
+    const data = await readData<T>(collection, []);
+    return data.filter(item => item[foreignKey] === foreignValue) as unknown as R[];
+  } catch (error) {
+    console.error(`Error getting related data from ${collection}.json:`, error);
+    return defaultValue;
+  }
+}
+
+// Function to find a record by ID
+export async function findById<T extends { id: string }>(
+  collection: string,
+  id: string
+): Promise<T | null> {
+  try {
+    const data = await readData<T>(collection, []);
+    return data.find(item => item.id === id) || null;
+  } catch (error) {
+    console.error(`Error finding record by ID in ${collection}.json:`, error);
+    return null;
+  }
+}

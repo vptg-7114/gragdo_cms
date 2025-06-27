@@ -35,6 +35,18 @@
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
   {
+    "id": "adm-003",
+    "name": "Clinic Admin 3",
+    "email": "admin3@digigo.com",
+    "password": "password123",
+    "phone": "+91-9876543212",
+    "role": "ADMIN",
+    "clinicId": "cli-003",
+    "isActive": true,
+    "createdAt": "2024-01-03T00:00:00.000Z",
+    "updatedAt": "2024-01-03T00:00:00.000Z"
+  },
+  {
     "id": "stf-001",
     "name": "Staff Member 1",
     "email": "staff1@digigo.com",
@@ -57,6 +69,30 @@
     "isActive": true,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
+  },
+  {
+    "id": "stf-003",
+    "name": "Staff Member 3",
+    "email": "staff3@digigo.com",
+    "password": "password123",
+    "phone": "+91-9876543214",
+    "role": "STAFF",
+    "clinicId": "cli-001",
+    "isActive": true,
+    "createdAt": "2024-01-03T00:00:00.000Z",
+    "updatedAt": "2024-01-03T00:00:00.000Z"
+  },
+  {
+    "id": "stf-004",
+    "name": "Staff Member 4",
+    "email": "staff4@digigo.com",
+    "password": "password123",
+    "phone": "+91-9876543215",
+    "role": "STAFF",
+    "clinicId": "cli-002",
+    "isActive": true,
+    "createdAt": "2024-01-04T00:00:00.000Z",
+    "updatedAt": "2024-01-04T00:00:00.000Z"
   },
   {
     "id": "doc-001",
@@ -105,5 +141,29 @@
     "isActive": true,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
+  },
+  {
+    "id": "doc-005",
+    "name": "Dr. K. Arun Kumar",
+    "email": "arun@digigo.com",
+    "password": "password123",
+    "phone": "+91-9876543218",
+    "role": "DOCTOR",
+    "clinicId": "cli-003",
+    "isActive": true,
+    "createdAt": "2024-01-03T00:00:00.000Z",
+    "updatedAt": "2024-01-03T00:00:00.000Z"
+  },
+  {
+    "id": "doc-006",
+    "name": "Dr. G. Kiran Kumar",
+    "email": "kiran@digigo.com",
+    "password": "password123",
+    "phone": "+91-9876543219",
+    "role": "DOCTOR",
+    "clinicId": "cli-003",
+    "isActive": true,
+    "createdAt": "2024-01-03T00:00:00.000Z",
+    "updatedAt": "2024-01-03T00:00:00.000Z"
   }
 ]

@@ -1,6 +1,7 @@
 [
   {
     "id": "doc-001",
+    "userId": "doc-001",
     "name": "Dr. K. Ranganath",
     "email": "ranganath@digigo.com",
     "phone": "+91-9876543214",
@@ -16,6 +17,7 @@
   },
   {
     "id": "doc-002",
+    "userId": "doc-002",
     "name": "Dr. L. Satya",
     "email": "satya@digigo.com",
     "phone": "+91-9876543215",
@@ -31,6 +33,7 @@
   },
   {
     "id": "doc-003",
+    "userId": "doc-003",
     "name": "Dr. G. Anitha",
     "email": "anitha@digigo.com",
     "phone": "+91-9876543216",
@@ -46,6 +49,7 @@
   },
   {
     "id": "doc-004",
+    "userId": "doc-004",
     "name": "Dr. M. Santhosh",
     "email": "santhosh@digigo.com",
     "phone": "+91-9876543217",
@@ -61,6 +65,7 @@
   },
   {
     "id": "doc-005",
+    "userId": "doc-005",
     "name": "Dr. K. Arun Kumar",
     "email": "arun@digigo.com",
     "phone": "+91-9876543218",
@@ -69,13 +74,14 @@
     "experience": 8,
     "consultationFee": 350,
     "isAvailable": false,
-    "clinicId": "cli-001",
-    "createdById": "adm-001",
+    "clinicId": "cli-003",
+    "createdById": "adm-003",
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   },
   {
     "id": "doc-006",
+    "userId": "doc-006",
     "name": "Dr. G. Kiran Kumar",
     "email": "kiran@digigo.com",
     "phone": "+91-9876543219",
@@ -85,7 +91,7 @@
     "consultationFee": 450,
     "isAvailable": true,
     "clinicId": "cli-003",
-    "createdById": "adm-001",
+    "createdById": "adm-003",
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   }

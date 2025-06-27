@@ -126,5 +126,37 @@
     "createdById": "stf-002",
     "createdAt": "2024-01-04T00:00:00.000Z",
     "updatedAt": "2024-01-04T00:00:00.000Z"
+  },
+  {
+    "id": "pat-009",
+    "patientId": "PAT890123",
+    "name": "V. Ramesh",
+    "email": "ramesh@example.com",
+    "phone": "9876543222",
+    "gender": "MALE",
+    "age": 50,
+    "address": "789 Patient Court, Chennai",
+    "medicalHistory": "Arthritis",
+    "allergies": null,
+    "clinicId": "cli-003",
+    "createdById": "stf-003",
+    "createdAt": "2024-01-05T00:00:00.000Z",
+    "updatedAt": "2024-01-05T00:00:00.000Z"
+  },
+  {
+    "id": "pat-010",
+    "patientId": "PAT901234",
+    "name": "L. Sunitha",
+    "email": "sunitha@example.com",
+    "phone": "9876543223",
+    "gender": "FEMALE",
+    "age": 42,
+    "address": "123 Patient Plaza, Chennai",
+    "medicalHistory": "Thyroid disorder",
+    "allergies": "Shellfish",
+    "clinicId": "cli-003",
+    "createdById": "stf-003",
+    "createdAt": "2024-01-05T00:00:00.000Z",
+    "updatedAt": "2024-01-05T00:00:00.000Z"
   }
 ]

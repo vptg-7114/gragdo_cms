@@ -1,29 +1,7 @@
 'use server'
 
-import { readData, writeData } from '@/lib/db';
-
-interface Prescription {
-  id: string;
-  patientId: string;
-  patientName: string;
-  doctorName: string;
-  concern: string;
-  gender: string;
-  age: number;
-  reports: {
-    id: string;
-    name: string;
-    type: string;
-    url: string;
-  }[];
-  prescriptions: {
-    id: string;
-    name: string;
-    type: string;
-    url: string;
-  }[];
-  createdAt: string;
-}
+import { readData, writeData, findById, getRelatedData } from '@/lib/db';
+import { Prescription, Patient, Doctor, EnhancedPrescription } from '@/lib/types';
 
 interface RawPrescription {
   id: string;
@@ -34,19 +12,7 @@ interface RawPrescription {
   createdAt: string;
 }
 
-interface Patient {
-  id: string;
-  name: string;
-  gender: string;
-  age: number;
-}
-
-interface Doctor {
-  id: string;
-  name: string;
-}
-
-export async function getPrescriptions() {
+export async function getPrescriptions(clinicId?: string, doctorId?: string, patientId?: string) {
   try {
     const rawPrescriptions = await readData<RawPrescription[]>('prescriptions', []);
     
@@ -86,7 +52,7 @@ export async function getPrescriptions() {
               size: '1.2 MB'
             }
           ],
-          createdAt: new Date('2024-01-15').toISOString()
+          createdAt: new Date('2024-01-15')
         },
         {
           id: '2',
@@ -114,7 +80,7 @@ export async function getPrescriptions() {
               size: '1.5 MB'
             }
           ],
-          createdAt: new Date('2024-01-10').toISOString()
+          createdAt: new Date('2024-01-10')
         },
         {
           id: '3',
@@ -149,16 +115,34 @@ export async function getPrescriptions() {
               size: '2.2 MB'
             }
           ],
-          createdAt: new Date('2024-01-08').toISOString()
+          createdAt: new Date('2024-01-08')
         }
       ];
+    }
+    
+    // Filter prescriptions if parameters are provided
+    let filteredPrescriptions = rawPrescriptions;
+    
+    if (clinicId) {
+      filteredPrescriptions = filteredPrescriptions.filter(p => {
+        const prescription = p as unknown as Prescription;
+        return prescription.clinicId === clinicId;
+      });
+    }
+    
+    if (doctorId) {
+      filteredPrescriptions = filteredPrescriptions.filter(p => p.doctorId === doctorId);
+    }
+    
+    if (patientId) {
+      filteredPrescriptions = filteredPrescriptions.filter(p => p.patientId === patientId);
     }
     
     // Enrich prescriptions with patient and doctor data
     const patients = await readData<Patient[]>('patients', []);
     const doctors = await readData<Doctor[]>('doctors', []);
     
-    const enrichedPrescriptions: Prescription[] = rawPrescriptions.map(prescription => {
+    const enrichedPrescriptions: EnhancedPrescription[] = filteredPrescriptions.map(prescription => {
       const patient = patients.find(p => p.id === prescription.patientId);
       const doctor = doctors.find(d => d.id === prescription.doctorId);
       
@@ -168,7 +152,7 @@ export async function getPrescriptions() {
         patientName: patient?.name || 'Unknown Patient',
         doctorName: doctor?.name || 'Unknown Doctor',
         concern: prescription.diagnosis || 'General consultation',
-        gender: patient?.gender || 'N/A',
+        gender: patient?.gender || 'MALE',
         age: patient?.age || 0,
         reports: [], // Default empty array for reports
         prescriptions: prescription.medications ? [{
@@ -184,17 +168,69 @@ export async function getPrescriptions() {
           url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
           size: '1.2 MB'
         }],
-        createdAt: prescription.createdAt
+        createdAt: new Date(prescription.createdAt)
       };
     });
     
-    // Convert string dates to Date objects for the client
-    return enrichedPrescriptions.map(prescription => ({
-      ...prescription,
-      createdAt: new Date(prescription.createdAt)
-    }));
+    // Sort by createdAt in descending order
+    return enrichedPrescriptions.sort((a, b) => 
+      b.createdAt.getTime() - a.createdAt.getTime()
+    );
   } catch (error) {
     console.error('Error fetching prescriptions:', error);
     return [];
+  }
+}
+
+export async function createPrescription(data: {
+  patientId: string;
+  doctorId: string;
+  clinicId: string;
+  diagnosis: string;
+  medications: string;
+  instructions?: string;
+  followUpDate?: string;
+}) {
+  try {
+    const now = new Date().toISOString();
+    
+    const prescriptions = await readData<Prescription[]>('prescriptions', []);
+    
+    const newPrescription: Prescription = {
+      id: `prs-${(prescriptions.length + 1).toString().padStart(3, '0')}`,
+      ...data,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    prescriptions.push(newPrescription);
+    await writeData('prescriptions', prescriptions);
+    
+    return { success: true, prescription: newPrescription };
+  } catch (error) {
+    console.error('Error creating prescription:', error);
+    return { success: false, error: 'Failed to create prescription' };
+  }
+}
+
+export async function getPrescriptionById(id: string) {
+  try {
+    const prescription = await findById<Prescription>('prescriptions', id);
+    
+    if (!prescription) {
+      return null;
+    }
+    
+    const patient = await findById<Patient>('patients', prescription.patientId);
+    const doctor = await findById<Doctor>('doctors', prescription.doctorId);
+    
+    return {
+      ...prescription,
+      patient,
+      doctor
+    };
+  } catch (error) {
+    console.error('Error fetching prescription:', error);
+    return null;
   }
 }

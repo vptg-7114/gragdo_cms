@@ -110,5 +110,33 @@
     "createdById": "stf-002",
     "createdAt": "2025-06-04T00:00:00.000Z",
     "updatedAt": "2025-06-04T00:00:00.000Z"
+  },
+  {
+    "id": "apt-009",
+    "patientId": "pat-009",
+    "doctorId": "doc-005",
+    "clinicId": "cli-003",
+    "appointmentDate": "2025-06-09T09:00:00.000Z",
+    "duration": 30,
+    "concern": "Arthritis pain management",
+    "notes": "Chronic pain assessment",
+    "status": "PENDING",
+    "createdById": "stf-003",
+    "createdAt": "2025-06-05T00:00:00.000Z",
+    "updatedAt": "2025-06-05T00:00:00.000Z"
+  },
+  {
+    "id": "apt-010",
+    "patientId": "pat-010",
+    "doctorId": "doc-006",
+    "clinicId": "cli-003",
+    "appointmentDate": "2025-06-09T11:00:00.000Z",
+    "duration": 30,
+    "concern": "Thyroid function test review",
+    "notes": "Medication adjustment",
+    "status": "PENDING",
+    "createdById": "stf-003",
+    "createdAt": "2025-06-05T00:00:00.000Z",
+    "updatedAt": "2025-06-05T00:00:00.000Z"
   }
 ]

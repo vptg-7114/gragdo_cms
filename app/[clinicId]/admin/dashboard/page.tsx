@@ -10,6 +10,8 @@ import { TransactionHistory } from "@/components/admin/dashboard/transaction-his
 import { AdminAppointments } from "@/components/admin/dashboard/admin-appointments"
 import { getAdminDashboardStats, getAdminDoctors, getAdminStaff, getAdminTransactions, getAdminAppointments } from "@/lib/actions/admin-dashboard"
 import { getClinicById } from "@/lib/actions/clinics"
+import { findById } from "@/lib/db"
+import { User } from "@/lib/types"
 
 interface AdminDashboardPageProps {
   params: {
