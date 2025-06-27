@@ -6,7 +6,8 @@ import { redirect } from "next/navigation"
 
 export default async function ClinicsPage() {
   // Get the current user profile
-  const userProfile = await getUserProfile()
+  // We're passing undefined here to explicitly show we want the default behavior
+  const userProfile = await getUserProfile(undefined)
   
   // If no user is logged in or user is not a super admin, redirect to login
   if (!userProfile || userProfile.role !== 'SUPER_ADMIN') {

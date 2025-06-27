@@ -5,7 +5,8 @@ import { getRedirectPathForRole } from "@/lib/actions/auth"
 export default async function Home() {
   try {
     // Get user profile to check role
-    const userProfile = await getUserProfile()
+    // We're passing undefined here to explicitly show we want the default behavior
+    const userProfile = await getUserProfile(undefined)
     
     if (!userProfile) {
       redirect('/login')
