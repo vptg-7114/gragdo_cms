@@ -11,12 +11,19 @@ import { Plus, Filter } from "lucide-react"
 import { getDashboardStats, getRecentAppointments, getDoctorsActivity, getRecentReports } from "@/lib/actions/dashboard"
 
 export default async function DashboardPage() {
-  const [stats, appointments, doctorsActivity, recentReports] = await Promise.all([
+  const [statsRaw, appointments, doctorsActivity, recentReports] = await Promise.all([
     getDashboardStats(),
     getRecentAppointments(),
     getDoctorsActivity(),
     getRecentReports()
   ])
+
+  // Map the stats properties to match what StatsCards expects
+  const stats = {
+    appointments: statsRaw.todayAppointments,
+    checkIns: statsRaw.todayPatients,
+    ...statsRaw
+  }
 
   return (
     <div className="flex h-screen bg-[#f4f3ff]">
