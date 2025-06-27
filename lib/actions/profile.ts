@@ -2,9 +2,19 @@
 
 import { readData, writeData, findById } from '@/lib/db';
 import { UserRole, User } from '@/lib/types';
+import { cookies } from 'next/headers';
 
 export async function getUserProfile(userId?: string) {
   try {
+    // In a real app, if userId is not provided, we would:
+    // 1. Get the auth token from cookies
+    // const cookieStore = cookies()
+    // const token = cookieStore.get('auth-token')?.value
+    // 2. Verify and decode the token to get the user ID
+    // const tokenUserId = verifyAndDecodeToken(token)
+    // 3. Use the user ID from the token
+    // userId = userId || tokenUserId
+
     if (!userId) {
       // For demo purposes, return a default profile
       return {

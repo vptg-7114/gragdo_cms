@@ -3,11 +3,21 @@ import { ClinicsClient } from "@/components/clinics/clinics-client"
 import { getClinics } from "@/lib/actions/clinics"
 import { getUserProfile } from "@/lib/actions/profile"
 import { redirect } from "next/navigation"
+import { cookies } from 'next/headers'
 
 export default async function ClinicsPage() {
+  // In a real app, we would get the user ID from the authentication token
+  // For now, we'll simulate this by assuming we have the user ID
+  
+  // This would be the proper implementation:
+  // 1. Get the auth token from cookies
+  // const cookieStore = cookies()
+  // const token = cookieStore.get('auth-token')?.value
+  // 2. Verify and decode the token to get the user ID
+  // const userId = verifyAndDecodeToken(token)
+  
   // Get the current user profile
-  // We're passing undefined here to explicitly show we want the default behavior
-  const userProfile = await getUserProfile(undefined)
+  const userProfile = await getUserProfile()
   
   // If no user is logged in or user is not a super admin, redirect to login
   if (!userProfile || userProfile.role !== 'SUPER_ADMIN') {
