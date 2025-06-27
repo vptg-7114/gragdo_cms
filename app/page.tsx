@@ -19,6 +19,12 @@ export default async function Home() {
     )
     redirect(redirectPath)
   } catch (error) {
+    // Re-throw NEXT_REDIRECT errors to allow Next.js to handle redirects properly
+    if (error && typeof error === 'object' && 'digest' in error && 
+        typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
+    
     console.error('Error in home page:', error)
     redirect('/login')
   }
