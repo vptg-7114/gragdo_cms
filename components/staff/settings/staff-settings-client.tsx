@@ -5,16 +5,10 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { updateUserProfile } from "@/lib/actions/profile"
 
 const staffSettingsSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -69,8 +63,6 @@ export function StaffSettingsClient({ initialProfile }: StaffSettingsClientProps
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isDirty },
   } = useForm<StaffSettingsFormData>({
     resolver: zodResolver(staffSettingsSchema),
@@ -83,8 +75,8 @@ export function StaffSettingsClient({ initialProfile }: StaffSettingsClientProps
       emailId: initialProfile.email || "",
       mobileNumber: initialProfile.phone || "9876543210",
       maritalStatus: "Married",
-      qualification: "MBBS",
-      specialization: "Cardiology",
+      qualification: "B.Pharm",
+      specialization: "Clinical Pharmacy",
       designation: "Staff",
       experience: "3 Years",
       address: initialProfile.address || "1/2-3, ABC Street",
@@ -100,11 +92,19 @@ export function StaffSettingsClient({ initialProfile }: StaffSettingsClientProps
       // Combine first and last name
       const fullName = `${data.firstName} ${data.lastName}`.trim()
       
-      // In a real app, you would update the user profile here
-      console.log('Updating staff profile:', { ...data, fullName })
+      const result = await updateUserProfile(initialProfile.id, {
+        name: fullName,
+        email: data.emailId || undefined,
+        phone: data.mobileNumber,
+        address: data.address
+      })
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (result.success) {
+        // You could add a toast notification here
+        console.log('Profile updated successfully')
+      } else {
+        console.error('Failed to update profile:', result.error)
+      }
     } catch (error) {
       console.error('Error updating profile:', error)
     } finally {
@@ -437,7 +437,7 @@ export function StaffSettingsClient({ initialProfile }: StaffSettingsClientProps
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isDirty}
                 className="w-full sm:w-auto h-12 px-8 rounded-lg bg-[#7165e1] hover:bg-[#5f52d1] text-white font-medium"
               >
                 Edit

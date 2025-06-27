@@ -1,15 +1,15 @@
 import { Suspense } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
-import { DoctorSettingsClient } from "@/components/doctor/settings/doctor-settings-client"
+import { StaffSettingsClient } from "@/components/staff/settings/staff-settings-client"
 import { getUserProfile } from "@/lib/actions/profile"
 
-export default async function DoctorSettingsPage() {
+export default async function StaffSettingsPage() {
   const userProfile = await getUserProfile()
 
   return (
     <div className="flex h-screen bg-[#f4f3ff]">
-      <Sidebar userRole="DOCTOR" />
+      <Sidebar userRole="STAFF" />
       
       <main className="flex-1 overflow-auto ml-0 md:ml-0">
         <Header />
@@ -20,7 +20,7 @@ export default async function DoctorSettingsPage() {
               <p className="text-lg text-gray-500 font-sf-pro">Loading settings...</p>
             </div>
           }>
-            <DoctorSettingsClient initialProfile={userProfile} />
+            <StaffSettingsClient initialProfile={userProfile} />
           </Suspense>
         </div>
       </main>
