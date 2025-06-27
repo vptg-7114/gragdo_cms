@@ -85,3 +85,18 @@ export async function forgotPassword(email: string) {
     return { success: false, error: "An error occurred during password reset" }
   }
 }
+
+export async function getRedirectPathForRole(role: UserRole, clinicId?: string) {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "/clinics"
+    case "ADMIN":
+      return clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard"
+    case "STAFF":
+      return "/staff/dashboard"
+    case "DOCTOR":
+      return "/doctor/dashboard"
+    default:
+      return "/"
+  }
+}

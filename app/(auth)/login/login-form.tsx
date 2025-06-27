@@ -51,7 +51,11 @@ export function LoginForm() {
             router.push("/clinics")
             break
           case "ADMIN":
-            router.push("/admin/dashboard")
+            if (result.user?.clinicId) {
+              router.push(`/${result.user.clinicId}/admin/dashboard`)
+            } else {
+              router.push("/admin/dashboard")
+            }
             break
           case "STAFF":
             router.push("/staff/dashboard")
