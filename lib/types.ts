@@ -83,3 +83,105 @@ export enum UserRole {
   STAFF = "STAFF",
   DOCTOR = "DOCTOR"
 }
+
+// Define the user interface
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string; // In a real app, this would be hashed
+  phone?: string;
+  role: UserRole;
+  clinicId?: string; // Required for ADMIN, STAFF, DOCTOR roles
+  isActive: boolean;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the transaction interface
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: "INCOME" | "EXPENSE";
+  description: string;
+  paymentStatus: "PAID" | "PENDING" | "CANCELLED";
+  appointmentId?: string;
+  patientId?: string;
+  doctorId?: string;
+  clinicId: string;
+  createdById: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the medicine interface
+export interface Medicine {
+  id: string;
+  name: string;
+  manufacturer: string;
+  batchNumber: string;
+  type: string;
+  dosage: string;
+  manufacturedDate: string;
+  expiryDate: string;
+  price: number;
+  stock: number;
+  clinicId: string;
+  createdById: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the treatment interface
+export interface Treatment {
+  id: string;
+  name: string;
+  description?: string;
+  cost: number;
+  duration?: number;
+  clinicId: string;
+  createdById: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the prescription interface
+export interface Prescription {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  clinicId: string;
+  diagnosis: string;
+  medications: string;
+  instructions?: string;
+  followUpDate?: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the room interface
+export interface Room {
+  id: string;
+  roomNumber: string;
+  roomType: string;
+  totalBeds: number;
+  clinicId: string;
+  createdById: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Define the bed interface
+export interface Bed {
+  id: string;
+  bedNumber: number;
+  roomId: string;
+  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MAINTENANCE";
+  patientId?: string;
+  admissionDate?: string;
+  dischargeDate?: string;
+  clinicId: string;
+  createdById: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}

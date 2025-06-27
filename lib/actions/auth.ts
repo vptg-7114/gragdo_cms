@@ -93,9 +93,9 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string) 
     case "ADMIN":
       return clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard"
     case "STAFF":
-      return "/staff/dashboard"
+      return clinicId ? `/${clinicId}/staff/dashboard` : "/staff/dashboard"
     case "DOCTOR":
-      return "/doctor/dashboard"
+      return clinicId ? `/${clinicId}/doctor/dashboard` : "/doctor/dashboard"
     default:
       return "/"
   }

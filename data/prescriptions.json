@@ -1,124 +1,62 @@
 [
   {
-    "id": "1",
-    "patientId": "1",
-    "doctorId": "1",
-    "clinicId": "1",
-    "concern": "Heart problem",
+    "id": "prs-001",
+    "patientId": "pat-001",
+    "doctorId": "doc-001",
+    "clinicId": "cli-001",
     "diagnosis": "Mild hypertension",
     "medications": "Amlodipine 5mg once daily",
     "instructions": "Take after breakfast. Avoid salty foods.",
     "followUpDate": "2025-07-05T00:00:00.000Z",
-    "createdById": "3",
     "createdAt": "2025-06-05T00:00:00.000Z",
-    "updatedAt": "2025-06-05T00:00:00.000Z",
-    "patientName": "K. Vijay",
-    "doctorName": "K. Ranganath",
-    "gender": "M",
-    "age": 22,
-    "reports": [
-      {
-        "id": "1",
-        "name": "Blood Test Report.pdf",
-        "type": "PDF",
-        "url": "/mock-reports/blood-test.pdf",
-        "size": "2.4 MB"
-      },
-      {
-        "id": "2",
-        "name": "ECG Report.jpg",
-        "type": "Image",
-        "url": "/mock-reports/ecg.jpg",
-        "size": "1.8 MB"
-      }
-    ],
-    "prescriptions": [
-      {
-        "id": "1",
-        "name": "Prescription_Jan_2024.pdf",
-        "type": "PDF",
-        "url": "/mock-prescriptions/prescription-jan.pdf",
-        "size": "1.2 MB"
-      }
-    ]
+    "updatedAt": "2025-06-05T00:00:00.000Z"
   },
   {
-    "id": "2",
-    "patientId": "2",
-    "doctorId": "2",
-    "clinicId": "1",
-    "concern": "General checkup",
+    "id": "prs-002",
+    "patientId": "pat-002",
+    "doctorId": "doc-002",
+    "clinicId": "cli-001",
     "diagnosis": "Healthy",
     "medications": "Multivitamin once daily",
     "instructions": "Regular exercise and balanced diet",
     "followUpDate": "2025-12-05T00:00:00.000Z",
-    "createdById": "3",
     "createdAt": "2025-06-05T00:00:00.000Z",
-    "updatedAt": "2025-06-05T00:00:00.000Z",
-    "patientName": "P. Sandeep",
-    "doctorName": "L. Satya",
-    "gender": "M",
-    "age": 30,
-    "reports": [
-      {
-        "id": "3",
-        "name": "General Checkup Report.pdf",
-        "type": "PDF",
-        "url": "/mock-reports/general-checkup.pdf",
-        "size": "3.1 MB"
-      }
-    ],
-    "prescriptions": [
-      {
-        "id": "2",
-        "name": "Prescription_Jan_2024.pdf",
-        "type": "PDF",
-        "url": "/mock-prescriptions/prescription-jan-2.pdf",
-        "size": "1.5 MB"
-      }
-    ]
+    "updatedAt": "2025-06-05T00:00:00.000Z"
   },
   {
-    "id": "3",
-    "patientId": "3",
-    "doctorId": "3",
-    "clinicId": "1",
-    "concern": "PCOD",
+    "id": "prs-003",
+    "patientId": "pat-003",
+    "doctorId": "doc-002",
+    "clinicId": "cli-001",
     "diagnosis": "Polycystic Ovary Syndrome",
     "medications": "Metformin 500mg twice daily",
     "instructions": "Regular exercise and low-carb diet",
     "followUpDate": "2025-07-05T00:00:00.000Z",
-    "createdById": "3",
     "createdAt": "2025-06-04T00:00:00.000Z",
-    "updatedAt": "2025-06-04T00:00:00.000Z",
-    "patientName": "Ch. Asritha",
-    "doctorName": "G. Anitha",
-    "gender": "F",
-    "age": 25,
-    "reports": [
-      {
-        "id": "4",
-        "name": "Ultrasound Report.pdf",
-        "type": "PDF",
-        "url": "/mock-reports/ultrasound.pdf",
-        "size": "2.8 MB"
-      },
-      {
-        "id": "5",
-        "name": "Hormone Test.pdf",
-        "type": "PDF",
-        "url": "/mock-reports/hormone-test.pdf",
-        "size": "1.9 MB"
-      }
-    ],
-    "prescriptions": [
-      {
-        "id": "3",
-        "name": "PCOD_Treatment_Plan.pdf",
-        "type": "PDF",
-        "url": "/mock-prescriptions/pcod-treatment.pdf",
-        "size": "2.2 MB"
-      }
-    ]
+    "updatedAt": "2025-06-04T00:00:00.000Z"
+  },
+  {
+    "id": "prs-004",
+    "patientId": "pat-006",
+    "doctorId": "doc-003",
+    "clinicId": "cli-002",
+    "diagnosis": "Type 2 Diabetes",
+    "medications": "Metformin 1000mg twice daily, Glimepiride 2mg once daily",
+    "instructions": "Monitor blood sugar regularly. Follow diabetic diet.",
+    "followUpDate": "2025-07-07T00:00:00.000Z",
+    "createdAt": "2025-06-07T00:00:00.000Z",
+    "updatedAt": "2025-06-07T00:00:00.000Z"
+  },
+  {
+    "id": "prs-005",
+    "patientId": "pat-007",
+    "doctorId": "doc-004",
+    "clinicId": "cli-002",
+    "diagnosis": "Essential Hypertension",
+    "medications": "Telmisartan 40mg once daily",
+    "instructions": "Low salt diet. Regular blood pressure monitoring.",
+    "followUpDate": "2025-07-07T00:00:00.000Z",
+    "createdAt": "2025-06-07T00:00:00.000Z",
+    "updatedAt": "2025-06-07T00:00:00.000Z"
   }
 ]

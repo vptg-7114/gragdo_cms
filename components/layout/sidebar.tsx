@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
   userRole: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR'
+  clinicId?: string
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userRole, clinicId }: SidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -35,12 +36,17 @@ export function Sidebar({ userRole }: SidebarProps) {
 
   useEffect(() => {
     // Check if the current path is a submenu item and expand its parent
-    const treatmentsSubmenuPaths = ['/admin/treatment', '/admin/medicine', '/medicine']
+    const treatmentsSubmenuPaths = [
+      `/${clinicId}/admin/treatment`, 
+      `/${clinicId}/admin/medicine`, 
+      `/admin/treatment`, 
+      `/admin/medicine`
+    ]
     
     if (treatmentsSubmenuPaths.some(path => pathname.startsWith(path))) {
       setExpandedItems(prev => prev.includes('Treatments') ? prev : [...prev, 'Treatments'])
     }
-  }, [pathname])
+  }, [pathname, clinicId])
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -71,37 +77,37 @@ export function Sidebar({ userRole }: SidebarProps) {
   const adminMenuItems = [
     {
       name: "Dashboard",
-      href: "/admin/dashboard",
+      href: clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard",
       icon: LayoutDashboard,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Patients",
-      href: "/admin/patients",
+      href: clinicId ? `/${clinicId}/admin/patients` : "/admin/patients",
       icon: Users,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Doctors",
-      href: "/admin/doctors",
+      href: clinicId ? `/${clinicId}/admin/doctors` : "/admin/doctors",
       icon: UserCheck,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Staffs",
-      href: "/admin/staffs",
+      href: clinicId ? `/${clinicId}/admin/staffs` : "/admin/staffs",
       icon: Users2,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Appointments",
-      href: "/admin/appointments",
+      href: clinicId ? `/${clinicId}/admin/appointments` : "/admin/appointments",
       icon: Calendar,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Rooms",
-      href: "/admin/rooms",
+      href: clinicId ? `/${clinicId}/admin/rooms` : "/admin/rooms",
       icon: Bed,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
@@ -111,25 +117,31 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
       hasSubmenu: true,
       submenu: [
-        { name: "Treatments list", href: "/admin/treatment" },
-        { name: "Medicine", href: "/admin/medicine" }
+        { 
+          name: "Treatments list", 
+          href: clinicId ? `/${clinicId}/admin/treatment` : "/admin/treatment" 
+        },
+        { 
+          name: "Medicine", 
+          href: clinicId ? `/${clinicId}/admin/medicine` : "/admin/medicine" 
+        }
       ]
     },
     {
       name: "Transactions",
-      href: "/admin/transactions",
+      href: clinicId ? `/${clinicId}/admin/transactions` : "/admin/transactions",
       icon: Receipt,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Prescription",
-      href: "/admin/prescriptions",
+      href: clinicId ? `/${clinicId}/admin/prescriptions` : "/admin/prescriptions",
       icon: FileText,
       roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Analytics",
-      href: "/admin/analytics",
+      href: clinicId ? `/${clinicId}/admin/analytics` : "/admin/analytics",
       icon: Activity,
       roles: ['SUPER_ADMIN', 'ADMIN']
     }
@@ -139,37 +151,37 @@ export function Sidebar({ userRole }: SidebarProps) {
   const doctorMenuItems = [
     {
       name: "Dashboard",
-      href: "/doctor/dashboard",
+      href: clinicId ? `/${clinicId}/doctor/dashboard` : "/doctor/dashboard",
       icon: LayoutDashboard,
       roles: ['DOCTOR']
     },
     {
       name: "Patients",
-      href: "/doctor/patients",
+      href: clinicId ? `/${clinicId}/doctor/patients` : "/doctor/patients",
       icon: Users,
       roles: ['DOCTOR']
     },
     {
       name: "Appointments",
-      href: "/doctor/appointments",
+      href: clinicId ? `/${clinicId}/doctor/appointments` : "/doctor/appointments",
       icon: Calendar,
       roles: ['DOCTOR']
     },
     {
       name: "Schedule",
-      href: "/doctor/schedule",
+      href: clinicId ? `/${clinicId}/doctor/schedule` : "/doctor/schedule",
       icon: Clock,
       roles: ['DOCTOR']
     },
     {
       name: "Prescriptions",
-      href: "/doctor/prescriptions",
+      href: clinicId ? `/${clinicId}/doctor/prescriptions` : "/doctor/prescriptions",
       icon: FileText,
       roles: ['DOCTOR']
     },
     {
       name: "Settings",
-      href: "/doctor/settings",
+      href: clinicId ? `/${clinicId}/doctor/settings` : "/doctor/settings",
       icon: Settings,
       roles: ['DOCTOR']
     }
@@ -179,49 +191,49 @@ export function Sidebar({ userRole }: SidebarProps) {
   const staffMenuItems = [
     {
       name: "Dashboard",
-      href: "/staff/dashboard",
+      href: clinicId ? `/${clinicId}/staff/dashboard` : "/staff/dashboard",
       icon: LayoutDashboard,
       roles: ['STAFF']
     },
     {
       name: "Appointments",
-      href: "/staff/appointments",
+      href: clinicId ? `/${clinicId}/staff/appointments` : "/staff/appointments",
       icon: Calendar,
       roles: ['STAFF']
     },
     {
       name: "Patients",
-      href: "/staff/patients",
+      href: clinicId ? `/${clinicId}/staff/patients` : "/staff/patients",
       icon: Users,
       roles: ['STAFF']
     },
     {
       name: "Doctors",
-      href: "/staff/doctors",
+      href: clinicId ? `/${clinicId}/staff/doctors` : "/staff/doctors",
       icon: UserCheck,
       roles: ['STAFF']
     },
     {
       name: "Rooms",
-      href: "/staff/rooms",
+      href: clinicId ? `/${clinicId}/staff/rooms` : "/staff/rooms",
       icon: Bed,
       roles: ['STAFF']
     },
     {
       name: "Prescriptions",
-      href: "/staff/prescriptions",
+      href: clinicId ? `/${clinicId}/staff/prescriptions` : "/staff/prescriptions",
       icon: FileText,
       roles: ['STAFF']
     },
     {
       name: "Billing & Invoice",
-      href: "/staff/billing",
+      href: clinicId ? `/${clinicId}/staff/billing` : "/staff/billing",
       icon: CreditCard,
       roles: ['STAFF']
     },
     {
       name: "Settings",
-      href: "/staff/settings",
+      href: clinicId ? `/${clinicId}/staff/settings` : "/staff/settings",
       icon: Settings,
       roles: ['STAFF']
     }

@@ -2,7 +2,6 @@
 
 import { readData, writeData } from "@/lib/db";
 import { Gender, Patient } from "@/lib/types";
-import { generatePatientId } from "@/lib/utils";
 
 export async function createPatient(data: {
   name: string;
@@ -17,13 +16,15 @@ export async function createPatient(data: {
   createdById: string;
 }) {
   try {
-    const patientId = generatePatientId();
     const now = new Date().toISOString();
     
-    const patients = await readData<Patient>("patients");
+    const patients = await readData<Patient[]>("patients");
+    
+    // Generate a unique patient ID with prefix PAT
+    const patientId = `PAT${Math.floor(100000 + Math.random() * 900000)}`;
     
     const newPatient: Patient = {
-      id: Math.random().toString(36).substring(2, 15),
+      id: `pat-${(patients.length + 1).toString().padStart(3, '0')}`,
       patientId,
       ...data,
       createdAt: now,
@@ -51,7 +52,7 @@ export async function updatePatient(id: string, data: {
   allergies?: string;
 }) {
   try {
-    const patients = await readData<Patient>("patients");
+    const patients = await readData<Patient[]>("patients");
     const patientIndex = patients.findIndex(p => p.id === id);
     
     if (patientIndex === -1) {
@@ -80,7 +81,7 @@ export async function updatePatient(id: string, data: {
 
 export async function deletePatient(id: string) {
   try {
-    const patients = await readData<Patient>("patients");
+    const patients = await readData<Patient[]>("patients");
     const updatedPatients = patients.filter(p => p.id !== id);
     
     if (updatedPatients.length === patients.length) {
@@ -97,7 +98,7 @@ export async function deletePatient(id: string) {
 
 export async function getPatients(clinicId?: string) {
   try {
-    const patients = await readData<Patient>("patients");
+    const patients = await readData<Patient[]>("patients");
     
     // Filter by clinicId if provided
     const filteredPatients = clinicId 
@@ -116,7 +117,7 @@ export async function getPatients(clinicId?: string) {
 
 export async function getPatientById(id: string) {
   try {
-    const patients = await readData<Patient>("patients");
+    const patients = await readData<Patient[]>("patients");
     const patient = patients.find(p => p.id === id);
     
     if (!patient) {
@@ -141,9 +142,16 @@ export async function getPatientById(id: string) {
       };
     });
     
+    // Get prescriptions for this patient
+    const prescriptions = await readData("prescriptions");
+    const patientPrescriptions = prescriptions
+      .filter(p => p.patientId === id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
     return {
       ...patient,
-      appointments: appointmentsWithDoctors
+      appointments: appointmentsWithDoctors,
+      prescriptions: patientPrescriptions
     };
   } catch (error) {
     console.error('Error fetching patient:', error);

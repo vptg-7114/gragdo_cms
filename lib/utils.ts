@@ -55,10 +55,17 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function generatePatientId(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+// Generate a random ID with specified length
+export function generateId(length: number = 8): string {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }
 
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 15);
+// Generate a unique patient ID with prefix
+export function generatePatientId(): string {
+  return `PAT${Math.floor(100000 + Math.random() * 900000)}`;
 }

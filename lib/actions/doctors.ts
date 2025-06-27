@@ -2,7 +2,6 @@
 
 import { readData, writeData } from "@/lib/db";
 import { Doctor } from "@/lib/types";
-import { generateId } from "@/lib/utils";
 
 export async function createDoctor(data: {
   name: string;
@@ -18,10 +17,10 @@ export async function createDoctor(data: {
   try {
     const now = new Date().toISOString();
     
-    const doctors = await readData<Doctor>("doctors");
+    const doctors = await readData<Doctor[]>("doctors");
     
     const newDoctor: Doctor = {
-      id: generateId(),
+      id: `doc-${(doctors.length + 1).toString().padStart(3, '0')}`,
       ...data,
       isAvailable: true,
       createdAt: now,
@@ -49,7 +48,7 @@ export async function updateDoctor(id: string, data: {
   isAvailable?: boolean;
 }) {
   try {
-    const doctors = await readData<Doctor>("doctors");
+    const doctors = await readData<Doctor[]>("doctors");
     const doctorIndex = doctors.findIndex(d => d.id === id);
     
     if (doctorIndex === -1) {
@@ -78,7 +77,7 @@ export async function updateDoctor(id: string, data: {
 
 export async function deleteDoctor(id: string) {
   try {
-    const doctors = await readData<Doctor>("doctors");
+    const doctors = await readData<Doctor[]>("doctors");
     const updatedDoctors = doctors.filter(d => d.id !== id);
     
     if (updatedDoctors.length === doctors.length) {
@@ -95,7 +94,7 @@ export async function deleteDoctor(id: string) {
 
 export async function getDoctors(clinicId?: string) {
   try {
-    const doctors = await readData<Doctor>("doctors");
+    const doctors = await readData<Doctor[]>("doctors");
     
     // Filter by clinicId if provided
     const filteredDoctors = clinicId 
@@ -131,24 +130,11 @@ export async function getDoctors(clinicId?: string) {
 
 export async function getDoctorById(id: string) {
   try {
-    const doctors = await readData<Doctor>("doctors");
+    const doctors = await readData<Doctor[]>("doctors");
     const doctor = doctors.find(d => d.id === id);
     
     if (!doctor) {
-      // Return mock data for demo purposes
-      return {
-        id: id,
-        name: 'Dr. Ch. Asritha',
-        email: 'asritha@vishnuclinic.com',
-        phone: '+91-9876543214',
-        specialization: 'Gynecology',
-        qualification: 'MBBS, MS (Gynecology)',
-        experience: 10,
-        consultationFee: 400,
-        isAvailable: true,
-        schedules: [],
-        appointments: []
-      };
+      return null;
     }
     
     // Get schedules and appointments for this doctor
@@ -182,19 +168,6 @@ export async function getDoctorById(id: string) {
     };
   } catch (error) {
     console.error('Error fetching doctor:', error);
-    // Return mock data for demo purposes
-    return {
-      id: id,
-      name: 'Dr. Ch. Asritha',
-      email: 'asritha@vishnuclinic.com',
-      phone: '+91-9876543214',
-      specialization: 'Gynecology',
-      qualification: 'MBBS, MS (Gynecology)',
-      experience: 10,
-      consultationFee: 400,
-      isAvailable: true,
-      schedules: [],
-      appointments: []
-    };
+    return null;
   }
 }

@@ -15,10 +15,10 @@ export async function createClinic(data: {
   try {
     const now = new Date().toISOString();
     
-    const clinics = await readData<Clinic>("clinics");
+    const clinics = await readData<Clinic[]>("clinics");
     
     const newClinic: Clinic = {
-      id: generateId(),
+      id: `cli-${generateId(6)}`,
       ...data,
       createdAt: now,
       updatedAt: now
@@ -42,7 +42,7 @@ export async function updateClinic(id: string, data: {
   description?: string;
 }) {
   try {
-    const clinics = await readData<Clinic>("clinics");
+    const clinics = await readData<Clinic[]>("clinics");
     const clinicIndex = clinics.findIndex(c => c.id === id);
     
     if (clinicIndex === -1) {
@@ -71,7 +71,7 @@ export async function updateClinic(id: string, data: {
 
 export async function deleteClinic(id: string) {
   try {
-    const clinics = await readData<Clinic>("clinics");
+    const clinics = await readData<Clinic[]>("clinics");
     const updatedClinics = clinics.filter(c => c.id !== id);
     
     if (updatedClinics.length === clinics.length) {
@@ -88,83 +88,32 @@ export async function deleteClinic(id: string) {
 
 export async function getClinics() {
   try {
-    const clinics = await readData<Clinic>("clinics");
+    const clinics = await readData<Clinic[]>("clinics");
     
     // Sort by name in ascending order
     const sortedClinics = clinics.sort((a, b) => a.name.localeCompare(b.name));
     
-    // If no clinics found, return mock data for demo purposes
-    if (sortedClinics.length === 0) {
-      return [
-        {
-          id: '1',
-          name: 'Vishnu Clinic',
-          address: '123 Health Street, Medical District',
-          phone: '+91-9876543210',
-          email: 'info@vishnuclinic.com',
-          description: 'A modern healthcare facility providing comprehensive medical services',
-          stats: {
-            patients: 350,
-            appointments: 120,
-            doctors: 15
-          }
-        },
-        {
-          id: '2',
-          name: 'City Health Center',
-          address: '456 Medical Avenue, Downtown',
-          phone: '+91-9876543211',
-          email: 'info@cityhealthcenter.com',
-          description: 'Providing quality healthcare services to urban communities',
-          stats: {
-            patients: 520,
-            appointments: 210,
-            doctors: 22
-          }
-        },
-        {
-          id: '3',
-          name: 'Rural Medical Clinic',
-          address: '789 Village Road, Countryside',
-          phone: '+91-9876543212',
-          email: 'info@ruralmedical.com',
-          description: 'Bringing healthcare services to rural communities',
-          stats: {
-            patients: 180,
-            appointments: 75,
-            doctors: 8
-          }
-        },
-        {
-          id: '4',
-          name: 'Family Care Center',
-          address: '321 Family Street, Residential Area',
-          phone: '+91-9876543213',
-          email: 'info@familycare.com',
-          description: 'Comprehensive healthcare for the entire family',
-          stats: {
-            patients: 420,
-            appointments: 160,
-            doctors: 18
-          }
-        },
-        {
-          id: '5',
-          name: 'Specialty Medical Center',
-          address: '654 Specialist Road, Medical Hub',
-          phone: '+91-9876543214',
-          email: 'info@specialtymedical.com',
-          description: 'Advanced care for specialized medical conditions',
-          stats: {
-            patients: 280,
-            appointments: 130,
-            doctors: 25
-          }
-        }
-      ];
-    }
+    // Add stats for each clinic
+    const patients = await readData("patients");
+    const appointments = await readData("appointments");
+    const doctors = await readData("doctors");
     
-    return sortedClinics;
+    const clinicsWithStats = sortedClinics.map(clinic => {
+      const clinicPatients = patients.filter(p => p.clinicId === clinic.id);
+      const clinicAppointments = appointments.filter(a => a.clinicId === clinic.id);
+      const clinicDoctors = doctors.filter(d => d.clinicId === clinic.id);
+      
+      return {
+        ...clinic,
+        stats: {
+          patients: clinicPatients.length,
+          appointments: clinicAppointments.length,
+          doctors: clinicDoctors.length
+        }
+      };
+    });
+    
+    return clinicsWithStats;
   } catch (error) {
     console.error('Error fetching clinics:', error);
     return [];
@@ -173,9 +122,30 @@ export async function getClinics() {
 
 export async function getClinicById(id: string) {
   try {
-    const clinics = await readData<Clinic>("clinics");
+    const clinics = await readData<Clinic[]>("clinics");
     const clinic = clinics.find(c => c.id === id);
-    return clinic || null;
+    
+    if (!clinic) {
+      return null;
+    }
+    
+    // Add stats for the clinic
+    const patients = await readData("patients");
+    const appointments = await readData("appointments");
+    const doctors = await readData("doctors");
+    
+    const clinicPatients = patients.filter(p => p.clinicId === clinic.id);
+    const clinicAppointments = appointments.filter(a => a.clinicId === clinic.id);
+    const clinicDoctors = doctors.filter(d => d.clinicId === clinic.id);
+    
+    return {
+      ...clinic,
+      stats: {
+        patients: clinicPatients.length,
+        appointments: clinicAppointments.length,
+        doctors: clinicDoctors.length
+      }
+    };
   } catch (error) {
     console.error('Error fetching clinic:', error);
     return null;
