@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,30 +41,32 @@ interface DoctorPatientsClientProps {
 
 export function DoctorPatientsClient({ initialPatients }: DoctorPatientsClientProps) {
   const router = useRouter()
-  const [patients, setPatients] = useState(initialPatients)
-  const [filteredPatients, setFilteredPatients] = useState(initialPatients)
+  
+  // Use useState with functional updater to prevent recreation on every render
+  const [patients] = useState(() => {
+    return initialPatients.map(patient => ({
+      ...patient,
+      concern: patient.concern || (patient.id === "1" ? "Heart problem" : 
+                                 patient.id === "2" ? "General checkup" : 
+                                 patient.id === "3" ? "PCOD" : 
+                                 patient.id === "4" ? "Kidney disease" : "Heart problem"),
+      doctorName: patient.id === "1" || patient.id === "5" ? "K. Ranganath" :
+                  patient.id === "2" ? "L. Satya" :
+                  patient.id === "3" ? "G. Anitha" : "P. Ravi",
+      duration: "30 Min",
+      status: patient.id <= "5" ? "Completed" : 
+              patient.id === "6" ? "In Progress" : "Pending"
+    }))
+  })
+
+  const [filteredPatients, setFilteredPatients] = useState(patients)
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Add mock data for display purposes
-  const patientsWithAppointmentData = patients.map(patient => ({
-    ...patient,
-    concern: patient.concern || (patient.id === "1" ? "Heart problem" : 
-                               patient.id === "2" ? "General checkup" : 
-                               patient.id === "3" ? "PCOD" : 
-                               patient.id === "4" ? "Kidney disease" : "Heart problem"),
-    doctorName: patient.id === "1" || patient.id === "5" ? "K. Ranganath" :
-                patient.id === "2" ? "L. Satya" :
-                patient.id === "3" ? "G. Anitha" : "P. Ravi",
-    duration: "30 Min",
-    status: patient.id <= "5" ? "Completed" : 
-            patient.id === "6" ? "In Progress" : "Pending"
-  }))
-
   useEffect(() => {
     // Filter patients based on search term
-    const filtered = patientsWithAppointmentData.filter((patient) =>
+    const filtered = patients.filter((patient) =>
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.patientId.includes(searchTerm) ||
       patient.phone.includes(searchTerm) ||
@@ -74,7 +76,7 @@ export function DoctorPatientsClient({ initialPatients }: DoctorPatientsClientPr
     )
     setFilteredPatients(filtered)
     setCurrentPage(1) // Reset to first page when searching
-  }, [searchTerm, patientsWithAppointmentData])
+  }, [searchTerm, patients])
 
   // Pagination logic
   const totalRecords = filteredPatients.length

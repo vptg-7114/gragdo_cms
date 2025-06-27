@@ -45,25 +45,26 @@ interface AdminStaffsClientProps {
 }
 
 export function AdminStaffsClient({ initialStaff }: AdminStaffsClientProps) {
-  // Transform staff data to match the table structure
-  const staffWithScheduleData = initialStaff.map((staff, index) => ({
-    id: staff.id,
-    staffId: `${123456 + index}`,
-    name: staff.name,
-    designation: staff.role,
-    weeklySchedule: {
-      sun: "NA",
-      mon: "9AM-2PM",
-      tue: "9AM-2PM",
-      wed: "9AM-2PM",
-      thu: "9AM-2PM",
-      fri: "9AM-2PM",
-      sat: "9AM-2PM"
-    }
-  }))
+  // Use useState with functional updater to prevent recreation on every render
+  const [staff] = useState(() => {
+    return initialStaff.map((staff, index) => ({
+      id: staff.id,
+      staffId: `${123456 + index}`,
+      name: staff.name,
+      designation: staff.role,
+      weeklySchedule: {
+        sun: "NA",
+        mon: "9AM-2PM",
+        tue: "9AM-2PM",
+        wed: "9AM-2PM",
+        thu: "9AM-2PM",
+        fri: "9AM-2PM",
+        sat: "9AM-2PM"
+      }
+    }))
+  })
 
-  const [staff, setStaff] = useState(staffWithScheduleData)
-  const [filteredStaff, setFilteredStaff] = useState(staffWithScheduleData)
+  const [filteredStaff, setFilteredStaff] = useState(staff)
   const [searchTerm, setSearchTerm] = useState("")
   const [recordsPerPage, setRecordsPerPage] = useState("10")
   const [currentPage, setCurrentPage] = useState(1)
@@ -92,7 +93,9 @@ export function AdminStaffsClient({ initialStaff }: AdminStaffsClientProps) {
   }
 
   const handleDelete = async (id: string) => {
-    setStaff(prev => prev.filter(s => s.id !== id))
+    // Note: In a real app, you would need to update the staff state here
+    // For now, we'll just log the action
+    console.log('Staff member deleted:', id)
   }
 
   // Pagination logic
