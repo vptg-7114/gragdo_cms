@@ -1,13 +1,14 @@
 'use server'
 
 import { readData, writeData } from '@/lib/db';
+import { UserRole } from '@/lib/types';
 
 interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  role: string;
+  role: UserRole;
   clinicId?: string;
   createdAt: string;
 }
@@ -30,7 +31,7 @@ export async function getUserProfile(userId?: string) {
       name: 'Clinic Admin',
       email: 'admin@vishnuclinic.com',
       phone: '+91-9876543210',
-      role: 'ADMIN',
+      role: UserRole.ADMIN,
       clinicId: '1',
       createdAt: new Date().toISOString()
     };
@@ -60,7 +61,7 @@ export async function getUserProfile(userId?: string) {
       name: 'Clinic Admin',
       email: 'admin@vishnuclinic.com',
       phone: '+91-9876543210',
-      role: 'ADMIN',
+      role: UserRole.ADMIN,
       address: '123 Health Street, Medical District',
       bio: 'Experienced healthcare administrator with over 10 years in clinic management.',
       profileImage: undefined,

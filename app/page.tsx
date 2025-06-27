@@ -8,6 +8,8 @@ export default async function Home() {
   // Redirect based on user role
   if (userProfile.role === 'ADMIN' || userProfile.role === 'SUPER_ADMIN') {
     redirect('/clinics')
+  } else if (userProfile.role === 'STAFF') {
+    redirect('/staff/dashboard')
   } else {
     redirect('/dashboard')
   }

@@ -75,3 +75,11 @@ export interface Clinic {
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }
+
+// Define the user roles
+export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  DOCTOR = "DOCTOR",
+  STAFF = "STAFF"
+}

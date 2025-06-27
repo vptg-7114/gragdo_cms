@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
-  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'DOCTOR' | 'STAFF'
+  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'DOCTOR' | 'STAFF'
 }
 
 export function Sidebar({ userRole }: SidebarProps) {
@@ -196,15 +196,27 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['STAFF']
     },
     {
-      name: "Schedule",
-      href: "/staff/schedule",
-      icon: Clock,
+      name: "Doctors",
+      href: "/staff/doctors",
+      icon: UserCheck,
+      roles: ['STAFF']
+    },
+    {
+      name: "Rooms",
+      href: "/staff/rooms",
+      icon: Bed,
       roles: ['STAFF']
     },
     {
       name: "Prescriptions",
       href: "/staff/prescriptions",
       icon: FileText,
+      roles: ['STAFF']
+    },
+    {
+      name: "Billing & Invoice",
+      href: "/staff/billing",
+      icon: CreditCard,
       roles: ['STAFF']
     },
     {
@@ -215,66 +227,12 @@ export function Sidebar({ userRole }: SidebarProps) {
     }
   ]
 
-  // User menu items
-  const userMenuItems = [
-    {
-      name: "Dashboard",
-      href: "/user/dashboard",
-      icon: LayoutDashboard,
-      roles: ['USER']
-    },
-    {
-      name: "Appointments",
-      href: "/user/appointments",
-      icon: Calendar,
-      roles: ['USER']
-    },
-    {
-      name: "Patients",
-      href: "/user/patients",
-      icon: Users,
-      roles: ['USER']
-    },
-    {
-      name: "Doctors",
-      href: "/user/doctors",
-      icon: UserCheck,
-      roles: ['USER']
-    },
-    {
-      name: "Rooms",
-      href: "/user/rooms",
-      icon: Bed,
-      roles: ['USER']
-    },
-    {
-      name: "Prescriptions",
-      href: "/user/prescriptions",
-      icon: FileText,
-      roles: ['USER']
-    },
-    {
-      name: "Billing & Invoice",
-      href: "/user/billing",
-      icon: CreditCard,
-      roles: ['USER']
-    },
-    {
-      name: "Settings",
-      href: "/user/settings",
-      icon: Settings,
-      roles: ['USER']
-    }
-  ]
-
   // Determine which menu items to show based on user role
   let menuItems;
   if (userRole === 'DOCTOR') {
     menuItems = doctorMenuItems;
   } else if (userRole === 'STAFF') {
     menuItems = staffMenuItems;
-  } else if (userRole === 'USER') {
-    menuItems = userMenuItems;
   } else {
     menuItems = adminMenuItems;
   }
