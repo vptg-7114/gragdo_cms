@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
@@ -48,10 +48,24 @@ export function DoctorScheduleClient({
 }: DoctorScheduleClientProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [appointments, setAppointments] = useState(initialAppointments)
-  const [timeSlots, setTimeSlots] = useState<string[]>([])
   const [scheduledAppointments, setScheduledAppointments] = useState<Record<string, string>>({})
   const [currentAppointment, setCurrentAppointment] = useState<PatientDetails | null>(null)
   const [nextAppointment, setNextAppointment] = useState<PatientDetails | null>(null)
+
+  // Generate time slots from 9:00 to 17:00 using useMemo
+  const allTimeSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const formattedHour = hour.toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        slots.push(`${formattedHour}:${formattedMinute}`);
+      }
+    }
+    return slots;
+  }, []);
+
+  const [timeSlots, setTimeSlots] = useState<string[]>(allTimeSlots)
 
   // Mock data for patient details
   const mockPatientDetails = {
@@ -120,19 +134,6 @@ export function DoctorScheduleClient({
     }
   };
 
-  // Generate time slots from 9:00 to 17:00
-  useEffect(() => {
-    const slots = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const formattedHour = hour.toString().padStart(2, '0');
-        const formattedMinute = minute.toString().padStart(2, '0');
-        slots.push(`${formattedHour}:${formattedMinute}`);
-      }
-    }
-    setTimeSlots(slots);
-  }, []);
-
   // Set up mock schedule data
   useEffect(() => {
     // This would normally come from the appointments data
@@ -161,15 +162,15 @@ export function DoctorScheduleClient({
     }
     
     // Find the next appointment
-    const timeSlotIndex = slots.findIndex(slot => slot === currentTimeString);
-    if (timeSlotIndex !== -1 && timeSlotIndex < slots.length - 1) {
-      const nextTimeSlot = slots[timeSlotIndex + 1];
+    const timeSlotIndex = allTimeSlots.findIndex(slot => slot === currentTimeString);
+    if (timeSlotIndex !== -1 && timeSlotIndex < allTimeSlots.length - 1) {
+      const nextTimeSlot = allTimeSlots[timeSlotIndex + 1];
       const nextPatientName = mockSchedule[nextTimeSlot];
       if (nextPatientName) {
         setNextAppointment(mockPatientDetails[nextPatientName]);
       }
     }
-  }, []);
+  }, [allTimeSlots]);
 
   const handlePreviousDay = () => {
     const newDate = new Date(currentDate);
@@ -182,6 +183,26 @@ export function DoctorScheduleClient({
     newDate.setDate(newDate.getDate() + 1);
     setCurrentDate(newDate);
   };
+
+  // Helper component for ChevronDown icon
+  function ChevronDown(props) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -318,25 +339,5 @@ export function DoctorScheduleClient({
         </Card>
       </div>
     </div>
-  )
-}
-
-// Helper component for ChevronDown icon
-function ChevronDown(props) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
   )
 }
