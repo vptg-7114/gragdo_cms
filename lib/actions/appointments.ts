@@ -1,8 +1,7 @@
 "use server";
 
-import { readData, writeData, findById } from "@/lib/db";
+import { appointmentsApi } from '@/lib/services/api';
 import { AppointmentStatus, AppointmentType, Appointment } from "@/lib/models";
-import { createAppointment } from "@/lib/models";
 
 interface AppointmentWithDetails extends Appointment {
   patient?: {
@@ -35,52 +34,13 @@ export async function createAppointmentRecord(data: {
   createdById: string;
 }) {
   try {
-    const now = new Date().toISOString();
+    const response = await appointmentsApi.createAppointment(data);
     
-    // Generate a unique appointment ID
-    const appointmentId = `APT${Math.floor(100000 + Math.random() * 900000)}`;
-    
-    // Create appointment object
-    const newAppointment = createAppointment({
-      patientId: data.patientId,
-      doctorId: data.doctorId,
-      clinicId: data.clinicId,
-      appointmentDate: data.appointmentDate,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      duration: data.duration,
-      type: data.type,
-      concern: data.concern,
-      notes: data.notes,
-      status: AppointmentStatus.SCHEDULED,
-      isFollowUp: data.isFollowUp,
-      previousAppointmentId: data.previousAppointmentId,
-      createdById: data.createdById,
-      appointmentId,
-      createdAt: now,
-      updatedAt: now
-    });
-    
-    // Save to database
-    const appointments = await readData<Appointment[]>("appointments", []);
-    appointments.push(newAppointment as any);
-    await writeData("appointments", appointments);
-
-    // Get patient and doctor details for the response
-    const patients = await readData("patients", []);
-    const doctors = await readData("doctors", []);
-    
-    const patient = patients.find(p => p.id === data.patientId);
-    const doctor = doctors.find(d => d.id === data.doctorId);
-
-    return { 
-      success: true, 
-      appointment: {
-        ...newAppointment,
-        patient,
-        doctor
-      }
-    };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to create appointment' };
+    }
   } catch (error) {
     console.error('Error creating appointment:', error);
     return { success: false, error: 'Failed to create appointment' };
@@ -108,41 +68,13 @@ export async function updateAppointmentRecord(id: string, data: {
   followUpDate?: string;
 }) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    const response = await appointmentsApi.updateAppointment(id, data);
     
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to update appointment' };
     }
-    
-    const updatedData = {
-      ...data,
-      updatedAt: new Date().toISOString()
-    };
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
-      ...updatedData
-    };
-    
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    // Get patient and doctor details for the response
-    const patients = await readData("patients", []);
-    const doctors = await readData("doctors", []);
-    
-    const patient = patients.find(p => p.id === updatedAppointment.patientId);
-    const doctor = doctors.find(d => d.id === updatedAppointment.doctorId);
-
-    return { 
-      success: true, 
-      appointment: {
-        ...updatedAppointment,
-        patient,
-        doctor
-      }
-    };
   } catch (error) {
     console.error('Error updating appointment:', error);
     return { success: false, error: 'Failed to update appointment' };
@@ -154,28 +86,17 @@ export async function cancelAppointment(id: string, data: {
   cancelReason: string;
 }) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
-    
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
-    }
-    
-    const now = new Date().toISOString();
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
-      status: AppointmentStatus.CANCELLED,
-      cancelledAt: now,
+    const response = await appointmentsApi.updateAppointment(id, {
+      action: 'cancel',
       cancelledById: data.cancelledById,
-      cancelReason: data.cancelReason,
-      updatedAt: now
-    };
+      cancelReason: data.cancelReason
+    });
     
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    return { success: true, appointment: updatedAppointment };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to cancel appointment' };
+    }
   } catch (error) {
     console.error('Error cancelling appointment:', error);
     return { success: false, error: 'Failed to cancel appointment' };
@@ -184,15 +105,13 @@ export async function cancelAppointment(id: string, data: {
 
 export async function deleteAppointment(id: string) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const updatedAppointments = appointments.filter(a => a.id !== id);
+    const response = await appointmentsApi.deleteAppointment(id);
     
-    if (updatedAppointments.length === appointments.length) {
-      return { success: false, error: 'Appointment not found' };
+    if (response.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: response.error || 'Failed to delete appointment' };
     }
-    
-    await writeData("appointments", updatedAppointments);
-    return { success: true };
   } catch (error) {
     console.error('Error deleting appointment:', error);
     return { success: false, error: 'Failed to delete appointment' };
@@ -201,58 +120,19 @@ export async function deleteAppointment(id: string) {
 
 export async function getAppointments(clinicId?: string, doctorId?: string, patientId?: string, status?: AppointmentStatus) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    
-    // Apply filters
-    let filteredAppointments = appointments;
-    
-    if (clinicId) {
-      filteredAppointments = filteredAppointments.filter(a => a.clinicId === clinicId);
-    }
-    
-    if (doctorId) {
-      filteredAppointments = filteredAppointments.filter(a => a.doctorId === doctorId);
-    }
-    
-    if (patientId) {
-      filteredAppointments = filteredAppointments.filter(a => a.patientId === patientId);
-    }
-    
-    if (status) {
-      filteredAppointments = filteredAppointments.filter(a => a.status === status);
-    }
-    
-    // Sort by appointmentDate in descending order
-    const sortedAppointments = filteredAppointments.sort((a, b) => 
-      new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
-    );
-    
-    // Get patient and doctor details for each appointment
-    const patients = await readData("patients", []);
-    const doctors = await readData("doctors", []);
-    
-    const appointmentsWithDetails = sortedAppointments.map((appointment) => {
-      const patient = patients.find(p => p.id === appointment.patientId);
-      const doctor = doctors.find(d => d.id === appointment.doctorId);
-      
-      return {
-        ...appointment,
-        patient: patient ? {
-          id: patient.id,
-          patientId: patient.patientId,
-          name: `${patient.firstName} ${patient.lastName}`,
-          phone: patient.phone,
-          gender: patient.gender,
-          age: patient.age
-        } : undefined,
-        doctor: doctor ? {
-          id: doctor.id,
-          name: doctor.name
-        } : undefined
-      };
+    const response = await appointmentsApi.getAppointments({
+      clinicId,
+      doctorId,
+      patientId,
+      status
     });
     
-    return appointmentsWithDetails as AppointmentWithDetails[];
+    if (response.success) {
+      return response.appointments;
+    } else {
+      console.error('Error fetching appointments:', response.error);
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching appointments:', error);
     return [];
@@ -261,34 +141,14 @@ export async function getAppointments(clinicId?: string, doctorId?: string, pati
 
 export async function getAppointmentById(id: string) {
   try {
-    const appointment = await findById<Appointment>("appointments", id);
+    const response = await appointmentsApi.getAppointment(id);
     
-    if (!appointment) {
+    if (response.success) {
+      return response.appointment;
+    } else {
+      console.error('Error fetching appointment:', response.error);
       return null;
     }
-    
-    // Get patient and doctor details
-    const patients = await readData("patients", []);
-    const doctors = await readData("doctors", []);
-    
-    const patient = patients.find(p => p.id === appointment.patientId);
-    const doctor = doctors.find(d => d.id === appointment.doctorId);
-    
-    return {
-      ...appointment,
-      patient: patient ? {
-        id: patient.id,
-        patientId: patient.patientId,
-        name: `${patient.firstName} ${patient.lastName}`,
-        phone: patient.phone,
-        gender: patient.gender,
-        age: patient.age
-      } : undefined,
-      doctor: doctor ? {
-        id: doctor.id,
-        name: doctor.name
-      } : undefined
-    } as AppointmentWithDetails;
   } catch (error) {
     console.error('Error fetching appointment:', error);
     return null;
@@ -297,23 +157,13 @@ export async function getAppointmentById(id: string) {
 
 export async function checkInAppointment(id: string) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    const response = await appointmentsApi.checkInAppointment(id);
     
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to check in appointment' };
     }
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
-      status: AppointmentStatus.CHECKED_IN,
-      updatedAt: new Date().toISOString()
-    };
-    
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    return { success: true, appointment: updatedAppointment };
   } catch (error) {
     console.error('Error checking in appointment:', error);
     return { success: false, error: 'Failed to check in appointment' };
@@ -322,23 +172,13 @@ export async function checkInAppointment(id: string) {
 
 export async function startAppointment(id: string) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    const response = await appointmentsApi.startAppointment(id);
     
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to start appointment' };
     }
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
-      status: AppointmentStatus.IN_PROGRESS,
-      updatedAt: new Date().toISOString()
-    };
-    
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    return { success: true, appointment: updatedAppointment };
   } catch (error) {
     console.error('Error starting appointment:', error);
     return { success: false, error: 'Failed to start appointment' };
@@ -359,26 +199,13 @@ export async function completeAppointment(id: string, data: {
   followUpDate?: string;
 }) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    const response = await appointmentsApi.completeAppointment(id, data);
     
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to complete appointment' };
     }
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
-      status: AppointmentStatus.COMPLETED,
-      vitals: data.vitals,
-      notes: data.notes || appointments[appointmentIndex].notes,
-      followUpDate: data.followUpDate,
-      updatedAt: new Date().toISOString()
-    };
-    
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    return { success: true, appointment: updatedAppointment };
   } catch (error) {
     console.error('Error completing appointment:', error);
     return { success: false, error: 'Failed to complete appointment' };
@@ -392,29 +219,36 @@ export async function rescheduleAppointment(id: string, data: {
   duration: number;
 }) {
   try {
-    const appointments = await readData<Appointment[]>("appointments", []);
-    const appointmentIndex = appointments.findIndex(a => a.id === id);
-    
-    if (appointmentIndex === -1) {
-      return { success: false, error: 'Appointment not found' };
-    }
-    
-    const updatedAppointment = {
-      ...appointments[appointmentIndex],
+    const response = await appointmentsApi.updateAppointment(id, {
+      action: 'reschedule',
       appointmentDate: data.appointmentDate,
       startTime: data.startTime,
       endTime: data.endTime,
-      duration: data.duration,
-      status: AppointmentStatus.RESCHEDULED,
-      updatedAt: new Date().toISOString()
-    };
+      duration: data.duration
+    });
     
-    appointments[appointmentIndex] = updatedAppointment;
-    await writeData("appointments", appointments);
-    
-    return { success: true, appointment: updatedAppointment };
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to reschedule appointment' };
+    }
   } catch (error) {
     console.error('Error rescheduling appointment:', error);
     return { success: false, error: 'Failed to reschedule appointment' };
+  }
+}
+
+export async function updateAppointment(id: string, data: any) {
+  try {
+    const response = await appointmentsApi.updateAppointment(id, data);
+    
+    if (response.success) {
+      return { success: true, appointment: response.appointment };
+    } else {
+      return { success: false, error: response.error || 'Failed to update appointment' };
+    }
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    return { success: false, error: 'Failed to update appointment' };
   }
 }

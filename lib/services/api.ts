@@ -1,5 +1,7 @@
 // API client for making requests to the backend
 
+import { config } from '@/lib/config';
+
 /**
  * Base API client for making requests
  */
@@ -12,7 +14,7 @@ export const apiClient = {
    */
   async get(endpoint: string, params?: Record<string, string>) {
     try {
-      const url = new URL(`/api${endpoint}`, window.location.origin);
+      const url = new URL(`${config.api.baseUrl}${endpoint}`);
       
       // Add query parameters if provided
       if (params) {
@@ -31,6 +33,10 @@ export const apiClient = {
         credentials: 'include', // Include cookies
       });
       
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error(`API GET error for ${endpoint}:`, error);
@@ -46,7 +52,7 @@ export const apiClient = {
    */
   async post(endpoint: string, data: any) {
     try {
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,6 +60,10 @@ export const apiClient = {
         body: JSON.stringify(data),
         credentials: 'include', // Include cookies
       });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
       
       return await response.json();
     } catch (error) {
@@ -70,7 +80,7 @@ export const apiClient = {
    */
   async patch(endpoint: string, data: any) {
     try {
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -78,6 +88,10 @@ export const apiClient = {
         body: JSON.stringify(data),
         credentials: 'include', // Include cookies
       });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
       
       return await response.json();
     } catch (error) {
@@ -93,7 +107,7 @@ export const apiClient = {
    */
   async delete(endpoint: string) {
     try {
-      const response = await fetch(`/api${endpoint}`, {
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -101,9 +115,48 @@ export const apiClient = {
         credentials: 'include', // Include cookies
       });
       
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
       return await response.json();
     } catch (error) {
       console.error(`API DELETE error for ${endpoint}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Upload a file
+   * @param endpoint The API endpoint
+   * @param file The file to upload
+   * @param additionalData Additional form data
+   * @returns The response data
+   */
+  async uploadFile(endpoint: string, file: File, additionalData?: Record<string, string>) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      if (additionalData) {
+        Object.entries(additionalData).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+      }
+      
+      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Include cookies
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`API upload error for ${endpoint}:`, error);
       throw error;
     }
   }

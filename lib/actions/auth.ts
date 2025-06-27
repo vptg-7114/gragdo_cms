@@ -1,9 +1,8 @@
 'use server'
 
-import { readData } from "@/lib/db"
-import { UserRole, User } from "@/lib/types"
 import { cookies } from 'next/headers'
-import { generateToken, verifyToken } from '@/lib/services/auth'
+import { UserRole } from "@/lib/types"
+import { authApi } from '@/lib/services/api'
 
 interface LoginCredentials {
   email: string
@@ -23,48 +22,16 @@ interface SignupData {
 
 export async function login(credentials: LoginCredentials) {
   try {
-    // In a real app, you would validate credentials against a database
-    const users = await readData<User[]>("users", [])
-    const user = users.find(
-      (u) => u.email === credentials.email && u.role === credentials.role
-    )
-
-    if (!user) {
-      return { success: false, error: "Invalid credentials" }
-    }
-
-    // In a real app, you would verify the password here
-    // For demo purposes, we'll just return success
+    const response = await authApi.login(credentials.email, credentials.password, credentials.role)
     
-    // Generate JWT token with user information
-    const token = await generateToken({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      clinicId: user.clinicId,
-      clinicIds: user.clinicIds
-    });
-    
-    // Set auth cookie directly
-    const cookieStore = cookies();
-    cookieStore.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: '/',
-    });
-
-    return {
-      success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        clinicId: user.clinicId,
-        clinicIds: user.clinicIds
+    if (response.success) {
+      // The cookie is set by the backend, so we don't need to set it here
+      return {
+        success: true,
+        user: response.user
       }
+    } else {
+      return { success: false, error: response.error || "Invalid credentials" }
     }
   } catch (error) {
     console.error("Error during login:", error)
@@ -74,41 +41,16 @@ export async function login(credentials: LoginCredentials) {
 
 export async function signup(data: SignupData) {
   try {
-    // In a real app, you would create a new user in the database
-    // For demo purposes, we'll just return success
+    const response = await authApi.signup(data)
     
-    const fullName = `${data.firstName} ${data.lastName}`.trim()
-    
-    // Generate a mock user ID
-    const userId = Math.random().toString(36).substring(2, 15);
-    
-    // Generate JWT token with user information
-    const token = await generateToken({
-      id: userId,
-      name: fullName,
-      email: data.email,
-      role: data.role,
-      clinicId: data.clinicId
-    });
-    
-    // Set auth cookie directly
-    const cookieStore = cookies();
-    cookieStore.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: '/',
-    });
-    
-    return {
-      success: true,
-      user: {
-        id: userId,
-        name: fullName,
-        email: data.email,
-        role: data.role,
-        clinicId: data.clinicId
+    if (response.success) {
+      // The cookie is set by the backend, so we don't need to set it here
+      return {
+        success: true,
+        user: response.user
       }
+    } else {
+      return { success: false, error: response.error || "Signup failed" }
     }
   } catch (error) {
     console.error("Error during signup:", error)
@@ -118,10 +60,13 @@ export async function signup(data: SignupData) {
 
 export async function forgotPassword(email: string) {
   try {
-    // In a real app, you would send a password reset email
-    // For demo purposes, we'll just return success
+    const response = await authApi.forgotPassword(email)
     
-    return { success: true, message: "Password reset email sent" }
+    return { 
+      success: response.success, 
+      message: response.message,
+      error: response.error 
+    }
   } catch (error) {
     console.error("Error during password reset:", error)
     return { success: false, error: "An error occurred during password reset" }
@@ -130,20 +75,13 @@ export async function forgotPassword(email: string) {
 
 export async function resetPassword(token: string, newPassword: string) {
   try {
-    // In a real app, you would validate the token and update the user's password
-    // For demo purposes, we'll just return success
+    const response = await authApi.resetPassword(token, newPassword)
     
-    // Validate token (mock validation)
-    if (!token || token.length < 10) {
-      return { success: false, error: "Invalid or expired token" }
+    return { 
+      success: response.success, 
+      message: response.message,
+      error: response.error 
     }
-    
-    // Validate password
-    if (!newPassword || newPassword.length < 6) {
-      return { success: false, error: "Password must be at least 6 characters" }
-    }
-    
-    return { success: true, message: "Password reset successful" }
   } catch (error) {
     console.error("Error during password reset:", error)
     return { success: false, error: "An error occurred during password reset" }
@@ -166,34 +104,30 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string, 
 }
 
 export async function logout() {
-  // Clear the auth cookie directly
-  const cookieStore = cookies();
-  cookieStore.delete('auth-token');
-  
-  return { success: true }
+  try {
+    await authApi.logout()
+    
+    // Clear the auth cookie on the client side as well
+    cookies().delete('auth-token')
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Error during logout:", error)
+    return { success: false, error: "An error occurred during logout" }
+  }
 }
 
 export async function getCurrentUser(token?: string) {
-  if (!token) {
-    return null;
-  }
-  
   try {
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return null;
+    const response = await authApi.getCurrentUser()
+    
+    if (response.success) {
+      return response.user
     }
     
-    return {
-      id: payload.id,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role as UserRole,
-      clinicId: payload.clinicId as string | undefined,
-      clinicIds: payload.clinicIds as string[] | undefined
-    };
+    return null
   } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
+    console.error('Error getting current user:', error)
+    return null
   }
 }

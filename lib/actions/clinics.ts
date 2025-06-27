@@ -1,7 +1,7 @@
 "use server";
 
-import { readData, writeData } from "@/lib/db";
 import { Clinic } from "@/lib/types";
+import { clinicsApi } from '@/lib/services/api';
 import { generateId } from "@/lib/utils";
 
 export async function createClinic(data: {
@@ -13,21 +13,19 @@ export async function createClinic(data: {
   createdById: string;
 }) {
   try {
-    const now = new Date().toISOString();
+    const response = await clinicsApi.createClinic({
+      name: data.name,
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+      description: data.description
+    });
     
-    const clinics = await readData<Clinic[]>("clinics");
-    
-    const newClinic: Clinic = {
-      id: `cli-${generateId(6)}`,
-      ...data,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    clinics.push(newClinic);
-    await writeData("clinics", clinics);
-
-    return { success: true, clinic: newClinic };
+    if (response.success) {
+      return { success: true, clinic: response.clinic };
+    } else {
+      return { success: false, error: response.error || 'Failed to create clinic' };
+    }
   } catch (error) {
     console.error('Error creating clinic:', error);
     return { success: false, error: 'Failed to create clinic' };
@@ -42,27 +40,13 @@ export async function updateClinic(id: string, data: {
   description?: string;
 }) {
   try {
-    const clinics = await readData<Clinic[]>("clinics");
-    const clinicIndex = clinics.findIndex(c => c.id === id);
+    const response = await clinicsApi.updateClinic(id, data);
     
-    if (clinicIndex === -1) {
-      return { success: false, error: 'Clinic not found' };
+    if (response.success) {
+      return { success: true, clinic: response.clinic };
+    } else {
+      return { success: false, error: response.error || 'Failed to update clinic' };
     }
-    
-    const updatedData = {
-      ...data,
-      updatedAt: new Date().toISOString()
-    };
-    
-    const updatedClinic = {
-      ...clinics[clinicIndex],
-      ...updatedData
-    };
-    
-    clinics[clinicIndex] = updatedClinic;
-    await writeData("clinics", clinics);
-    
-    return { success: true, clinic: updatedClinic };
   } catch (error) {
     console.error('Error updating clinic:', error);
     return { success: false, error: 'Failed to update clinic' };
@@ -71,15 +55,13 @@ export async function updateClinic(id: string, data: {
 
 export async function deleteClinic(id: string) {
   try {
-    const clinics = await readData<Clinic[]>("clinics");
-    const updatedClinics = clinics.filter(c => c.id !== id);
+    const response = await clinicsApi.deleteClinic(id);
     
-    if (updatedClinics.length === clinics.length) {
-      return { success: false, error: 'Clinic not found' };
+    if (response.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: response.error || 'Failed to delete clinic' };
     }
-    
-    await writeData("clinics", updatedClinics);
-    return { success: true };
   } catch (error) {
     console.error('Error deleting clinic:', error);
     return { success: false, error: 'Failed to delete clinic' };
@@ -88,32 +70,14 @@ export async function deleteClinic(id: string) {
 
 export async function getClinics() {
   try {
-    const clinics = await readData<Clinic[]>("clinics");
+    const response = await clinicsApi.getClinics();
     
-    // Sort by name in ascending order
-    const sortedClinics = clinics.sort((a, b) => a.name.localeCompare(b.name));
-    
-    // Add stats for each clinic
-    const patients = await readData("patients");
-    const appointments = await readData("appointments");
-    const doctors = await readData("doctors");
-    
-    const clinicsWithStats = sortedClinics.map(clinic => {
-      const clinicPatients = patients.filter(p => p.clinicId === clinic.id);
-      const clinicAppointments = appointments.filter(a => a.clinicId === clinic.id);
-      const clinicDoctors = doctors.filter(d => d.clinicId === clinic.id);
-      
-      return {
-        ...clinic,
-        stats: {
-          patients: clinicPatients.length,
-          appointments: clinicAppointments.length,
-          doctors: clinicDoctors.length
-        }
-      };
-    });
-    
-    return clinicsWithStats;
+    if (response.success) {
+      return response.clinics;
+    } else {
+      console.error('Error fetching clinics:', response.error);
+      return [];
+    }
   } catch (error) {
     console.error('Error fetching clinics:', error);
     return [];
@@ -122,30 +86,14 @@ export async function getClinics() {
 
 export async function getClinicById(id: string) {
   try {
-    const clinics = await readData<Clinic[]>("clinics");
-    const clinic = clinics.find(c => c.id === id);
+    const response = await clinicsApi.getClinic(id);
     
-    if (!clinic) {
+    if (response.success) {
+      return response.clinic;
+    } else {
+      console.error('Error fetching clinic:', response.error);
       return null;
     }
-    
-    // Add stats for the clinic
-    const patients = await readData("patients");
-    const appointments = await readData("appointments");
-    const doctors = await readData("doctors");
-    
-    const clinicPatients = patients.filter(p => p.clinicId === clinic.id);
-    const clinicAppointments = appointments.filter(a => a.clinicId === clinic.id);
-    const clinicDoctors = doctors.filter(d => d.clinicId === clinic.id);
-    
-    return {
-      ...clinic,
-      stats: {
-        patients: clinicPatients.length,
-        appointments: clinicAppointments.length,
-        doctors: clinicDoctors.length
-      }
-    };
   } catch (error) {
     console.error('Error fetching clinic:', error);
     return null;
