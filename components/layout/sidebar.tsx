@@ -185,12 +185,6 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['USER']
     },
     {
-      name: "Clinics",
-      href: "/clinics",
-      icon: Building2,
-      roles: ['USER']
-    },
-    {
       name: "Settings",
       href: "/settings",
       icon: Settings,
