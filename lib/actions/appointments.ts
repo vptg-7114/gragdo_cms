@@ -1,38 +1,59 @@
 "use server";
 
-import { readData, writeData } from "@/lib/db";
-import { AppointmentStatus, Appointment } from "@/lib/types";
+import { readData, writeData, findById } from "@/lib/db";
+import { AppointmentStatus, AppointmentType, Appointment } from "@/lib/models";
+import { createAppointment } from "@/lib/models";
 
-export async function createAppointment(data: {
+export async function createAppointmentRecord(data: {
   patientId: string;
   doctorId: string;
   clinicId: string;
-  appointmentDate: Date;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
   duration: number;
+  type: AppointmentType;
   concern: string;
   notes?: string;
+  isFollowUp: boolean;
+  previousAppointmentId?: string;
   createdById: string;
 }) {
   try {
     const now = new Date().toISOString();
     
-    const appointments = await readData<Appointment[]>("appointments");
+    // Generate a unique appointment ID
+    const appointmentId = `APT${Math.floor(100000 + Math.random() * 900000)}`;
     
-    const newAppointment: Appointment = {
-      id: `apt-${(appointments.length + 1).toString().padStart(3, '0')}`,
-      ...data,
-      appointmentDate: data.appointmentDate.toISOString(),
-      status: AppointmentStatus.PENDING,
+    // Create appointment object
+    const newAppointment = createAppointment({
+      patientId: data.patientId,
+      doctorId: data.doctorId,
+      clinicId: data.clinicId,
+      appointmentDate: data.appointmentDate,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      duration: data.duration,
+      type: data.type,
+      concern: data.concern,
+      notes: data.notes,
+      status: AppointmentStatus.SCHEDULED,
+      isFollowUp: data.isFollowUp,
+      previousAppointmentId: data.previousAppointmentId,
+      createdById: data.createdById,
+      appointmentId,
       createdAt: now,
       updatedAt: now
-    };
+    });
     
-    appointments.push(newAppointment);
+    // Save to database
+    const appointments = await readData<Appointment[]>("appointments", []);
+    appointments.push(newAppointment as any);
     await writeData("appointments", appointments);
 
     // Get patient and doctor details for the response
-    const patients = await readData("patients");
-    const doctors = await readData("doctors");
+    const patients = await readData("patients", []);
+    const doctors = await readData("doctors", []);
     
     const patient = patients.find(p => p.id === data.patientId);
     const doctor = doctors.find(d => d.id === data.doctorId);
@@ -51,24 +72,36 @@ export async function createAppointment(data: {
   }
 }
 
-export async function updateAppointment(id: string, data: {
-  appointmentDate?: Date;
+export async function updateAppointmentRecord(id: string, data: {
+  appointmentDate?: string;
+  startTime?: string;
+  endTime?: string;
   duration?: number;
+  type?: AppointmentType;
   concern?: string;
   notes?: string;
   status?: AppointmentStatus;
+  vitals?: {
+    temperature?: number;
+    bloodPressure?: string;
+    heartRate?: number;
+    respiratoryRate?: number;
+    oxygenSaturation?: number;
+    weight?: number;
+    height?: number;
+  };
+  followUpDate?: string;
 }) {
   try {
-    const appointments = await readData<Appointment[]>("appointments");
+    const appointments = await readData<Appointment[]>("appointments", []);
     const appointmentIndex = appointments.findIndex(a => a.id === id);
     
     if (appointmentIndex === -1) {
       return { success: false, error: 'Appointment not found' };
     }
     
-    const updatedData: Partial<Appointment> = {
+    const updatedData = {
       ...data,
-      appointmentDate: data.appointmentDate ? data.appointmentDate.toISOString() : undefined,
       updatedAt: new Date().toISOString()
     };
     
@@ -81,8 +114,8 @@ export async function updateAppointment(id: string, data: {
     await writeData("appointments", appointments);
     
     // Get patient and doctor details for the response
-    const patients = await readData("patients");
-    const doctors = await readData("doctors");
+    const patients = await readData("patients", []);
+    const doctors = await readData("doctors", []);
     
     const patient = patients.find(p => p.id === updatedAppointment.patientId);
     const doctor = doctors.find(d => d.id === updatedAppointment.doctorId);
@@ -101,9 +134,42 @@ export async function updateAppointment(id: string, data: {
   }
 }
 
+export async function cancelAppointment(id: string, data: {
+  cancelledById: string;
+  cancelReason: string;
+}) {
+  try {
+    const appointments = await readData<Appointment[]>("appointments", []);
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    
+    if (appointmentIndex === -1) {
+      return { success: false, error: 'Appointment not found' };
+    }
+    
+    const now = new Date().toISOString();
+    
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      status: AppointmentStatus.CANCELLED,
+      cancelledAt: now,
+      cancelledById: data.cancelledById,
+      cancelReason: data.cancelReason,
+      updatedAt: now
+    };
+    
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
+    
+    return { success: true, appointment: updatedAppointment };
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    return { success: false, error: 'Failed to cancel appointment' };
+  }
+}
+
 export async function deleteAppointment(id: string) {
   try {
-    const appointments = await readData<Appointment[]>("appointments");
+    const appointments = await readData<Appointment[]>("appointments", []);
     const updatedAppointments = appointments.filter(a => a.id !== id);
     
     if (updatedAppointments.length === appointments.length) {
@@ -118,9 +184,9 @@ export async function deleteAppointment(id: string) {
   }
 }
 
-export async function getAppointments(clinicId?: string, doctorId?: string, patientId?: string) {
+export async function getAppointments(clinicId?: string, doctorId?: string, patientId?: string, status?: AppointmentStatus) {
   try {
-    const appointments = await readData<Appointment[]>("appointments");
+    const appointments = await readData<Appointment[]>("appointments", []);
     
     // Apply filters
     let filteredAppointments = appointments;
@@ -137,14 +203,18 @@ export async function getAppointments(clinicId?: string, doctorId?: string, pati
       filteredAppointments = filteredAppointments.filter(a => a.patientId === patientId);
     }
     
+    if (status) {
+      filteredAppointments = filteredAppointments.filter(a => a.status === status);
+    }
+    
     // Sort by appointmentDate in descending order
     const sortedAppointments = filteredAppointments.sort((a, b) => 
       new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
     );
     
     // Get patient and doctor details for each appointment
-    const patients = await readData("patients");
-    const doctors = await readData("doctors");
+    const patients = await readData("patients", []);
+    const doctors = await readData("doctors", []);
     
     const appointmentsWithDetails = sortedAppointments.map((appointment) => {
       const patient = patients.find(p => p.id === appointment.patientId);
@@ -152,9 +222,18 @@ export async function getAppointments(clinicId?: string, doctorId?: string, pati
       
       return {
         ...appointment,
-        patient,
-        doctor,
-        appointmentDate: new Date(appointment.appointmentDate)
+        patient: patient ? {
+          id: patient.id,
+          patientId: patient.patientId,
+          name: `${patient.firstName} ${patient.lastName}`,
+          phone: patient.phone,
+          gender: patient.gender,
+          age: patient.age
+        } : undefined,
+        doctor: doctor ? {
+          id: doctor.id,
+          name: doctor.name
+        } : undefined
       };
     });
     
@@ -167,28 +246,160 @@ export async function getAppointments(clinicId?: string, doctorId?: string, pati
 
 export async function getAppointmentById(id: string) {
   try {
-    const appointments = await readData<Appointment[]>("appointments");
-    const appointment = appointments.find(a => a.id === id);
+    const appointment = await findById<Appointment>("appointments", id);
     
     if (!appointment) {
       return null;
     }
     
     // Get patient and doctor details
-    const patients = await readData("patients");
-    const doctors = await readData("doctors");
+    const patients = await readData("patients", []);
+    const doctors = await readData("doctors", []);
     
     const patient = patients.find(p => p.id === appointment.patientId);
     const doctor = doctors.find(d => d.id === appointment.doctorId);
     
     return {
       ...appointment,
-      patient,
-      doctor,
-      appointmentDate: new Date(appointment.appointmentDate)
+      patient: patient ? {
+        id: patient.id,
+        patientId: patient.patientId,
+        name: `${patient.firstName} ${patient.lastName}`,
+        phone: patient.phone,
+        gender: patient.gender,
+        age: patient.age
+      } : undefined,
+      doctor: doctor ? {
+        id: doctor.id,
+        name: doctor.name
+      } : undefined
     };
   } catch (error) {
     console.error('Error fetching appointment:', error);
     return null;
+  }
+}
+
+export async function checkInAppointment(id: string) {
+  try {
+    const appointments = await readData<Appointment[]>("appointments", []);
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    
+    if (appointmentIndex === -1) {
+      return { success: false, error: 'Appointment not found' };
+    }
+    
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      status: AppointmentStatus.CHECKED_IN,
+      updatedAt: new Date().toISOString()
+    };
+    
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
+    
+    return { success: true, appointment: updatedAppointment };
+  } catch (error) {
+    console.error('Error checking in appointment:', error);
+    return { success: false, error: 'Failed to check in appointment' };
+  }
+}
+
+export async function startAppointment(id: string) {
+  try {
+    const appointments = await readData<Appointment[]>("appointments", []);
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    
+    if (appointmentIndex === -1) {
+      return { success: false, error: 'Appointment not found' };
+    }
+    
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      status: AppointmentStatus.IN_PROGRESS,
+      updatedAt: new Date().toISOString()
+    };
+    
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
+    
+    return { success: true, appointment: updatedAppointment };
+  } catch (error) {
+    console.error('Error starting appointment:', error);
+    return { success: false, error: 'Failed to start appointment' };
+  }
+}
+
+export async function completeAppointment(id: string, data: {
+  vitals?: {
+    temperature?: number;
+    bloodPressure?: string;
+    heartRate?: number;
+    respiratoryRate?: number;
+    oxygenSaturation?: number;
+    weight?: number;
+    height?: number;
+  };
+  notes?: string;
+  followUpDate?: string;
+}) {
+  try {
+    const appointments = await readData<Appointment[]>("appointments", []);
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    
+    if (appointmentIndex === -1) {
+      return { success: false, error: 'Appointment not found' };
+    }
+    
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      status: AppointmentStatus.COMPLETED,
+      vitals: data.vitals,
+      notes: data.notes || appointments[appointmentIndex].notes,
+      followUpDate: data.followUpDate,
+      updatedAt: new Date().toISOString()
+    };
+    
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
+    
+    return { success: true, appointment: updatedAppointment };
+  } catch (error) {
+    console.error('Error completing appointment:', error);
+    return { success: false, error: 'Failed to complete appointment' };
+  }
+}
+
+export async function rescheduleAppointment(id: string, data: {
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+}) {
+  try {
+    const appointments = await readData<Appointment[]>("appointments", []);
+    const appointmentIndex = appointments.findIndex(a => a.id === id);
+    
+    if (appointmentIndex === -1) {
+      return { success: false, error: 'Appointment not found' };
+    }
+    
+    const updatedAppointment = {
+      ...appointments[appointmentIndex],
+      appointmentDate: data.appointmentDate,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      duration: data.duration,
+      status: AppointmentStatus.RESCHEDULED,
+      updatedAt: new Date().toISOString()
+    };
+    
+    appointments[appointmentIndex] = updatedAppointment;
+    await writeData("appointments", appointments);
+    
+    return { success: true, appointment: updatedAppointment };
+  } catch (error) {
+    console.error('Error rescheduling appointment:', error);
+    return { success: false, error: 'Failed to reschedule appointment' };
   }
 }

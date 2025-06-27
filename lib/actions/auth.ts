@@ -3,6 +3,7 @@
 import { readData } from "@/lib/db"
 import { UserRole, User } from "@/lib/types"
 import { cookies } from 'next/headers'
+import { generateToken, setAuthCookie, clearAuthCookie, verifyToken } from '@/lib/services/auth'
 
 interface LoginCredentials {
   email: string
@@ -23,7 +24,6 @@ interface SignupData {
 export async function login(credentials: LoginCredentials) {
   try {
     // In a real app, you would validate credentials against a database
-    // For demo purposes, we'll just check if the user exists
     const users = await readData<User[]>("users", [])
     const user = users.find(
       (u) => u.email === credentials.email && u.role === credentials.role
@@ -36,16 +36,18 @@ export async function login(credentials: LoginCredentials) {
     // In a real app, you would verify the password here
     // For demo purposes, we'll just return success
     
-    // Set auth cookie in a real app
-    const cookieStore = cookies()
-    // Generate a JWT token with user information
-    // const token = generateAuthToken(user)
-    // cookieStore.set('auth-token', token, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   maxAge: 60 * 60 * 24 * 7, // 1 week
-    //   path: '/',
-    // })
+    // Generate JWT token with user information
+    const token = await generateToken({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      clinicId: user.clinicId,
+      clinicIds: user.clinicIds
+    });
+    
+    // Set auth cookie
+    setAuthCookie(token);
 
     return {
       success: true,
@@ -71,10 +73,25 @@ export async function signup(data: SignupData) {
     
     const fullName = `${data.firstName} ${data.lastName}`.trim()
     
+    // Generate a mock user ID
+    const userId = Math.random().toString(36).substring(2, 15);
+    
+    // Generate JWT token with user information
+    const token = await generateToken({
+      id: userId,
+      name: fullName,
+      email: data.email,
+      role: data.role,
+      clinicId: data.clinicId
+    });
+    
+    // Set auth cookie
+    setAuthCookie(token);
+    
     return {
       success: true,
       user: {
-        id: Math.random().toString(36).substring(2, 15),
+        id: userId,
         name: fullName,
         email: data.email,
         role: data.role,
@@ -138,22 +155,34 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string, 
 
 export async function logout() {
   // Clear the auth cookie
-  const cookieStore = cookies()
-  cookieStore.delete('auth-token')
+  clearAuthCookie();
   
   return { success: true }
 }
 
-// This function would verify and decode the JWT token in a real app
-function verifyAndDecodeToken(token: string) {
-  // In a real app, you would use a library like jsonwebtoken to verify and decode the token
-  // For demo purposes, we'll just return a mock user ID
-  return 'default-user'
-}
-
-// This function would generate a JWT token in a real app
-function generateAuthToken(user: User) {
-  // In a real app, you would use a library like jsonwebtoken to generate a token
-  // For demo purposes, we'll just return a mock token
-  return 'mock-token'
+export async function getCurrentUser() {
+  const token = cookies().get('auth-token')?.value;
+  
+  if (!token) {
+    return null;
+  }
+  
+  try {
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return null;
+    }
+    
+    return {
+      id: payload.id,
+      name: payload.name,
+      email: payload.email,
+      role: payload.role,
+      clinicId: payload.clinicId,
+      clinicIds: payload.clinicIds
+    };
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
 }

@@ -2,15 +2,16 @@
 
 import { readData, writeData, findById } from '@/lib/db';
 import { UserRole, User } from '@/lib/types';
+import { verifyToken } from '@/lib/services/auth';
 
 export async function getUserProfile(userId?: string, token?: string) {
   try {
-    // In a real app, if userId is not provided, we would get it from the auth token
+    // If token is provided, verify and extract user ID
     if (!userId && token) {
-      // Verify and decode the token to get the user ID
-      // userId = verifyAndDecodeToken(token);
-      
-      // For now, we'll continue with the demo user if no userId is provided
+      const payload = await verifyToken(token);
+      if (payload) {
+        userId = payload.id;
+      }
     }
 
     if (!userId) {
@@ -117,11 +118,4 @@ export async function updateUserProfile(userId: string, data: {
     console.error('Error updating user profile:', error);
     return { success: false, error: 'Failed to update profile' };
   }
-}
-
-// Helper function to verify and decode JWT token (would be implemented in a real app)
-function verifyAndDecodeToken(token: string): string | null {
-  // In a real app, this would verify the JWT signature and decode the payload
-  // For demo purposes, we'll just return a mock user ID
-  return 'default-user';
 }

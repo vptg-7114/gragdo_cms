@@ -1,133 +1,306 @@
 'use server'
 
-import { readData, writeData, findById, getRelatedData } from '@/lib/db';
-import { Prescription, Patient, Doctor, EnhancedPrescription } from '@/lib/types';
+import { readData, writeData, findById } from '@/lib/db';
+import { Prescription, Patient, Doctor, DocumentType } from '@/lib/models';
+import { createPrescription } from '@/lib/models';
+import { uploadFile, deleteFile, generateFileKey } from '@/lib/services/s3';
 
-interface RawPrescription {
-  id: string;
+export async function createPrescriptionRecord(data: {
   patientId: string;
   doctorId: string;
+  clinicId: string;
+  appointmentId: string;
+  diagnosis: string;
+  medications: {
+    name: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+    instructions?: string;
+    medicineId?: string;
+    quantity: number;
+  }[];
+  instructions?: string;
+  followUpDate?: string;
+  document?: {
+    file: Buffer;
+    contentType: string;
+  };
+  createdById: string;
+}) {
+  try {
+    const now = new Date().toISOString();
+    
+    // Generate a unique prescription ID
+    const prescriptionId = `PRE${Math.floor(100000 + Math.random() * 900000)}`;
+    
+    // Process document if provided
+    let documentUrl;
+    if (data.document) {
+      const key = generateFileKey('prescriptions', `prescription_${prescriptionId}.pdf`);
+      documentUrl = await uploadFile(data.document.file, key, data.document.contentType);
+    }
+    
+    // Create prescription object
+    const newPrescription = createPrescription({
+      patientId: data.patientId,
+      doctorId: data.doctorId,
+      clinicId: data.clinicId,
+      appointmentId: data.appointmentId,
+      diagnosis: data.diagnosis,
+      medications: data.medications.map(med => ({
+        id: `med-${Math.random().toString(36).substring(2, 10)}`,
+        ...med
+      })),
+      instructions: data.instructions,
+      followUpDate: data.followUpDate,
+      documentUrl,
+      prescriptionId,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now
+    });
+    
+    // Save to database
+    const prescriptions = await readData<Prescription[]>("prescriptions", []);
+    prescriptions.push(newPrescription as any);
+    await writeData("prescriptions", prescriptions);
+    
+    // If document was uploaded, also save it as a patient document
+    if (documentUrl) {
+      const patients = await readData("patients", []);
+      const patientIndex = patients.findIndex(p => p.id === data.patientId);
+      
+      if (patientIndex !== -1) {
+        const patient = patients[patientIndex];
+        const documents = [...(patient.documents || [])];
+        
+        documents.push({
+          id: `doc-${Math.random().toString(36).substring(2, 10)}`,
+          documentId: `DOC${Math.floor(100000 + Math.random() * 900000)}`,
+          name: `Prescription_${prescriptionId}.pdf`,
+          type: DocumentType.PRESCRIPTION,
+          url: documentUrl,
+          size: data.document.file.length,
+          patientId: data.patientId,
+          appointmentId: data.appointmentId,
+          uploadedById: data.createdById,
+          clinicId: data.clinicId,
+          createdAt: now,
+          updatedAt: now
+        });
+        
+        patients[patientIndex] = {
+          ...patient,
+          documents,
+          updatedAt: now
+        };
+        
+        await writeData("patients", patients);
+      }
+    }
+
+    return { success: true, prescription: newPrescription };
+  } catch (error) {
+    console.error('Error creating prescription:', error);
+    return { success: false, error: 'Failed to create prescription' };
+  }
+}
+
+export async function updatePrescriptionRecord(id: string, data: {
   diagnosis?: string;
-  medications?: string;
-  createdAt: string;
+  medications?: {
+    id?: string;
+    name: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+    instructions?: string;
+    medicineId?: string;
+    quantity: number;
+  }[];
+  instructions?: string;
+  followUpDate?: string;
+  isActive?: boolean;
+  document?: {
+    file: Buffer;
+    contentType: string;
+  };
+}) {
+  try {
+    const prescriptions = await readData<Prescription[]>("prescriptions", []);
+    const prescriptionIndex = prescriptions.findIndex(p => p.id === id);
+    
+    if (prescriptionIndex === -1) {
+      return { success: false, error: 'Prescription not found' };
+    }
+    
+    const now = new Date().toISOString();
+    
+    // Process document if provided
+    let documentUrl = prescriptions[prescriptionIndex].documentUrl;
+    if (data.document) {
+      // Delete old document if it exists
+      if (documentUrl) {
+        try {
+          const urlParts = new URL(documentUrl);
+          const key = urlParts.pathname.substring(1); // Remove leading slash
+          await deleteFile(key);
+        } catch (error) {
+          console.error('Error deleting old prescription document:', error);
+          // Continue even if deletion fails
+        }
+      }
+      
+      // Upload new document
+      const key = generateFileKey('prescriptions', `prescription_${prescriptions[prescriptionIndex].prescriptionId}.pdf`);
+      documentUrl = await uploadFile(data.document.file, key, data.document.contentType);
+    }
+    
+    // Process medications
+    let medications = prescriptions[prescriptionIndex].medications;
+    if (data.medications) {
+      medications = data.medications.map(med => ({
+        id: med.id || `med-${Math.random().toString(36).substring(2, 10)}`,
+        ...med
+      }));
+    }
+    
+    const updatedData = {
+      ...data,
+      medications,
+      documentUrl,
+      updatedAt: now
+    };
+    
+    const updatedPrescription = {
+      ...prescriptions[prescriptionIndex],
+      ...updatedData
+    };
+    
+    prescriptions[prescriptionIndex] = updatedPrescription;
+    await writeData("prescriptions", prescriptions);
+    
+    // If document was updated, also update it in patient documents
+    if (data.document && documentUrl) {
+      const patients = await readData("patients", []);
+      const patientIndex = patients.findIndex(p => p.id === updatedPrescription.patientId);
+      
+      if (patientIndex !== -1) {
+        const patient = patients[patientIndex];
+        let documents = [...(patient.documents || [])];
+        
+        // Find existing document for this prescription
+        const docIndex = documents.findIndex(d => 
+          d.type === DocumentType.PRESCRIPTION && 
+          d.name.includes(updatedPrescription.prescriptionId)
+        );
+        
+        if (docIndex !== -1) {
+          // Update existing document
+          documents[docIndex] = {
+            ...documents[docIndex],
+            url: documentUrl,
+            size: data.document.file.length,
+            updatedAt: now
+          };
+        } else {
+          // Add new document
+          documents.push({
+            id: `doc-${Math.random().toString(36).substring(2, 10)}`,
+            documentId: `DOC${Math.floor(100000 + Math.random() * 900000)}`,
+            name: `Prescription_${updatedPrescription.prescriptionId}.pdf`,
+            type: DocumentType.PRESCRIPTION,
+            url: documentUrl,
+            size: data.document.file.length,
+            patientId: updatedPrescription.patientId,
+            appointmentId: updatedPrescription.appointmentId,
+            uploadedById: patient.createdById,
+            clinicId: updatedPrescription.clinicId,
+            createdAt: now,
+            updatedAt: now
+          });
+        }
+        
+        patients[patientIndex] = {
+          ...patient,
+          documents,
+          updatedAt: now
+        };
+        
+        await writeData("patients", patients);
+      }
+    }
+    
+    return { success: true, prescription: updatedPrescription };
+  } catch (error) {
+    console.error('Error updating prescription:', error);
+    return { success: false, error: 'Failed to update prescription' };
+  }
+}
+
+export async function deletePrescriptionRecord(id: string) {
+  try {
+    const prescriptions = await readData<Prescription[]>("prescriptions", []);
+    const prescription = prescriptions.find(p => p.id === id);
+    
+    if (!prescription) {
+      return { success: false, error: 'Prescription not found' };
+    }
+    
+    // Delete document from S3 if it exists
+    if (prescription.documentUrl) {
+      try {
+        const urlParts = new URL(prescription.documentUrl);
+        const key = urlParts.pathname.substring(1); // Remove leading slash
+        await deleteFile(key);
+      } catch (error) {
+        console.error('Error deleting prescription document:', error);
+        // Continue even if deletion fails
+      }
+    }
+    
+    // Remove prescription from database
+    const updatedPrescriptions = prescriptions.filter(p => p.id !== id);
+    await writeData("prescriptions", updatedPrescriptions);
+    
+    // Also remove the document from patient documents
+    if (prescription.documentUrl) {
+      const patients = await readData("patients", []);
+      const patientIndex = patients.findIndex(p => p.id === prescription.patientId);
+      
+      if (patientIndex !== -1) {
+        const patient = patients[patientIndex];
+        const documents = (patient.documents || []).filter(d => 
+          !(d.type === DocumentType.PRESCRIPTION && d.name.includes(prescription.prescriptionId))
+        );
+        
+        patients[patientIndex] = {
+          ...patient,
+          documents,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await writeData("patients", patients);
+      }
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting prescription:', error);
+    return { success: false, error: 'Failed to delete prescription' };
+  }
 }
 
 export async function getPrescriptions(clinicId?: string, doctorId?: string, patientId?: string) {
   try {
-    const rawPrescriptions = await readData<RawPrescription[]>('prescriptions', []);
-    
-    if (rawPrescriptions.length === 0) {
-      // Return mock data for demo purposes
-      return [
-        {
-          id: '1',
-          patientId: '123456',
-          patientName: 'K. Vijay',
-          doctorName: 'K. Ranganath',
-          concern: 'Heart problem',
-          gender: 'M',
-          age: 22,
-          reports: [
-            {
-              id: '1',
-              name: 'Blood Test Report.pdf',
-              type: 'PDF',
-              url: '/mock-reports/blood-test.pdf',
-              size: '2.4 MB'
-            },
-            {
-              id: '2',
-              name: 'ECG Report.jpg',
-              type: 'Image',
-              url: '/mock-reports/ecg.jpg',
-              size: '1.8 MB'
-            }
-          ],
-          prescriptions: [
-            {
-              id: '1',
-              name: 'Prescription_Jan_2024.pdf',
-              type: 'PDF',
-              url: '/mock-prescriptions/prescription-jan.pdf',
-              size: '1.2 MB'
-            }
-          ],
-          createdAt: new Date('2024-01-15')
-        },
-        {
-          id: '2',
-          patientId: '454575',
-          patientName: 'P. Sandeep',
-          doctorName: 'L. Satya',
-          concern: 'General checkup',
-          gender: 'M',
-          age: 30,
-          reports: [
-            {
-              id: '3',
-              name: 'General Checkup Report.pdf',
-              type: 'PDF',
-              url: '/mock-reports/general-checkup.pdf',
-              size: '3.1 MB'
-            }
-          ],
-          prescriptions: [
-            {
-              id: '2',
-              name: 'Prescription_Jan_2024.pdf',
-              type: 'PDF',
-              url: '/mock-prescriptions/prescription-jan-2.pdf',
-              size: '1.5 MB'
-            }
-          ],
-          createdAt: new Date('2024-01-10')
-        },
-        {
-          id: '3',
-          patientId: '787764',
-          patientName: 'Ch. Asritha',
-          doctorName: 'G. Anitha',
-          concern: 'PCOD',
-          gender: 'F',
-          age: 25,
-          reports: [
-            {
-              id: '4',
-              name: 'Ultrasound Report.pdf',
-              type: 'PDF',
-              url: '/mock-reports/ultrasound.pdf',
-              size: '2.8 MB'
-            },
-            {
-              id: '5',
-              name: 'Hormone Test.pdf',
-              type: 'PDF',
-              url: '/mock-reports/hormone-test.pdf',
-              size: '1.9 MB'
-            }
-          ],
-          prescriptions: [
-            {
-              id: '3',
-              name: 'PCOD_Treatment_Plan.pdf',
-              type: 'PDF',
-              url: '/mock-prescriptions/pcod-treatment.pdf',
-              size: '2.2 MB'
-            }
-          ],
-          createdAt: new Date('2024-01-08')
-        }
-      ];
-    }
+    const prescriptions = await readData<Prescription[]>("prescriptions", []);
     
     // Filter prescriptions if parameters are provided
-    let filteredPrescriptions = rawPrescriptions;
+    let filteredPrescriptions = prescriptions;
     
     if (clinicId) {
-      filteredPrescriptions = filteredPrescriptions.filter(p => {
-        const prescription = p as unknown as Prescription;
-        return prescription.clinicId === clinicId;
-      });
+      filteredPrescriptions = filteredPrescriptions.filter(p => p.clinicId === clinicId);
     }
     
     if (doctorId) {
@@ -139,39 +312,25 @@ export async function getPrescriptions(clinicId?: string, doctorId?: string, pat
     }
     
     // Enrich prescriptions with patient and doctor data
-    const patients = await readData<Patient[]>('patients', []);
-    const doctors = await readData<Doctor[]>('doctors', []);
+    const patients = await readData("patients", []);
+    const doctors = await readData("doctors", []);
     
-    const enrichedPrescriptions: EnhancedPrescription[] = filteredPrescriptions.map(prescription => {
+    const enrichedPrescriptions = filteredPrescriptions.map(prescription => {
       const patient = patients.find(p => p.id === prescription.patientId);
       const doctor = doctors.find(d => d.id === prescription.doctorId);
       
-      // Create a default prescription document
-      const defaultPrescriptionDoc = {
-        id: `${prescription.id}-default`,
-        name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
-        type: 'PDF',
-        url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
-        size: '1.2 MB'
-      };
-      
       return {
-        id: prescription.id,
-        patientId: prescription.patientId,
-        patientName: patient?.name || 'Unknown Patient',
+        ...prescription,
+        patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient',
         doctorName: doctor?.name || 'Unknown Doctor',
-        concern: prescription.diagnosis || 'General consultation',
-        gender: patient?.gender || 'MALE',
-        age: patient?.age || 0,
-        reports: [], // Default empty array for reports
-        prescriptions: [defaultPrescriptionDoc], // Always provide at least one prescription document
-        createdAt: new Date(prescription.createdAt)
+        patientGender: patient?.gender || 'UNKNOWN',
+        patientAge: patient?.age || 0
       };
     });
     
     // Sort by createdAt in descending order
     return enrichedPrescriptions.sort((a, b) => 
-      b.createdAt.getTime() - a.createdAt.getTime()
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   } catch (error) {
     console.error('Error fetching prescriptions:', error);
@@ -179,52 +338,26 @@ export async function getPrescriptions(clinicId?: string, doctorId?: string, pat
   }
 }
 
-export async function createPrescription(data: {
-  patientId: string;
-  doctorId: string;
-  clinicId: string;
-  diagnosis: string;
-  medications: string;
-  instructions?: string;
-  followUpDate?: string;
-}) {
-  try {
-    const now = new Date().toISOString();
-    
-    const prescriptions = await readData<Prescription[]>('prescriptions', []);
-    
-    const newPrescription: Prescription = {
-      id: `prs-${(prescriptions.length + 1).toString().padStart(3, '0')}`,
-      ...data,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    prescriptions.push(newPrescription);
-    await writeData('prescriptions', prescriptions);
-    
-    return { success: true, prescription: newPrescription };
-  } catch (error) {
-    console.error('Error creating prescription:', error);
-    return { success: false, error: 'Failed to create prescription' };
-  }
-}
-
 export async function getPrescriptionById(id: string) {
   try {
-    const prescription = await findById<Prescription>('prescriptions', id);
+    const prescription = await findById<Prescription>("prescriptions", id);
     
     if (!prescription) {
       return null;
     }
     
-    const patient = await findById<Patient>('patients', prescription.patientId);
-    const doctor = await findById<Doctor>('doctors', prescription.doctorId);
+    // Get patient and doctor details
+    const patient = await findById("patients", prescription.patientId);
+    const doctor = await findById("doctors", prescription.doctorId);
+    
+    // Get appointment details
+    const appointment = await findById("appointments", prescription.appointmentId);
     
     return {
       ...prescription,
       patient,
-      doctor
+      doctor,
+      appointment
     };
   } catch (error) {
     console.error('Error fetching prescription:', error);
