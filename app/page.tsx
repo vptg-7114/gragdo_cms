@@ -1,11 +1,16 @@
 import { redirect } from 'next/navigation'
 import { getUserProfile } from "@/lib/actions/profile"
 import { getRedirectPathForRole, getCurrentUser } from "@/lib/actions/auth"
+import { cookies } from 'next/headers'
 
 export default async function Home() {
   try {
-    // Get current user using the proper auth function
-    const currentUser = await getCurrentUser()
+    // Get the auth token from cookies in the server component
+    const cookieStore = cookies()
+    const token = cookieStore.get('auth-token')?.value
+    
+    // Get current user using the token
+    const currentUser = await getCurrentUser(token)
     
     // If no user, redirect to login
     if (!currentUser) {

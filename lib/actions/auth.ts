@@ -173,10 +173,7 @@ export async function logout() {
   return { success: true }
 }
 
-export async function getCurrentUser() {
-  const cookieStore = cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  
+export async function getCurrentUser(token?: string) {
   if (!token) {
     return null;
   }
