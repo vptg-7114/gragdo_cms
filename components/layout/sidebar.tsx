@@ -168,12 +168,6 @@ export function Sidebar({ userRole }: SidebarProps) {
       roles: ['DOCTOR']
     },
     {
-      name: "Billing & Invoice",
-      href: "/doctor/billing",
-      icon: CreditCard,
-      roles: ['DOCTOR']
-    },
-    {
       name: "Settings",
       href: "/doctor/settings",
       icon: Settings,
