@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
-  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'DOCTOR'
+  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'STAFF'
 }
 
 export function Sidebar({ userRole }: SidebarProps) {
@@ -135,48 +135,48 @@ export function Sidebar({ userRole }: SidebarProps) {
     }
   ]
 
-  // Doctor menu items
-  const doctorMenuItems = [
+  // Staff menu items
+  const staffMenuItems = [
     {
       name: "Dashboard",
-      href: "/doctor/dashboard",
+      href: "/staff/dashboard",
       icon: LayoutDashboard,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     },
     {
       name: "Patients",
-      href: "/doctor/patients",
+      href: "/staff/patients",
       icon: Users,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     },
     {
       name: "Appointments",
-      href: "/doctor/appointments",
+      href: "/staff/appointments",
       icon: Calendar,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     },
     {
       name: "Schedule",
-      href: "/doctor/schedule",
+      href: "/staff/schedule",
       icon: Clock,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     },
     {
       name: "Prescriptions",
-      href: "/doctor/prescriptions",
+      href: "/staff/prescriptions",
       icon: FileText,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     },
     {
       name: "Settings",
-      href: "/doctor/settings",
+      href: "/staff/settings",
       icon: Settings,
-      roles: ['DOCTOR']
+      roles: ['STAFF']
     }
   ]
 
-  // Staff menu items
-  const staffMenuItems = [
+  // User menu items
+  const userMenuItems = [
     {
       name: "Dashboard",
       href: "/user/dashboard",
@@ -228,9 +228,9 @@ export function Sidebar({ userRole }: SidebarProps) {
   ]
 
   // Determine which menu items to show based on user role
-  let menuItems = userRole === 'DOCTOR' 
-    ? doctorMenuItems 
-    : (userRole === 'USER' ? staffMenuItems : adminMenuItems);
+  let menuItems = userRole === 'STAFF' 
+    ? staffMenuItems 
+    : (userRole === 'USER' ? userMenuItems : adminMenuItems);
   
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(userRole)
