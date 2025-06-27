@@ -30,7 +30,7 @@ interface RawPrescription {
   patientId: string;
   doctorId: string;
   diagnosis?: string;
-  medications?: any[];
+  medications?: string;
   createdAt: string;
 }
 
@@ -171,13 +171,13 @@ export async function getPrescriptions() {
         gender: patient?.gender || 'N/A',
         age: patient?.age || 0,
         reports: [], // Default empty array for reports
-        prescriptions: prescription.medications ? prescription.medications.map((med, index) => ({
-          id: `${prescription.id}-med-${index}`,
+        prescriptions: prescription.medications ? [{
+          id: `${prescription.id}-med`,
           name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
           type: 'PDF',
           url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
           size: '1.2 MB'
-        })) : [{
+        }] : [{
           id: `${prescription.id}-default`,
           name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
           type: 'PDF',
