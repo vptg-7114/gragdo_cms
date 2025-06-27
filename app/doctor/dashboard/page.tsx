@@ -2,17 +2,13 @@ import { Suspense } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { StatsCards } from "@/components/dashboard/stats-cards"
-import { AppointmentTable } from "@/components/appointments/appointment-table"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Filter } from "lucide-react"
-import { getDashboardStats, getRecentAppointments } from "@/lib/actions/dashboard"
+import { getDashboardStats } from "@/lib/actions/dashboard"
 
 export default async function DoctorDashboardPage() {
-  const [stats, appointments] = await Promise.all([
-    getDashboardStats(),
-    getRecentAppointments()
-  ])
+  const stats = await getDashboardStats()
 
   return (
     <div className="flex h-screen bg-[#f4f3ff]">
@@ -23,18 +19,19 @@ export default async function DoctorDashboardPage() {
         
         <div className="p-4 md:p-6 lg:p-[34px]">
           {/* Stats Cards */}
-          <Suspense fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 animate-pulse rounded-[16px]" />
-              ))}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white rounded-[20px] shadow-sm p-6">
+              <h3 className="text-gray-500 text-sm mb-1">Today's Appointments</h3>
+              <p className="text-4xl font-bold">50</p>
             </div>
-          }>
-            <StatsCards stats={stats} />
-          </Suspense>
+            <div className="bg-white rounded-[20px] shadow-sm p-6">
+              <h3 className="text-gray-500 text-sm mb-1">Today's Patients</h3>
+              <p className="text-4xl font-bold">60</p>
+            </div>
+          </div>
 
           {/* Time Filter and Add Patient */}
-          <div className="flex flex-col lg:flex-row justify-between gap-4 mt-6 lg:mt-[30px]">
+          <div className="flex flex-col lg:flex-row justify-between gap-4 mt-6 lg:mt-[30px] mb-6">
             <Tabs defaultValue="today" className="w-full lg:w-[561px]">
               <TabsList className="w-full h-[50px] md:h-[54px] p-0 bg-white rounded-2xl grid grid-cols-3">
                 <TabsTrigger
@@ -69,37 +66,90 @@ export default async function DoctorDashboardPage() {
             </div>
           </div>
 
-          {/* Appointments Table - Full Width */}
-          <div className="mt-8 lg:mt-[50px]">
-            <Suspense fallback={
-              <div className="bg-white rounded-[20px] shadow-sm p-6">
-                <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
-              </div>
-            }>
-              <AppointmentTable appointments={appointments} />
-            </Suspense>
+          {/* Appointments Table */}
+          <div className="bg-white rounded-[20px] shadow-sm p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Appointments</h2>
+              <Button variant="link" className="text-[#7165e1]">View All</Button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-gray-500">
+                    <th className="py-3 px-2">S.No</th>
+                    <th className="py-3 px-2">Patient's ID</th>
+                    <th className="py-3 px-2">Name</th>
+                    <th className="py-3 px-2">Age</th>
+                    <th className="py-3 px-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">1</td>
+                    <td className="py-3 px-2">123456</td>
+                    <td className="py-3 px-2">K. Vijay</td>
+                    <td className="py-3 px-2">22</td>
+                    <td className="py-3 px-2"><span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Completed</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">2</td>
+                    <td className="py-3 px-2">454575</td>
+                    <td className="py-3 px-2">P. Sandeep</td>
+                    <td className="py-3 px-2">30</td>
+                    <td className="py-3 px-2"><span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Completed</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">3</td>
+                    <td className="py-3 px-2">787764</td>
+                    <td className="py-3 px-2">Ch. Asritha</td>
+                    <td className="py-3 px-2">25</td>
+                    <td className="py-3 px-2"><span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Completed</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">4</td>
+                    <td className="py-3 px-2">454215</td>
+                    <td className="py-3 px-2">P. Ravi</td>
+                    <td className="py-3 px-2">32</td>
+                    <td className="py-3 px-2"><span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Completed</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">5</td>
+                    <td className="py-3 px-2">548721</td>
+                    <td className="py-3 px-2">K. Arun</td>
+                    <td className="py-3 px-2">32</td>
+                    <td className="py-3 px-2"><span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">In Progress</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">6</td>
+                    <td className="py-3 px-2">457245</td>
+                    <td className="py-3 px-2">K. Satya</td>
+                    <td className="py-3 px-2">32</td>
+                    <td className="py-3 px-2"><span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Pending</span></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2">7</td>
+                    <td className="py-3 px-2">786421</td>
+                    <td className="py-3 px-2">B. Kiran</td>
+                    <td className="py-3 px-2">32</td>
+                    <td className="py-3 px-2"><span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Pending</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Calendar Section */}
-          <div className="mt-8 lg:mt-[50px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-[20px] shadow-sm p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold">
-                  Calendar
-                </h2>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center">
-                    <Button variant="outline" className="rounded-l-lg rounded-r-none border-r-0">
-                      May
-                    </Button>
-                    <Button variant="outline" className="rounded-l-none rounded-r-lg">
-                      2023
-                    </Button>
-                  </div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Calendar</h2>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" className="rounded-l-lg rounded-r-none border-r-0">May</Button>
+                  <Button variant="outline" className="rounded-l-none rounded-r-lg">2023</Button>
                 </div>
               </div>
               
-              {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-1">
                 {/* Days of Week */}
                 <div className="text-center p-2 text-gray-500 font-medium">Mo</div>
@@ -111,48 +161,53 @@ export default async function DoctorDashboardPage() {
                 <div className="text-center p-2 text-gray-500 font-medium">Su</div>
                 
                 {/* Calendar Days */}
-                {Array.from({ length: 31 }).map((_, i) => {
-                  const day = i + 1;
-                  const isToday = day === 18;
-                  return (
-                    <div 
-                      key={day} 
-                      className={`text-center p-2 rounded-lg ${
-                        isToday 
-                          ? 'bg-[#7165e1] text-white' 
-                          : 'hover:bg-gray-100 cursor-pointer'
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  );
-                })}
-                
-                {/* Empty cells for next month */}
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div 
-                    key={`next-${i}`} 
-                    className="text-center p-2 text-gray-300"
-                  >
-                    {i + 1}
-                  </div>
-                ))}
+                <div className="text-center p-2">1</div>
+                <div className="text-center p-2">2</div>
+                <div className="text-center p-2">3</div>
+                <div className="text-center p-2">4</div>
+                <div className="text-center p-2">5</div>
+                <div className="text-center p-2">6</div>
+                <div className="text-center p-2">7</div>
+                <div className="text-center p-2">8</div>
+                <div className="text-center p-2">9</div>
+                <div className="text-center p-2">10</div>
+                <div className="text-center p-2">11</div>
+                <div className="text-center p-2">12</div>
+                <div className="text-center p-2">13</div>
+                <div className="text-center p-2">14</div>
+                <div className="text-center p-2">15</div>
+                <div className="text-center p-2">16</div>
+                <div className="text-center p-2">17</div>
+                <div className="text-center p-2 bg-[#7165e1] text-white rounded-lg">18</div>
+                <div className="text-center p-2">19</div>
+                <div className="text-center p-2">20</div>
+                <div className="text-center p-2">21</div>
+                <div className="text-center p-2">22</div>
+                <div className="text-center p-2">23</div>
+                <div className="text-center p-2">24</div>
+                <div className="text-center p-2">25</div>
+                <div className="text-center p-2">26</div>
+                <div className="text-center p-2">27</div>
+                <div className="text-center p-2">28</div>
+                <div className="text-center p-2">29</div>
+                <div className="text-center p-2">30</div>
+                <div className="text-center p-2">31</div>
+                <div className="text-center p-2 text-gray-300">1</div>
+                <div className="text-center p-2 text-gray-300">2</div>
+                <div className="text-center p-2 text-gray-300">3</div>
+                <div className="text-center p-2 text-gray-300">4</div>
               </div>
             </div>
-          </div>
 
-          {/* Appointments Overview */}
-          <div className="mt-8 lg:mt-[50px]">
+            {/* Appointments Overview */}
             <div className="bg-white rounded-[20px] shadow-sm p-6">
-              <h2 className="text-xl md:text-2xl text-black font-sf-pro font-semibold mb-6">
-                Appointments Overview
-              </h2>
+              <h2 className="text-xl font-semibold mb-6">Appointments Overview</h2>
               
               <div className="flex justify-center">
                 <div className="relative w-64 h-64">
                   {/* Pie Chart */}
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    {/* General Checkup segment */}
+                    {/* Male segment */}
                     <circle
                       cx="50"
                       cy="50"
@@ -163,7 +218,7 @@ export default async function DoctorDashboardPage() {
                       strokeDasharray="83.8 251.2"
                       strokeDashoffset="0"
                     />
-                    {/* Surgery segment */}
+                    {/* Female segment */}
                     <circle
                       cx="50"
                       cy="50"
@@ -174,7 +229,7 @@ export default async function DoctorDashboardPage() {
                       strokeDasharray="120.6 251.2"
                       strokeDashoffset="-83.8"
                     />
-                    {/* Diagnosis segment */}
+                    {/* Children segment */}
                     <circle
                       cx="50"
                       cy="50"
@@ -187,7 +242,7 @@ export default async function DoctorDashboardPage() {
                     />
                   </svg>
                   
-                  {/* Labels */}
+                  {/* Center text */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
                     <div className="text-lg font-bold">Total</div>
                     <div className="text-3xl font-bold text-[#7165e1]">2,427</div>
@@ -199,21 +254,21 @@ export default async function DoctorDashboardPage() {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-[#7165e1] rounded-full"></div>
                   <div>
-                    <div className="text-sm text-gray-500">General Checkup</div>
+                    <div className="text-sm text-gray-500">Male</div>
                     <div className="text-lg font-bold">660</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-[#a855f7] rounded-full"></div>
                   <div>
-                    <div className="text-sm text-gray-500">Surgery</div>
+                    <div className="text-sm text-gray-500">Female</div>
                     <div className="text-lg font-bold">949</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-[#c4b5fd] rounded-full"></div>
                   <div>
-                    <div className="text-sm text-gray-500">Diagnosis</div>
+                    <div className="text-sm text-gray-500">Children</div>
                     <div className="text-lg font-bold">818</div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -92,7 +92,7 @@ export function DoctorPatientsClient({ initialPatients }: DoctorPatientsClientPr
 
   const handleRecordsPerPageChange = (value: string) => {
     setRecordsPerPage(value)
-    setCurrentPage(1) // Reset to first page when changing records per page
+    setCurrentPage(1)
   }
 
   const handlePatientClick = (id: string) => {
@@ -124,7 +124,10 @@ export function DoctorPatientsClient({ initialPatients }: DoctorPatientsClientPr
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Display</span>
-              <Select value={recordsPerPage} onValueChange={handleRecordsPerPageChange}>
+              <Select 
+                defaultValue={recordsPerPage} 
+                onValueChange={handleRecordsPerPageChange}
+              >
                 <SelectTrigger className="h-10 w-[80px] rounded-xl text-sm">
                   <SelectValue />
                 </SelectTrigger>

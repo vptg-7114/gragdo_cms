@@ -139,37 +139,37 @@ export function Sidebar({ userRole }: SidebarProps) {
   const doctorMenuItems = [
     {
       name: "Dashboard",
-      href: "/dashboard/dashboard",
+      href: "/doctor/dashboard",
       icon: LayoutDashboard,
       roles: ['DOCTOR']
     },
     {
-      name: "Appointments",
-      href: "/dashboard/appointments",
-      icon: Calendar,
-      roles: ['DOCTOR']
-    },
-    {
       name: "Patients",
-      href: "/dashboard/patients",
+      href: "/doctor/patients",
       icon: Users,
       roles: ['DOCTOR']
     },
     {
+      name: "Appointments",
+      href: "/doctor/appointments",
+      icon: Calendar,
+      roles: ['DOCTOR']
+    },
+    {
       name: "Prescriptions",
-      href: "/dashboard/prescriptions",
+      href: "/doctor/prescriptions",
       icon: FileText,
       roles: ['DOCTOR']
     },
     {
       name: "Billing & Invoice",
-      href: "/dashboard/billing",
+      href: "/doctor/billing",
       icon: CreditCard,
       roles: ['DOCTOR']
     },
     {
       name: "Settings",
-      href: "/dashboard/settings",
+      href: "/doctor/settings",
       icon: Settings,
       roles: ['DOCTOR']
     }
@@ -179,62 +179,58 @@ export function Sidebar({ userRole }: SidebarProps) {
   const staffMenuItems = [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/user/dashboard",
       icon: LayoutDashboard,
       roles: ['USER']
     },
     {
       name: "Appointments",
-      href: "/appointments",
+      href: "/user/appointments",
       icon: Calendar,
       roles: ['USER']
     },
     {
       name: "Patients",
-      href: "/patients",
+      href: "/user/patients",
       icon: Users,
-      roles: ['USER'],
-      hasSubmenu: true,
-      submenu: [
-        { name: "All Patients", href: "/patients" },
-        { name: "Add Patient", href: "/patients/add" }
-      ]
+      roles: ['USER']
     },
     {
       name: "Doctors",
-      href: "/doctors",
+      href: "/user/doctors",
       icon: UserCheck,
       roles: ['USER']
     },
     {
       name: "Rooms",
-      href: "/rooms",
+      href: "/user/rooms",
       icon: Bed,
       roles: ['USER']
     },
     {
       name: "Prescriptions",
-      href: "/prescriptions",
+      href: "/user/prescriptions",
       icon: FileText,
       roles: ['USER']
     },
     {
       name: "Billing & Invoice",
-      href: "/billing",
+      href: "/user/billing",
       icon: CreditCard,
       roles: ['USER']
     },
     {
       name: "Settings",
-      href: "/settings",
+      href: "/user/settings",
       icon: Settings,
       roles: ['USER']
     }
   ]
 
-  // Determine which menu items to show based on current path
-  const isAdminPath = pathname.startsWith('/admin')
-  let menuItems = isAdminPath ? adminMenuItems : (userRole === 'DOCTOR' ? doctorMenuItems : staffMenuItems)
+  // Determine which menu items to show based on user role
+  let menuItems = userRole === 'DOCTOR' 
+    ? doctorMenuItems 
+    : (userRole === 'USER' ? staffMenuItems : adminMenuItems);
   
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(userRole)
