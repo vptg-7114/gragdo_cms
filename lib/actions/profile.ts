@@ -118,3 +118,10 @@ export async function updateUserProfile(userId: string, data: {
     return { success: false, error: 'Failed to update profile' };
   }
 }
+
+// Helper function to verify and decode JWT token (would be implemented in a real app)
+function verifyAndDecodeToken(token: string): string | null {
+  // In a real app, this would verify the JWT signature and decode the payload
+  // For demo purposes, we'll just return a mock user ID
+  return 'default-user';
+}
