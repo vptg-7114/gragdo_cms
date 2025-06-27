@@ -25,11 +25,32 @@ interface Prescription {
   createdAt: string;
 }
 
+interface RawPrescription {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  diagnosis?: string;
+  medications?: any[];
+  createdAt: string;
+}
+
+interface Patient {
+  id: string;
+  name: string;
+  gender: string;
+  age: number;
+}
+
+interface Doctor {
+  id: string;
+  name: string;
+}
+
 export async function getPrescriptions() {
   try {
-    const prescriptions = await readData<Prescription[]>('prescriptions', []);
+    const rawPrescriptions = await readData<RawPrescription[]>('prescriptions', []);
     
-    if (prescriptions.length === 0) {
+    if (rawPrescriptions.length === 0) {
       // Return mock data for demo purposes
       return [
         {
@@ -133,8 +154,42 @@ export async function getPrescriptions() {
       ];
     }
     
+    // Enrich prescriptions with patient and doctor data
+    const patients = await readData<Patient[]>('patients', []);
+    const doctors = await readData<Doctor[]>('doctors', []);
+    
+    const enrichedPrescriptions: Prescription[] = rawPrescriptions.map(prescription => {
+      const patient = patients.find(p => p.id === prescription.patientId);
+      const doctor = doctors.find(d => d.id === prescription.doctorId);
+      
+      return {
+        id: prescription.id,
+        patientId: prescription.patientId,
+        patientName: patient?.name || 'Unknown Patient',
+        doctorName: doctor?.name || 'Unknown Doctor',
+        concern: prescription.diagnosis || 'General consultation',
+        gender: patient?.gender || 'N/A',
+        age: patient?.age || 0,
+        reports: [], // Default empty array for reports
+        prescriptions: prescription.medications ? prescription.medications.map((med, index) => ({
+          id: `${prescription.id}-med-${index}`,
+          name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
+          type: 'PDF',
+          url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
+          size: '1.2 MB'
+        })) : [{
+          id: `${prescription.id}-default`,
+          name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
+          type: 'PDF',
+          url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
+          size: '1.2 MB'
+        }],
+        createdAt: prescription.createdAt
+      };
+    });
+    
     // Convert string dates to Date objects for the client
-    return prescriptions.map(prescription => ({
+    return enrichedPrescriptions.map(prescription => ({
       ...prescription,
       createdAt: new Date(prescription.createdAt)
     }));
