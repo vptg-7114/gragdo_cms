@@ -6,7 +6,7 @@ import { getAppointments } from "@/lib/actions/appointments"
 import { getPatients } from "@/lib/actions/patients"
 import { getDoctors } from "@/lib/actions/doctors"
 
-export default async function StaffAppointmentsPage() {
+export default async function AppointmentsPage() {
   const [appointments, patients, doctors] = await Promise.all([
     getAppointments(),
     getPatients(),

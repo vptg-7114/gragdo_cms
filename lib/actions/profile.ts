@@ -8,7 +8,7 @@ interface User {
   name: string;
   email: string;
   phone?: string;
-  role: UserRole;
+  role: string;
   clinicId?: string;
   createdAt: string;
 }
@@ -31,7 +31,7 @@ export async function getUserProfile(userId?: string) {
       name: 'Clinic Admin',
       email: 'admin@vishnuclinic.com',
       phone: '+91-9876543210',
-      role: UserRole.ADMIN,
+      role: 'ADMIN',
       clinicId: '1',
       createdAt: new Date().toISOString()
     };
@@ -61,7 +61,7 @@ export async function getUserProfile(userId?: string) {
       name: 'Clinic Admin',
       email: 'admin@vishnuclinic.com',
       phone: '+91-9876543210',
-      role: UserRole.ADMIN,
+      role: 'ADMIN',
       address: '123 Health Street, Medical District',
       bio: 'Experienced healthcare administrator with over 10 years in clinic management.',
       profileImage: undefined,

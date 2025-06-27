@@ -3,7 +3,7 @@ import { Header } from "@/components/layout/header"
 import { PatientsClient } from "@/components/patients/patients-client"
 import { getPatients } from "@/lib/actions/patients"
 
-export default async function StaffPatientsPage() {
+export default async function PatientsPage() {
   const patients = await getPatients()
 
   return (

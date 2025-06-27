@@ -3,7 +3,7 @@ import { Header } from "@/components/layout/header"
 import { InvoicesClient } from "@/components/billing/invoices-client"
 import { getInvoices } from "@/lib/actions/billing"
 
-export default async function StaffBillingPage() {
+export default async function BillingPage() {
   const invoices = await getInvoices()
 
   return (

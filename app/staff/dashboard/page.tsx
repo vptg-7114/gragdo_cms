@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Filter } from "lucide-react"
 import { getDashboardStats, getRecentAppointments, getDoctorsActivity, getRecentReports } from "@/lib/actions/dashboard"
 
-export default async function StaffDashboardPage() {
+export default async function DashboardPage() {
   const [stats, appointments, doctorsActivity, recentReports] = await Promise.all([
     getDashboardStats(),
     getRecentAppointments(),

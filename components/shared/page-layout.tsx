@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header"
 
 interface PageLayoutProps {
   children: ReactNode
-  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'DOCTOR' | 'STAFF'
+  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR'
   title?: string
 }
 
