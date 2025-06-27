@@ -52,16 +52,24 @@ export function LoginForm() {
             break
           case "ADMIN":
             if (result.user?.clinicId) {
-              router.push(`/${result.user.clinicId}/admin/dashboard`)
+              router.push(`/${result.user.clinicId}/admin/${result.user.id}/dashboard`)
             } else {
               router.push("/admin/dashboard")
             }
             break
           case "STAFF":
-            router.push("/staff/dashboard")
+            if (result.user?.clinicId && result.user?.id) {
+              router.push(`/${result.user.clinicId}/staff/${result.user.id}/dashboard`)
+            } else {
+              router.push("/staff/dashboard")
+            }
             break
           case "DOCTOR":
-            router.push("/doctor/dashboard")
+            if (result.user?.clinicId && result.user?.id) {
+              router.push(`/${result.user.clinicId}/doctor/${result.user.id}/dashboard`)
+            } else {
+              router.push("/doctor/dashboard")
+            }
             break
           default:
             router.push("/")
