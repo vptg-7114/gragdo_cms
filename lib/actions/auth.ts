@@ -87,6 +87,28 @@ export async function forgotPassword(email: string) {
   }
 }
 
+export async function resetPassword(token: string, newPassword: string) {
+  try {
+    // In a real app, you would validate the token and update the user's password
+    // For demo purposes, we'll just return success
+    
+    // Validate token (mock validation)
+    if (!token || token.length < 10) {
+      return { success: false, error: "Invalid or expired token" }
+    }
+    
+    // Validate password
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: "Password must be at least 6 characters" }
+    }
+    
+    return { success: true, message: "Password reset successful" }
+  } catch (error) {
+    console.error("Error during password reset:", error)
+    return { success: false, error: "An error occurred during password reset" }
+  }
+}
+
 export async function getRedirectPathForRole(role: UserRole, clinicId?: string, userId?: string) {
   switch (role) {
     case UserRole.SUPER_ADMIN:
