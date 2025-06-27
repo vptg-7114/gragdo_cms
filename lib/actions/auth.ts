@@ -1,4 +1,4 @@
-"use server"
+'use server'
 
 import { readData } from "@/lib/db"
 import { UserRole, User } from "@/lib/types"
