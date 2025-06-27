@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,7 +96,7 @@ export function DoctorPatientsClient({ initialPatients }: DoctorPatientsClientPr
   }
 
   const handlePatientClick = (id: string) => {
-    router.push(`/doctor/patients/${id}`)
+    router.push(`/dashboard/patients/${id}`)
   }
 
   const getStatusVariant = (status: string) => {
