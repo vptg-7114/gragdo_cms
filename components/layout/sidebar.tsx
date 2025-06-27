@@ -139,37 +139,37 @@ export function Sidebar({ userRole }: SidebarProps) {
   const doctorMenuItems = [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/dashboard/dashboard",
       icon: LayoutDashboard,
       roles: ['DOCTOR']
     },
     {
       name: "Appointments",
-      href: "/appointments",
+      href: "/dashboard/appointments",
       icon: Calendar,
       roles: ['DOCTOR']
     },
     {
       name: "Patients",
-      href: "/patients",
+      href: "/dashboard/patients",
       icon: Users,
       roles: ['DOCTOR']
     },
     {
       name: "Prescriptions",
-      href: "/prescriptions",
+      href: "/dashboard/prescriptions",
       icon: FileText,
       roles: ['DOCTOR']
     },
     {
       name: "Billing & Invoice",
-      href: "/billing",
+      href: "/dashboard/billing",
       icon: CreditCard,
       roles: ['DOCTOR']
     },
     {
       name: "Settings",
-      href: "/settings",
+      href: "/dashboard/settings",
       icon: Settings,
       roles: ['DOCTOR']
     }
