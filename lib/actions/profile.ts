@@ -2,21 +2,15 @@
 
 import { readData, writeData, findById } from '@/lib/db';
 import { UserRole, User } from '@/lib/types';
-import { cookies } from 'next/headers';
 
-export async function getUserProfile(userId?: string) {
+export async function getUserProfile(userId?: string, token?: string) {
   try {
     // In a real app, if userId is not provided, we would get it from the auth token
-    if (!userId) {
-      const cookieStore = cookies();
-      const token = cookieStore.get('auth-token')?.value;
+    if (!userId && token) {
+      // Verify and decode the token to get the user ID
+      // userId = verifyAndDecodeToken(token);
       
-      if (token) {
-        // Verify and decode the token to get the user ID
-        // userId = verifyAndDecodeToken(token);
-        
-        // For now, we'll continue with the demo user if no userId is provided
-      }
+      // For now, we'll continue with the demo user if no userId is provided
     }
 
     if (!userId) {

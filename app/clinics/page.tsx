@@ -20,7 +20,7 @@ export default async function ClinicsPage() {
   // For now, we'll use a simulated userId or let getUserProfile handle it
   
   // Get the current user profile
-  const userProfile = await getUserProfile()
+  const userProfile = await getUserProfile(undefined, token)
   
   // If no user is logged in or user is not a super admin, redirect to login
   if (!userProfile || userProfile.role !== 'SUPER_ADMIN') {

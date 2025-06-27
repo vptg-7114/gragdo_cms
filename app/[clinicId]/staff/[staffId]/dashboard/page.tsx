@@ -33,8 +33,8 @@ export default async function StaffDashboardPage({ params }: StaffDashboardPageP
   let staff: User | null = null
   
   if (params.staffId === 'default-user') {
-    // Use mock user profile for demo mode
-    const mockProfile = await getUserProfile()
+    // Use mock user profile for demo mode - call without token to get default profile
+    const mockProfile = await getUserProfile('default-user')
     // Ensure the mock user has the correct role and clinic association
     if (mockProfile) {
       staff = {

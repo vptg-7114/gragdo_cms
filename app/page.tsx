@@ -19,7 +19,7 @@ export default async function Home() {
     // For now, we'll use a simulated userId or let getUserProfile handle it
     
     // Get user profile with the user ID from the token
-    const userProfile = await getUserProfile()
+    const userProfile = await getUserProfile(undefined, token)
     
     if (!userProfile) {
       redirect('/login')
