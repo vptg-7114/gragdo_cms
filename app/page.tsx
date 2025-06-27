@@ -1,25 +1,19 @@
 import { redirect } from 'next/navigation'
 import { getUserProfile } from "@/lib/actions/profile"
-import { getRedirectPathForRole } from "@/lib/actions/auth"
-import { cookies } from 'next/headers'
+import { getRedirectPathForRole, getCurrentUser } from "@/lib/actions/auth"
 
 export default async function Home() {
   try {
-    // In a real app, we would get the user ID from the authentication token
-    const cookieStore = cookies()
-    const token = cookieStore.get('auth-token')?.value
+    // Get current user using the proper auth function
+    const currentUser = await getCurrentUser()
     
-    // If no token, redirect to login
-    if (!token) {
+    // If no user, redirect to login
+    if (!currentUser) {
       redirect('/login')
     }
     
-    // Verify and decode the token to get the user ID
-    // const userId = verifyAndDecodeToken(token)
-    // For now, we'll use a simulated userId or let getUserProfile handle it
-    
-    // Get user profile with the user ID from the token
-    const userProfile = await getUserProfile(undefined, token)
+    // Get user profile with the current user's ID
+    const userProfile = await getUserProfile(currentUser.id)
     
     if (!userProfile) {
       redirect('/login')
