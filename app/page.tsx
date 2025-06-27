@@ -6,7 +6,7 @@ export default async function Home() {
   try {
     // Get user profile to check role
     // We're passing undefined here to explicitly show we want the default behavior
-    const userProfile = await getUserProfile(undefined)
+    const userProfile = await getUserProfile()
     
     if (!userProfile) {
       redirect('/login')
