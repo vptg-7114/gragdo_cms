@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Calendar, Users, UserCheck, FileText, CreditCard, Settings, ChevronDown, Building2, Menu, X, Users2, Receipt, Activity, Bed, Pill, FlaskRound as Flask } from "lucide-react"
+import { LayoutDashboard, Calendar, Users, UserCheck, FileText, CreditCard, Settings, ChevronDown, Building2, Menu, X, Users2, Receipt, Activity, Bed, Pill, FlaskRound as Flask, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -153,6 +153,12 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Appointments",
       href: "/doctor/appointments",
       icon: Calendar,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Schedule",
+      href: "/doctor/schedule",
+      icon: Clock,
       roles: ['DOCTOR']
     },
     {
