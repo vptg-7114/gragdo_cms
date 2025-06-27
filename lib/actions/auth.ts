@@ -3,7 +3,6 @@
 import { readData } from "@/lib/db"
 import { UserRole, User } from "@/lib/types"
 import { cookies } from 'next/headers'
-import { generateToken, verifyToken } from '@/lib/services/auth'
 
 interface LoginCredentials {
   email: string
@@ -36,19 +35,9 @@ export async function login(credentials: LoginCredentials) {
     // In a real app, you would verify the password here
     // For demo purposes, we'll just return success
     
-    // Generate JWT token with user information
-    const token = await generateToken({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      clinicId: user.clinicId,
-      clinicIds: user.clinicIds
-    });
-    
-    // Set auth cookie directly
+    // Set a simple cookie instead of JWT
     const cookieStore = cookies();
-    cookieStore.set('auth-token', token, {
+    cookieStore.set('auth-token', user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -82,18 +71,9 @@ export async function signup(data: SignupData) {
     // Generate a mock user ID
     const userId = Math.random().toString(36).substring(2, 15);
     
-    // Generate JWT token with user information
-    const token = await generateToken({
-      id: userId,
-      name: fullName,
-      email: data.email,
-      role: data.role,
-      clinicId: data.clinicId
-    });
-    
-    // Set auth cookie directly
+    // Set a simple cookie instead of JWT
     const cookieStore = cookies();
-    cookieStore.set('auth-token', token, {
+    cookieStore.set('auth-token', userId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -179,18 +159,22 @@ export async function getCurrentUser(token?: string) {
   }
   
   try {
-    const payload = await verifyToken(token);
-    if (!payload) {
+    // In a real app, you would verify the token
+    // For demo purposes, we'll just find the user by ID (token)
+    const users = await readData<User[]>("users", []);
+    const user = users.find(u => u.id === token);
+    
+    if (!user) {
       return null;
     }
     
     return {
-      id: payload.id,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role as UserRole,
-      clinicId: payload.clinicId as string | undefined,
-      clinicIds: payload.clinicIds as string[] | undefined
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role as UserRole,
+      clinicId: user.clinicId,
+      clinicIds: user.clinicIds
     };
   } catch (error) {
     console.error('Error getting current user:', error);

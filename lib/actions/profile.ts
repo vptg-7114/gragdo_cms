@@ -2,16 +2,12 @@
 
 import { readData, writeData, findById } from '@/lib/db';
 import { UserRole, User } from '@/lib/types';
-import { verifyToken } from '@/lib/services/auth';
 
 export async function getUserProfile(userId?: string, token?: string) {
   try {
-    // If token is provided, verify and extract user ID
+    // If token is provided, use it as the user ID
     if (!userId && token) {
-      const payload = await verifyToken(token);
-      if (payload) {
-        userId = payload.id as string;
-      }
+      userId = token;
     }
 
     if (!userId) {
