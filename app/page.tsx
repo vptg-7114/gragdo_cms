@@ -9,8 +9,16 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   try {
     // Get the auth token from cookies in the server component
-    const cookieStore = cookies()
-    const token = cookieStore.get('auth-token')?.value
+    let token: string | undefined
+    
+    try {
+      const cookieStore = cookies()
+      token = cookieStore.get('auth-token')?.value
+    } catch (cookieError) {
+      // If cookies() fails due to request scope issues, treat as no token
+      console.warn('Failed to access cookies:', cookieError)
+      token = undefined
+    }
     
     // Get current user using the token
     const currentUser = await getCurrentUser(token)
