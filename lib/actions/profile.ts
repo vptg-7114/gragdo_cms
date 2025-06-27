@@ -1,23 +1,34 @@
 'use server'
 
-import { readData, writeData } from '@/lib/db';
+import { readData, writeData, findById } from '@/lib/db';
 import { UserRole, User } from '@/lib/types';
 
 export async function getUserProfile(userId?: string) {
   try {
-    const users = await readData<User[]>('users', []);
-    const clinics = await readData('clinics', []);
-    
-    // If userId is provided, get that specific user
-    // Otherwise, for demo purposes, we'll get the first user
-    const user = userId 
-      ? users.find(u => u.id === userId)
-      : users[0];
+    if (!userId) {
+      // For demo purposes, return a default profile
+      return {
+        id: 'default-user',
+        name: 'Demo User',
+        email: 'demo@digigo.com',
+        phone: '+91-9999999999',
+        role: UserRole.STAFF,
+        clinic: {
+          id: 'cli-001',
+          name: 'Vishnu Clinic',
+          address: '123 Health Street, Medical District, Hyderabad'
+        },
+        createdAt: new Date()
+      };
+    }
+
+    const user = await findById<User>('users', userId);
     
     if (!user) {
       return null;
     }
 
+    const clinics = await readData('clinics', []);
     const clinic = user.clinicId ? clinics.find(c => c.id === user.clinicId) : undefined;
 
     return {
