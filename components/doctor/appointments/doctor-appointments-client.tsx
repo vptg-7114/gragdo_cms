@@ -19,9 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Filter, Search, PenSquare, Trash2 } from "lucide-react"
-import { formatTime } from "@/lib/utils"
+import { Plus, Filter, Search, PenSquare, Trash2, MoreHorizontal } from "lucide-react"
+import { updateAppointment } from "@/lib/actions/appointments"
 
 interface Appointment {
   id: string
@@ -39,6 +45,7 @@ interface Appointment {
   duration: number
   concern: string
   status: string
+  time?: string
 }
 
 interface DoctorAppointmentsClientProps {
@@ -53,13 +60,16 @@ export function DoctorAppointmentsClient({
   doctors 
 }: DoctorAppointmentsClientProps) {
   // Transform appointments to include time in the format shown in the screenshot
-  const transformedAppointments = initialAppointments.map((appointment, index) => {
+  const transformedAppointments = initialAppointments.map((appointment) => {
     const date = new Date(appointment.appointmentDate);
     const hours = date.getHours();
     const minutes = date.getMinutes();
     
+    // Format hours for 12-hour clock
+    const formattedHours = hours % 12 || 12;
+    
     // Create time strings like "09:30 AM", "10:00 AM", etc.
-    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`;
+    const timeString = `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`;
     
     return {
       ...appointment,
@@ -135,6 +145,36 @@ export function DoctorAppointmentsClient({
   const handleDelete = (id: string) => {
     console.log('Delete appointment:', id);
     setAppointments(prev => prev.filter(a => a.id !== id));
+  }
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      // Update the appointment status in the UI immediately for better UX
+      setAppointments(prev => 
+        prev.map(appointment => 
+          appointment.id === id 
+            ? { ...appointment, status: newStatus } 
+            : appointment
+        )
+      );
+      
+      // Call the server action to update the status in the database
+      const result = await updateAppointment(id, { status: newStatus as any });
+      
+      if (!result.success) {
+        // If the update fails, revert the UI change
+        console.error('Failed to update appointment status:', result.error);
+        setAppointments(prev => 
+          prev.map(appointment => 
+            appointment.id === id 
+              ? { ...appointment, status: appointment.status } 
+              : appointment
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+    }
   }
 
   // Pagination logic
@@ -304,12 +344,38 @@ export function DoctorAppointmentsClient({
                     {appointment.duration} Min
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={getStatusVariant(appointment.status)}
-                      className="rounded-[40px] text-base font-sf-pro"
-                    >
-                      {getStatusLabel(appointment.status)}
-                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 p-0">
+                          <Badge
+                            variant={getStatusVariant(appointment.status)}
+                            className="rounded-[40px] text-base font-sf-pro cursor-pointer"
+                          >
+                            {getStatusLabel(appointment.status)}
+                          </Badge>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, 'COMPLETED')}>
+                          <Badge variant="completed" className="rounded-[40px] mr-2">
+                            Completed
+                          </Badge>
+                          Mark as Completed
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, 'IN_PROGRESS')}>
+                          <Badge variant="inProgress" className="rounded-[40px] mr-2">
+                            In Progress
+                          </Badge>
+                          Mark as In Progress
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, 'PENDING')}>
+                          <Badge variant="pending" className="rounded-[40px] mr-2">
+                            Pending
+                          </Badge>
+                          Mark as Pending
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
