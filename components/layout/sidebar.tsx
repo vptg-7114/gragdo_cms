@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
-  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'USER'
+  userRole: 'SUPER_ADMIN' | 'ADMIN' | 'USER' | 'DOCTOR'
 }
 
 export function Sidebar({ userRole }: SidebarProps) {
@@ -135,7 +135,47 @@ export function Sidebar({ userRole }: SidebarProps) {
     }
   ]
 
-  // Staff menu items (existing)
+  // Doctor menu items
+  const doctorMenuItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Appointments",
+      href: "/appointments",
+      icon: Calendar,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Patients",
+      href: "/patients",
+      icon: Users,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Prescriptions",
+      href: "/prescriptions",
+      icon: FileText,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Billing & Invoice",
+      href: "/billing",
+      icon: CreditCard,
+      roles: ['DOCTOR']
+    },
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
+      roles: ['DOCTOR']
+    }
+  ]
+
+  // Staff menu items
   const staffMenuItems = [
     {
       name: "Dashboard",
@@ -194,7 +234,7 @@ export function Sidebar({ userRole }: SidebarProps) {
 
   // Determine which menu items to show based on current path
   const isAdminPath = pathname.startsWith('/admin')
-  const menuItems = isAdminPath ? adminMenuItems : staffMenuItems
+  let menuItems = isAdminPath ? adminMenuItems : (userRole === 'DOCTOR' ? doctorMenuItems : staffMenuItems)
   
   const filteredMenuItems = menuItems.filter(item => 
     item.roles.includes(userRole)
