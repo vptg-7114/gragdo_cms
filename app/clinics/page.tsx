@@ -15,6 +15,10 @@ export default async function ClinicsPage() {
     redirect('/login')
   }
   
+  // Verify and decode the token to get the user ID
+  // const userId = verifyAndDecodeToken(token)
+  // For now, we'll use a simulated userId or let getUserProfile handle it
+  
   // Get the current user profile
   const userProfile = await getUserProfile(undefined, token)
   

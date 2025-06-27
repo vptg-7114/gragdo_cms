@@ -1,24 +1,33 @@
-/**
- * This file previously contained JWT token functions.
- * We're keeping it as a placeholder but removing the actual JWT implementation.
- */
+import { SignJWT, jwtVerify } from 'jose';
+import { config } from '@/lib/config';
+import { UserRole } from '@/lib/types';
+
+// Convert string to Uint8Array for jose
+const textEncoder = new TextEncoder();
 
 /**
- * Generate a simple token for a user
+ * Generate a JWT token for a user
  */
 export async function generateToken(payload: any): Promise<string> {
-  // Just return the user ID as the token
-  return payload.id;
+  const secret = textEncoder.encode(config.jwt.secret);
+  
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(config.jwt.expiresIn)
+    .sign(secret);
+  
+  return token;
 }
 
 /**
- * Verify a token
+ * Verify and decode a JWT token
  */
 export async function verifyToken(token: string): Promise<any> {
   try {
-    // In a real app, we would verify the token
-    // For demo purposes, we'll just return the token as the user ID
-    return { id: token };
+    const secret = textEncoder.encode(config.jwt.secret);
+    const { payload } = await jwtVerify(token, secret);
+    return payload;
   } catch (error) {
     console.error('Token verification failed:', error);
     return null;
