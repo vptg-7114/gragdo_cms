@@ -20,6 +20,11 @@ export default async function Home() {
       token = undefined
     }
     
+    // If no token, redirect to login
+    if (!token) {
+      redirect('/login')
+    }
+    
     // Get current user using the token
     const currentUser = await getCurrentUser(token)
     
