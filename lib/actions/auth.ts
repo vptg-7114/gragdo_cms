@@ -3,7 +3,7 @@
 import { readData } from "@/lib/db"
 import { UserRole, User } from "@/lib/types"
 import { cookies } from 'next/headers'
-import { generateToken, setAuthCookie, clearAuthCookie, verifyToken } from '@/lib/services/auth'
+import { generateToken, verifyToken } from '@/lib/services/auth'
 
 interface LoginCredentials {
   email: string
@@ -46,8 +46,14 @@ export async function login(credentials: LoginCredentials) {
       clinicIds: user.clinicIds
     });
     
-    // Set auth cookie
-    setAuthCookie(token);
+    // Set auth cookie directly
+    const cookieStore = cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
 
     return {
       success: true,
@@ -85,8 +91,14 @@ export async function signup(data: SignupData) {
       clinicId: data.clinicId
     });
     
-    // Set auth cookie
-    setAuthCookie(token);
+    // Set auth cookie directly
+    const cookieStore = cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
     
     return {
       success: true,
@@ -154,14 +166,16 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string, 
 }
 
 export async function logout() {
-  // Clear the auth cookie
-  clearAuthCookie();
+  // Clear the auth cookie directly
+  const cookieStore = cookies();
+  cookieStore.delete('auth-token');
   
   return { success: true }
 }
 
 export async function getCurrentUser() {
-  const token = cookies().get('auth-token')?.value;
+  const cookieStore = cookies();
+  const token = cookieStore.get('auth-token')?.value;
   
   if (!token) {
     return null;
