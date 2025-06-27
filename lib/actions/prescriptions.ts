@@ -146,6 +146,15 @@ export async function getPrescriptions(clinicId?: string, doctorId?: string, pat
       const patient = patients.find(p => p.id === prescription.patientId);
       const doctor = doctors.find(d => d.id === prescription.doctorId);
       
+      // Create a default prescription document
+      const defaultPrescriptionDoc = {
+        id: `${prescription.id}-default`,
+        name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
+        type: 'PDF',
+        url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
+        size: '1.2 MB'
+      };
+      
       return {
         id: prescription.id,
         patientId: prescription.patientId,
@@ -155,19 +164,7 @@ export async function getPrescriptions(clinicId?: string, doctorId?: string, pat
         gender: patient?.gender || 'MALE',
         age: patient?.age || 0,
         reports: [], // Default empty array for reports
-        prescriptions: prescription.medications ? [{
-          id: `${prescription.id}-med`,
-          name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
-          type: 'PDF',
-          url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
-          size: '1.2 MB'
-        }] : [{
-          id: `${prescription.id}-default`,
-          name: `Prescription_${new Date(prescription.createdAt).toLocaleDateString().replace(/\//g, '_')}.pdf`,
-          type: 'PDF',
-          url: `/mock-prescriptions/prescription-${prescription.id}.pdf`,
-          size: '1.2 MB'
-        }],
+        prescriptions: [defaultPrescriptionDoc], // Always provide at least one prescription document
         createdAt: new Date(prescription.createdAt)
       };
     });
