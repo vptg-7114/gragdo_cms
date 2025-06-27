@@ -2,6 +2,7 @@
 
 import { readData } from "@/lib/db"
 import { UserRole, User } from "@/lib/types"
+import { cookies } from 'next/headers'
 
 interface LoginCredentials {
   email: string
@@ -34,6 +35,17 @@ export async function login(credentials: LoginCredentials) {
 
     // In a real app, you would verify the password here
     // For demo purposes, we'll just return success
+    
+    // Set auth cookie in a real app
+    const cookieStore = cookies()
+    // Generate a JWT token with user information
+    // const token = generateAuthToken(user)
+    // cookieStore.set('auth-token', token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   maxAge: 60 * 60 * 24 * 7, // 1 week
+    //   path: '/',
+    // })
 
     return {
       success: true,
@@ -114,7 +126,7 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string, 
     case UserRole.SUPER_ADMIN:
       return "/clinics"
     case UserRole.ADMIN:
-      return clinicId ? `/${clinicId}/admin/dashboard` : "/admin/dashboard"
+      return clinicId && userId ? `/${clinicId}/admin/${userId}/dashboard` : "/admin/dashboard"
     case UserRole.STAFF:
       return clinicId && userId ? `/${clinicId}/staff/${userId}/dashboard` : "/staff/dashboard"
     case UserRole.DOCTOR:
@@ -122,4 +134,26 @@ export async function getRedirectPathForRole(role: UserRole, clinicId?: string, 
     default:
       return "/"
   }
+}
+
+export async function logout() {
+  // Clear the auth cookie
+  const cookieStore = cookies()
+  cookieStore.delete('auth-token')
+  
+  return { success: true }
+}
+
+// This function would verify and decode the JWT token in a real app
+function verifyAndDecodeToken(token: string) {
+  // In a real app, you would use a library like jsonwebtoken to verify and decode the token
+  // For demo purposes, we'll just return a mock user ID
+  return 'default-user'
+}
+
+// This function would generate a JWT token in a real app
+function generateAuthToken(user: User) {
+  // In a real app, you would use a library like jsonwebtoken to generate a token
+  // For demo purposes, we'll just return a mock token
+  return 'mock-token'
 }

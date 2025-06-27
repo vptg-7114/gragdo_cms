@@ -6,14 +6,17 @@ import { cookies } from 'next/headers'
 export default async function Home() {
   try {
     // In a real app, we would get the user ID from the authentication token
-    // For now, we'll simulate this by assuming we have the user ID
+    const cookieStore = cookies()
+    const token = cookieStore.get('auth-token')?.value
     
-    // This would be the proper implementation:
-    // 1. Get the auth token from cookies
-    // const cookieStore = cookies()
-    // const token = cookieStore.get('auth-token')?.value
-    // 2. Verify and decode the token to get the user ID
+    // If no token, redirect to login
+    if (!token) {
+      redirect('/login')
+    }
+    
+    // Verify and decode the token to get the user ID
     // const userId = verifyAndDecodeToken(token)
+    // For now, we'll use a simulated userId or let getUserProfile handle it
     
     // Get user profile with the user ID from the token
     const userProfile = await getUserProfile()
