@@ -73,42 +73,42 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Dashboard",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Patients",
       href: "/admin/patients",
       icon: Users,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Doctors",
       href: "/admin/doctors",
       icon: UserCheck,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Staffs",
       href: "/admin/staffs",
       icon: Users2,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Appointments",
       href: "/admin/appointments",
       icon: Calendar,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Rooms",
       href: "/admin/rooms",
       icon: Bed,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Treatments",
       icon: Flask,
-      roles: ['ADMIN'],
+      roles: ['SUPER_ADMIN', 'ADMIN'],
       hasSubmenu: true,
       submenu: [
         { name: "Treatments list", href: "/admin/treatment" },
@@ -119,19 +119,19 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Transactions",
       href: "/admin/transactions",
       icon: Receipt,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Prescription",
       href: "/admin/prescriptions",
       icon: FileText,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {
       name: "Analytics",
       href: "/admin/analytics",
       icon: Activity,
-      roles: ['ADMIN']
+      roles: ['SUPER_ADMIN', 'ADMIN']
     }
   ]
 
@@ -141,19 +141,19 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     },
     {
       name: "Appointments",
       href: "/appointments",
       icon: Calendar,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     },
     {
       name: "Patients",
       href: "/patients",
       icon: Users,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER'],
+      roles: ['USER'],
       hasSubmenu: true,
       submenu: [
         { name: "All Patients", href: "/patients" },
@@ -164,53 +164,37 @@ export function Sidebar({ userRole }: SidebarProps) {
       name: "Doctors",
       href: "/doctors",
       icon: UserCheck,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     },
     {
       name: "Rooms",
       href: "/rooms",
       icon: Bed,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
-    },
-    {
-      name: "Treatments",
-      icon: Flask,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER'],
-      hasSubmenu: true,
-      submenu: [
-        { name: "Treatments list", href: "/admin/treatment" },
-        { name: "Medicine", href: "/medicine" }
-      ]
+      roles: ['USER']
     },
     {
       name: "Prescriptions",
       href: "/prescriptions",
       icon: FileText,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     },
     {
       name: "Billing & Invoice",
       href: "/billing",
       icon: CreditCard,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     },
     {
       name: "Clinics",
       href: "/clinics",
       icon: Building2,
-      roles: ['SUPER_ADMIN']
-    },
-    {
-      name: "Analytics",
-      href: "/analytics",
-      icon: Activity,
-      roles: ['SUPER_ADMIN', 'ADMIN']
+      roles: ['USER']
     },
     {
       name: "Settings",
       href: "/settings",
       icon: Settings,
-      roles: ['SUPER_ADMIN', 'ADMIN', 'USER']
+      roles: ['USER']
     }
   ]
 
