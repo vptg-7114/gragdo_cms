@@ -3,6 +3,9 @@ import { getUserProfile } from "@/lib/actions/profile"
 import { getRedirectPathForRole, getCurrentUser } from "@/lib/actions/auth"
 import { cookies } from 'next/headers'
 
+// Force dynamic rendering to ensure request context is available
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   try {
     // Get the auth token from cookies in the server component
