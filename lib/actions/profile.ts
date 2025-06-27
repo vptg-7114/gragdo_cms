@@ -29,6 +29,31 @@ export async function getUserProfile(userId?: string) {
     }
 
     const clinics = await readData('clinics', []);
+    
+    // For SUPER_ADMIN, get all clinics they have access to
+    if (user.role === UserRole.SUPER_ADMIN && user.clinicIds && user.clinicIds.length > 0) {
+      const userClinics = clinics.filter(c => user.clinicIds?.includes(c.id));
+      
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        address: undefined,
+        bio: undefined,
+        profileImage: undefined,
+        clinicIds: user.clinicIds,
+        clinics: userClinics.map(c => ({
+          id: c.id,
+          name: c.name,
+          address: c.address
+        })),
+        createdAt: new Date(user.createdAt)
+      };
+    }
+    
+    // For other roles, get their single clinic
     const clinic = user.clinicId ? clinics.find(c => c.id === user.clinicId) : undefined;
 
     return {
@@ -40,6 +65,7 @@ export async function getUserProfile(userId?: string) {
       address: undefined, // Add address field to User model if needed
       bio: undefined, // Add bio field to User model if needed
       profileImage: undefined, // Add profileImage field to User model if needed
+      clinicId: user.clinicId,
       clinic: clinic ? {
         id: clinic.id,
         name: clinic.name,

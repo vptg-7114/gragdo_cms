@@ -42,7 +42,8 @@ export async function login(credentials: LoginCredentials) {
         name: user.name,
         email: user.email,
         role: user.role,
-        clinicId: user.clinicId
+        clinicId: user.clinicId,
+        clinicIds: user.clinicIds
       }
     }
   } catch (error) {

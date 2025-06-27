@@ -34,11 +34,21 @@ export default async function StaffDashboardPage({ params }: StaffDashboardPageP
   
   if (params.staffId === 'default-user') {
     // Use mock user profile for demo mode
-    staff = await getUserProfile()
+    const mockProfile = await getUserProfile()
     // Ensure the mock user has the correct role and clinic association
-    if (staff) {
-      staff.role = 'STAFF'
-      staff.clinicId = params.clinicId
+    if (mockProfile) {
+      staff = {
+        id: mockProfile.id,
+        name: mockProfile.name,
+        email: mockProfile.email,
+        password: 'password123', // Mock password
+        phone: mockProfile.phone,
+        role: 'STAFF',
+        clinicId: params.clinicId,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
     }
   } else {
     // Find real user in database

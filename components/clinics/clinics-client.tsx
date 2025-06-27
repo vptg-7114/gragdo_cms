@@ -48,7 +48,11 @@ export function ClinicsClient({ initialClinics, userRole }: ClinicsClientProps) 
   }
 
   const handleClinicClick = (clinicId: string) => {
-    router.push(`/${clinicId}/admin/dashboard`)
+    if (userRole === 'SUPER_ADMIN') {
+      router.push(`/${clinicId}/admin/dashboard`)
+    } else {
+      router.push(`/${clinicId}/admin/dashboard`)
+    }
   }
 
   return (

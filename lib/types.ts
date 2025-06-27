@@ -36,6 +36,7 @@ export interface User extends BaseModel {
   phone?: string;
   role: UserRole;
   clinicId?: string; // Required for ADMIN, STAFF, DOCTOR roles
+  clinicIds?: string[]; // Array of clinic IDs for SUPER_ADMIN role
   isActive: boolean;
 }
 

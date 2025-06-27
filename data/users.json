@@ -6,6 +6,7 @@
     "password": "password123",
     "phone": "+91-9999999999",
     "role": "SUPER_ADMIN",
+    "clinicIds": ["cli-001", "cli-002", "cli-003", "cli-004", "cli-005"],
     "isActive": true,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
