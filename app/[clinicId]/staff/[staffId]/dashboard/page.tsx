@@ -12,6 +12,7 @@ import { Plus, Filter } from "lucide-react"
 import { getDashboardStats, getRecentAppointments, getDoctorsActivity, getRecentReports } from "@/lib/actions/dashboard"
 import { getClinicById } from "@/lib/actions/clinics"
 import { findById } from "@/lib/db"
+import { getUserProfile } from "@/lib/actions/profile"
 import { User } from "@/lib/types"
 
 interface StaffDashboardPageProps {
@@ -22,11 +23,29 @@ interface StaffDashboardPageProps {
 }
 
 export default async function StaffDashboardPage({ params }: StaffDashboardPageProps) {
-  // Verify clinic and staff exist
+  // Verify clinic exists
   const clinic = await getClinicById(params.clinicId)
-  const staff = await findById<User>('users', params.staffId)
+  if (!clinic) {
+    notFound()
+  }
+
+  // Handle staff verification - use mock profile for 'default-user'
+  let staff: User | null = null
   
-  if (!clinic || !staff || staff.role !== 'STAFF' || staff.clinicId !== params.clinicId) {
+  if (params.staffId === 'default-user') {
+    // Use mock user profile for demo mode
+    staff = await getUserProfile()
+    // Ensure the mock user has the correct role and clinic association
+    if (staff) {
+      staff.role = 'STAFF'
+      staff.clinicId = params.clinicId
+    }
+  } else {
+    // Find real user in database
+    staff = await findById<User>('users', params.staffId)
+  }
+  
+  if (!staff || staff.role !== 'STAFF' || staff.clinicId !== params.clinicId) {
     notFound()
   }
 
