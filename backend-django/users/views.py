@@ -14,6 +14,11 @@ from .serializers import (
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     ProfileSerializer
 )
+from .permissions import (
+    IsSuperAdmin, IsAdmin, IsStaff, IsDoctor,
+    IsClinicAdmin, IsClinicStaff, IsClinicDoctor,
+    IsOwner, ReadOnly
+)
 
 User = get_user_model()
 
@@ -86,6 +91,8 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     """View for user logout."""
+    
+    permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
         # In a token-based authentication system, the client should discard the token
@@ -177,6 +184,8 @@ class PasswordResetConfirmView(APIView):
 class CurrentUserView(APIView):
     """View for getting the current user."""
     
+    permission_classes = [permissions.IsAuthenticated]
+    
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response({
@@ -189,6 +198,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     """View for retrieving and updating user profile."""
     
     serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_object(self):
         user_id = self.request.query_params.get('userId')
@@ -196,8 +206,32 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         if user_id:
             # If userId is provided, get that user's profile
             profile = get_object_or_404(Profile, user__id=user_id)
-            self.check_object_permissions(self.request, profile)
+            
+            # Check if the user has permission to view this profile
+            if self.request.user.role == 'SUPER_ADMIN':
+                # Super admins can view any profile
+                pass
+            elif self.request.user.role in ['ADMIN', 'STAFF']:
+                # Admins and staff can view profiles in their clinic
+                if profile.user.clinic != self.request.user.clinic:
+                    self.permission_denied(self.request)
+            elif profile.user != self.request.user:
+                # Regular users can only view their own profile
+                self.permission_denied(self.request)
+                
             return profile
         
         # Otherwise, get the current user's profile
         return get_object_or_404(Profile, user=self.request.user)
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Check if the user has permission to update this profile
+        if request.user.role != 'SUPER_ADMIN' and instance.user != request.user:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to update this profile'
+            }, status=status.HTTP_403_FORBIDDEN)
+            
+        return super().update(request, *args, **kwargs)
