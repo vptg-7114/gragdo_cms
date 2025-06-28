@@ -25,7 +25,14 @@ export async function login(credentials: LoginCredentials) {
     const response = await authApi.login(credentials.email, credentials.password, credentials.role)
     
     if (response.success) {
-      // The cookie is set by the backend, so we don't need to set it here
+      // Set the auth token in a cookie
+      cookies().set('auth-token', response.access, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: '/',
+      })
+      
       return {
         success: true,
         user: response.user
@@ -44,7 +51,14 @@ export async function signup(data: SignupData) {
     const response = await authApi.signup(data)
     
     if (response.success) {
-      // The cookie is set by the backend, so we don't need to set it here
+      // Set the auth token in a cookie
+      cookies().set('auth-token', response.access, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: '/',
+      })
+      
       return {
         success: true,
         user: response.user
@@ -107,7 +121,7 @@ export async function logout() {
   try {
     await authApi.logout()
     
-    // Clear the auth cookie on the client side as well
+    // Clear the auth cookie
     cookies().delete('auth-token')
     
     return { success: true }

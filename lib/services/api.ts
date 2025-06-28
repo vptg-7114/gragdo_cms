@@ -14,7 +14,7 @@ export const apiClient = {
    */
   async get(endpoint: string, params?: Record<string, string>) {
     try {
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`);
+      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}${endpoint}`);
       
       // Add query parameters if provided
       if (params) {
@@ -53,7 +53,7 @@ export const apiClient = {
    */
   async post(endpoint: string, data: any) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export const apiClient = {
    */
   async patch(endpoint: string, data: any) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}${endpoint}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export const apiClient = {
    */
   async delete(endpoint: string) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}${endpoint}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export const apiClient = {
         });
       }
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}${endpoint}`, {
         method: 'POST',
         body: formData,
         credentials: 'include', // Include cookies
@@ -179,7 +179,7 @@ export const authApi = {
    * @returns Login response
    */
   async login(email: string, password: string, role: string) {
-    return apiClient.post('/auth/login', { email, password, role });
+    return apiClient.post('/auth/login/', { email, password, role });
   },
   
   /**
@@ -196,7 +196,15 @@ export const authApi = {
     clinicId?: string;
     password: string;
   }) {
-    return apiClient.post('/auth/signup', data);
+    return apiClient.post('/auth/signup/', {
+      email: data.email,
+      name: `${data.firstName} ${data.lastName}`,
+      phone: data.phone,
+      role: data.role,
+      clinic: data.clinicId,
+      password: data.password,
+      confirm_password: data.password
+    });
   },
   
   /**
@@ -205,7 +213,7 @@ export const authApi = {
    * @returns Password reset request response
    */
   async forgotPassword(email: string) {
-    return apiClient.post('/auth/forgot-password', { email });
+    return apiClient.post('/auth/forgot-password/', { email });
   },
   
   /**
@@ -215,7 +223,11 @@ export const authApi = {
    * @returns Password reset response
    */
   async resetPassword(token: string, newPassword: string) {
-    return apiClient.post('/auth/reset-password', { token, newPassword });
+    return apiClient.post('/auth/reset-password/', { 
+      token, 
+      new_password: newPassword,
+      confirm_password: newPassword
+    });
   },
   
   /**
@@ -223,7 +235,7 @@ export const authApi = {
    * @returns Logout response
    */
   async logout() {
-    return apiClient.post('/auth/logout', {});
+    return apiClient.post('/auth/logout/', {});
   },
   
   /**
@@ -231,7 +243,7 @@ export const authApi = {
    * @returns Current user response
    */
   async getCurrentUser() {
-    return apiClient.get('/auth/me');
+    return apiClient.get('/auth/me/');
   }
 };
 
@@ -249,7 +261,7 @@ export const profileApi = {
     if (userId) {
       params.userId = userId;
     }
-    return apiClient.get('/profile', params);
+    return apiClient.get('/profile/', params);
   },
   
   /**
@@ -266,7 +278,7 @@ export const profileApi = {
     bio?: string;
     profileImage?: string;
   }) {
-    return apiClient.patch('/profile', { userId, ...data });
+    return apiClient.patch('/profile/', { userId, ...data });
   }
 };
 
@@ -279,7 +291,7 @@ export const clinicsApi = {
    * @returns Clinics response
    */
   async getClinics() {
-    return apiClient.get('/clinics');
+    return apiClient.get('/clinics/');
   },
   
   /**
@@ -288,7 +300,7 @@ export const clinicsApi = {
    * @returns Clinic response
    */
   async getClinic(id: string) {
-    return apiClient.get(`/clinics/${id}`);
+    return apiClient.get(`/clinics/${id}/`);
   },
   
   /**
@@ -303,7 +315,7 @@ export const clinicsApi = {
     email?: string;
     description?: string;
   }) {
-    return apiClient.post('/clinics', data);
+    return apiClient.post('/clinics/', data);
   },
   
   /**
@@ -319,7 +331,7 @@ export const clinicsApi = {
     email?: string;
     description?: string;
   }) {
-    return apiClient.patch(`/clinics/${id}`, data);
+    return apiClient.patch(`/clinics/${id}/`, data);
   },
   
   /**
@@ -328,7 +340,7 @@ export const clinicsApi = {
    * @returns Clinic deletion response
    */
   async deleteClinic(id: string) {
-    return apiClient.delete(`/clinics/${id}`);
+    return apiClient.delete(`/clinics/${id}/`);
   }
 };
 
@@ -339,23 +351,23 @@ export const doctorsApi = {
     if (clinicId) {
       params.clinicId = clinicId;
     }
-    return apiClient.get('/doctors', params);
+    return apiClient.get('/doctors/', params);
   },
   
   async getDoctor(id: string) {
-    return apiClient.get(`/doctors/${id}`);
+    return apiClient.get(`/doctors/${id}/`);
   },
   
   async createDoctor(data: any) {
-    return apiClient.post('/doctors', data);
+    return apiClient.post('/doctors/', data);
   },
   
   async updateDoctor(id: string, data: any) {
-    return apiClient.patch(`/doctors/${id}`, data);
+    return apiClient.patch(`/doctors/${id}/`, data);
   },
   
   async deleteDoctor(id: string) {
-    return apiClient.delete(`/doctors/${id}`);
+    return apiClient.delete(`/doctors/${id}/`);
   }
 };
 
@@ -365,23 +377,23 @@ export const patientsApi = {
     if (clinicId) {
       params.clinicId = clinicId;
     }
-    return apiClient.get('/patients', params);
+    return apiClient.get('/patients/', params);
   },
   
   async getPatient(id: string) {
-    return apiClient.get(`/patients/${id}`);
+    return apiClient.get(`/patients/${id}/`);
   },
   
   async createPatient(data: any) {
-    return apiClient.post('/patients', data);
+    return apiClient.post('/patients/', data);
   },
   
   async updatePatient(id: string, data: any) {
-    return apiClient.patch(`/patients/${id}`, data);
+    return apiClient.patch(`/patients/${id}/`, data);
   },
   
   async deletePatient(id: string) {
-    return apiClient.delete(`/patients/${id}`);
+    return apiClient.delete(`/patients/${id}/`);
   }
 };
 
@@ -392,31 +404,31 @@ export const appointmentsApi = {
     patientId?: string;
     status?: string;
   }) {
-    return apiClient.get('/appointments', params as Record<string, string>);
+    return apiClient.get('/appointments/', params as Record<string, string>);
   },
   
   async getAppointment(id: string) {
-    return apiClient.get(`/appointments/${id}`);
+    return apiClient.get(`/appointments/${id}/`);
   },
   
   async createAppointment(data: any) {
-    return apiClient.post('/appointments', data);
+    return apiClient.post('/appointments/', data);
   },
   
   async updateAppointment(id: string, data: any) {
-    return apiClient.patch(`/appointments/${id}`, data);
+    return apiClient.patch(`/appointments/${id}/`, data);
   },
   
   async deleteAppointment(id: string) {
-    return apiClient.delete(`/appointments/${id}`);
+    return apiClient.delete(`/appointments/${id}/`);
   },
   
   async checkInAppointment(id: string) {
-    return apiClient.patch(`/appointments/${id}`, { action: 'checkIn' });
+    return apiClient.patch(`/appointments/${id}/check-in/`, {});
   },
   
   async startAppointment(id: string) {
-    return apiClient.patch(`/appointments/${id}`, { action: 'start' });
+    return apiClient.patch(`/appointments/${id}/start/`, {});
   },
   
   async completeAppointment(id: string, data: {
@@ -424,10 +436,7 @@ export const appointmentsApi = {
     notes?: string;
     followUpDate?: string;
   }) {
-    return apiClient.patch(`/appointments/${id}`, { 
-      ...data,
-      action: 'complete' 
-    });
+    return apiClient.patch(`/appointments/${id}/complete/`, data);
   }
 };
 
@@ -437,23 +446,23 @@ export const prescriptionsApi = {
     doctorId?: string;
     patientId?: string;
   }) {
-    return apiClient.get('/prescriptions', params as Record<string, string>);
+    return apiClient.get('/prescriptions/', params as Record<string, string>);
   },
   
   async getPrescription(id: string) {
-    return apiClient.get(`/prescriptions/${id}`);
+    return apiClient.get(`/prescriptions/${id}/`);
   },
   
   async createPrescription(data: any) {
-    return apiClient.post('/prescriptions', data);
+    return apiClient.post('/prescriptions/', data);
   },
   
   async updatePrescription(id: string, data: any) {
-    return apiClient.patch(`/prescriptions/${id}`, data);
+    return apiClient.patch(`/prescriptions/${id}/`, data);
   },
   
   async deletePrescription(id: string) {
-    return apiClient.delete(`/prescriptions/${id}`);
+    return apiClient.delete(`/prescriptions/${id}/`);
   }
 };
 
@@ -466,7 +475,7 @@ export const dashboardApi = {
     if (doctorId) {
       params.doctorId = doctorId;
     }
-    return apiClient.get('/dashboard/stats', params);
+    return apiClient.get('/dashboard/stats/', params);
   },
   
   async getRecentAppointments(clinicId?: string, doctorId?: string) {
@@ -477,7 +486,7 @@ export const dashboardApi = {
     if (doctorId) {
       params.doctorId = doctorId;
     }
-    return apiClient.get('/dashboard/appointments', params);
+    return apiClient.get('/dashboard/appointments/', params);
   },
   
   async getDoctorsActivity(clinicId?: string) {
@@ -485,7 +494,7 @@ export const dashboardApi = {
     if (clinicId) {
       params.clinicId = clinicId;
     }
-    return apiClient.get('/dashboard/doctors-activity', params);
+    return apiClient.get('/dashboard/doctors-activity/', params);
   },
   
   async getRecentReports(clinicId?: string) {
@@ -493,35 +502,35 @@ export const dashboardApi = {
     if (clinicId) {
       params.clinicId = clinicId;
     }
-    return apiClient.get('/dashboard/reports', params);
+    return apiClient.get('/dashboard/reports/', params);
   }
 };
 
 export const adminApi = {
   async getStats(clinicId: string) {
-    return apiClient.get('/admin/stats', { clinicId });
+    return apiClient.get('/admin/stats/', { clinicId });
   },
   
   async getDoctors(clinicId: string) {
-    return apiClient.get('/admin/doctors', { clinicId });
+    return apiClient.get('/admin/doctors/', { clinicId });
   },
   
   async getStaff(clinicId: string) {
-    return apiClient.get('/admin/staff', { clinicId });
+    return apiClient.get('/admin/staff/', { clinicId });
   },
   
   async getTransactions(clinicId: string) {
-    return apiClient.get('/admin/transactions', { clinicId });
+    return apiClient.get('/admin/transactions/', { clinicId });
   },
   
   async getAppointments(clinicId: string) {
-    return apiClient.get('/admin/appointments', { clinicId });
+    return apiClient.get('/admin/appointments/', { clinicId });
   }
 };
 
 export const analyticsApi = {
   async getData() {
-    return apiClient.get('/analytics');
+    return apiClient.get('/analytics/');
   }
 };
 
@@ -534,28 +543,27 @@ export const medicinesApi = {
     if (isActive !== undefined) {
       params.isActive = isActive.toString();
     }
-    return apiClient.get('/medicines', params);
+    return apiClient.get('/medicines/', params);
   },
   
   async getMedicine(id: string) {
-    return apiClient.get(`/medicines/${id}`);
+    return apiClient.get(`/medicines/${id}/`);
   },
   
   async createMedicine(data: any) {
-    return apiClient.post('/medicines', data);
+    return apiClient.post('/medicines/', data);
   },
   
   async updateMedicine(id: string, data: any) {
-    return apiClient.patch(`/medicines/${id}`, data);
+    return apiClient.patch(`/medicines/${id}/`, data);
   },
   
   async deleteMedicine(id: string) {
-    return apiClient.delete(`/medicines/${id}`);
+    return apiClient.delete(`/medicines/${id}/`);
   },
   
   async updateStock(id: string, quantity: number, isAddition: boolean) {
-    return apiClient.patch(`/medicines/${id}`, {
-      action: 'updateStock',
+    return apiClient.patch(`/medicines/${id}/update-stock/`, {
       quantity,
       isAddition
     });
@@ -564,11 +572,11 @@ export const medicinesApi = {
 
 export const treatmentsApi = {
   async getTreatments() {
-    return apiClient.get('/treatments');
+    return apiClient.get('/treatments/');
   },
   
   async deleteTreatment(id: string) {
-    return apiClient.delete(`/treatments/${id}`);
+    return apiClient.delete(`/treatments/${id}/`);
   }
 };
 
@@ -581,66 +589,61 @@ export const roomsApi = {
     if (isActive !== undefined) {
       params.isActive = isActive.toString();
     }
-    return apiClient.get('/rooms', params);
+    return apiClient.get('/rooms/', params);
   },
   
   async getRoom(id: string) {
-    return apiClient.get(`/rooms/${id}`);
+    return apiClient.get(`/rooms/${id}/`);
   },
   
   async createRoom(data: any) {
-    return apiClient.post('/rooms', data);
+    return apiClient.post('/rooms/', data);
   },
   
   async updateRoom(id: string, data: any) {
-    return apiClient.patch(`/rooms/${id}`, data);
+    return apiClient.patch(`/rooms/${id}/`, data);
   },
   
   async deleteRoom(id: string) {
-    return apiClient.delete(`/rooms/${id}`);
+    return apiClient.delete(`/rooms/${id}/`);
   }
 };
 
 export const bedsApi = {
   async getBedsByRoom(roomId: string) {
-    return apiClient.get(`/beds/room/${roomId}`);
+    return apiClient.get(`/beds/room/${roomId}/`);
   },
   
   async getBed(id: string) {
-    return apiClient.get(`/beds/${id}`);
+    return apiClient.get(`/beds/${id}/`);
   },
   
   async createBed(data: any) {
-    return apiClient.post('/beds', data);
+    return apiClient.post('/beds/', data);
   },
   
   async updateBed(id: string, data: any) {
-    return apiClient.patch(`/beds/${id}`, data);
+    return apiClient.patch(`/beds/${id}/`, data);
   },
   
   async deleteBed(id: string) {
-    return apiClient.delete(`/beds/${id}`);
+    return apiClient.delete(`/beds/${id}/`);
   },
   
   async assignBed(id: string, patientId: string, admissionDate: string, dischargeDate?: string) {
-    return apiClient.patch(`/beds/${id}`, {
-      action: 'assign',
-      patientId,
-      admissionDate,
-      dischargeDate
+    return apiClient.patch(`/beds/${id}/assign/`, {
+      patient: patientId,
+      admission_date: admissionDate,
+      discharge_date: dischargeDate
     });
   },
   
   async dischargeBed(id: string) {
-    return apiClient.patch(`/beds/${id}`, {
-      action: 'discharge'
-    });
+    return apiClient.patch(`/beds/${id}/discharge/`, {});
   },
   
   async reserveBed(id: string) {
-    return apiClient.patch(`/beds/${id}`, {
-      action: 'reserve'
-    });
+    return apiClient.patch(`/beds/${id}/reserve/`, {});
   }
 };
 
@@ -650,27 +653,27 @@ export const transactionsApi = {
     patientId?: string;
     type?: string;
   }) {
-    return apiClient.get('/transactions', params as Record<string, string>);
+    return apiClient.get('/transactions/', params as Record<string, string>);
   },
   
   async getTransaction(id: string) {
-    return apiClient.get(`/transactions/${id}`);
+    return apiClient.get(`/transactions/${id}/`);
   },
   
   async createTransaction(data: any) {
-    return apiClient.post('/transactions', data);
+    return apiClient.post('/transactions/', data);
   },
   
   async updateTransaction(id: string, data: any) {
-    return apiClient.patch(`/transactions/${id}`, data);
+    return apiClient.patch(`/transactions/${id}/`, data);
   },
   
   async deleteTransaction(id: string) {
-    return apiClient.delete(`/transactions/${id}`);
+    return apiClient.delete(`/transactions/${id}/`);
   },
   
   async getTransactionSummary(clinicId: string, period: 'day' | 'week' | 'month' | 'year' = 'month') {
-    return apiClient.get('/transactions/summary', { clinicId, period });
+    return apiClient.get('/transactions/summary/', { clinicId, period });
   }
 };
 
@@ -680,26 +683,26 @@ export const billingApi = {
     patientId?: string;
     status?: string;
   }) {
-    return apiClient.get('/billing/invoices', params as Record<string, string>);
+    return apiClient.get('/billing/invoices/', params as Record<string, string>);
   },
   
   async getInvoice(id: string) {
-    return apiClient.get(`/billing/invoices/${id}`);
+    return apiClient.get(`/billing/invoices/${id}/`);
   },
   
   async createInvoice(data: any) {
-    return apiClient.post('/billing/invoices', data);
+    return apiClient.post('/billing/invoices/', data);
   },
   
   async updateInvoice(id: string, data: any) {
-    return apiClient.patch(`/billing/invoices/${id}`, data);
+    return apiClient.patch(`/billing/invoices/${id}/`, data);
   },
   
   async deleteInvoice(id: string) {
-    return apiClient.delete(`/billing/invoices/${id}`);
+    return apiClient.delete(`/billing/invoices/${id}/`);
   },
   
   async recordPayment(data: any) {
-    return apiClient.post('/billing/payment', data);
+    return apiClient.post('/billing/payment/', data);
   }
 };

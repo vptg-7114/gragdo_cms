@@ -14,6 +14,6 @@ export const config = {
     url: process.env.NEXTAUTH_URL || 'http://localhost:3000',
   },
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
   }
 };
