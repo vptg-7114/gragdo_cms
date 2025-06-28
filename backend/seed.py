@@ -1,37 +1,15 @@
 import os
 import json
-import uuid
-from datetime import datetime
-from werkzeug.security import generate_password_hash
-from database import get_db, init_db
+import sqlite3
+from database import get_db, dict_factory
 
 def seed_data():
     """Seed the database with data from JSON files"""
     print("Starting data seeding process...")
     
-    # Initialize the database
-    init_db()
-    
-    # Connect to the database
-    db = get_db()
-    cursor = db.cursor()
-    
-    # Check if we already have data
-    cursor.execute('SELECT COUNT(*) as count FROM users')
-    result = cursor.fetchone()
-    
-    if result['count'] > 1:  # More than just the default super admin
-        print("Database already contains data. Skipping seed.")
-        db.close()
-        return
-    
-    # Path to data directory
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-    
-    if not os.path.exists(data_dir):
-        print(f"Data directory not found: {data_dir}")
-        db.close()
-        return
+    # Get database connection
+    conn = get_db()
+    cursor = conn.cursor()
     
     # Define the order of tables to import (to respect foreign keys)
     tables = [
@@ -49,43 +27,73 @@ def seed_data():
         'treatments'
     ]
     
+    # Get the data directory path
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+    
     for table in tables:
         json_file = os.path.join(data_dir, f'{table}.json')
+        
         if os.path.exists(json_file):
             print(f"Importing data for {table}...")
-            with open(json_file, 'r') as f:
-                try:
+            
+            try:
+                # Get table schema to check column names
+                cursor.execute(f"PRAGMA table_info({table})")
+                table_columns = [col['name'] for col in cursor.fetchall()]
+                
+                # Read JSON data
+                with open(json_file, 'r') as f:
                     records = json.load(f)
+                
+                for record in records:
+                    # Filter out keys that don't exist in the table schema
+                    filtered_record = {k: v for k, v in record.items() if k in table_columns}
                     
-                    # Special handling for users table to hash passwords
-                    if table == 'users':
-                        for record in records:
-                            if 'password' in record:
-                                record['password'] = generate_password_hash(record['password'])
+                    # Handle special cases for each table
+                    if table == 'patients':
+                        # Handle name field if it exists but firstName/lastName are required
+                        if 'name' in record and 'firstName' not in filtered_record and 'lastName' not in filtered_record:
+                            name_parts = record['name'].split(' ', 1)
+                            filtered_record['firstName'] = name_parts[0]
+                            filtered_record['lastName'] = name_parts[1] if len(name_parts) > 1 else ''
                     
-                    for record in records:
-                        # Convert any nested objects to JSON strings
-                        for key, value in record.items():
-                            if isinstance(value, (dict, list)):
-                                record[key] = json.dumps(value)
-                        
-                        # Get column names
-                        columns = ', '.join(record.keys())
-                        placeholders = ', '.join(['?'] * len(record))
-                        
-                        # Insert record
+                    elif table == 'appointments':
+                        # Ensure required fields are present
+                        if 'appointmentDate' in filtered_record and 'startTime' not in filtered_record:
+                            filtered_record['startTime'] = '09:00'
+                            filtered_record['endTime'] = '09:30'
+                    
+                    # Convert any nested objects to JSON strings
+                    for key, value in filtered_record.items():
+                        if isinstance(value, (dict, list)):
+                            filtered_record[key] = json.dumps(value)
+                    
+                    # Skip if record is empty after filtering
+                    if not filtered_record:
+                        continue
+                    
+                    # Get column names and values
+                    columns = ', '.join(filtered_record.keys())
+                    placeholders = ', '.join(['?'] * len(filtered_record))
+                    
+                    # Insert record
+                    try:
                         query = f'INSERT INTO {table} ({columns}) VALUES ({placeholders})'
-                        cursor.execute(query, list(record.values()))
-                    
-                    print(f"Successfully imported {len(records)} records for {table}")
-                except Exception as e:
-                    print(f"Error importing data for {table}: {e}")
+                        cursor.execute(query, list(filtered_record.values()))
+                    except sqlite3.Error as e:
+                        print(f"Error inserting record into {table}: {e}")
+                        # Continue with next record
+                
+                conn.commit()
+                print(f"Successfully imported data for {table}")
+                
+            except Exception as e:
+                print(f"Error importing data for {table}: {e}")
         else:
             print(f"No data file found for {table}")
     
-    db.commit()
-    db.close()
-    print("Data seeding completed!")
+    conn.close()
+    print("Data seeding completed")
 
 if __name__ == "__main__":
     seed_data()

@@ -7,7 +7,7 @@
     "phone": "+91-9999999999",
     "role": "SUPER_ADMIN",
     "clinicIds": ["cli-001", "cli-002", "cli-003", "cli-004", "cli-005"],
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -19,7 +19,7 @@
     "phone": "+91-9876543210",
     "role": "ADMIN",
     "clinicId": "cli-001",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -31,7 +31,7 @@
     "phone": "+91-9876543211",
     "role": "ADMIN",
     "clinicId": "cli-002",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
@@ -43,7 +43,7 @@
     "phone": "+91-9876543212",
     "role": "ADMIN",
     "clinicId": "cli-003",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   },
@@ -55,7 +55,7 @@
     "phone": "+91-9876543212",
     "role": "STAFF",
     "clinicId": "cli-001",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -67,7 +67,7 @@
     "phone": "+91-9876543213",
     "role": "STAFF",
     "clinicId": "cli-002",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
@@ -79,7 +79,7 @@
     "phone": "+91-9876543214",
     "role": "STAFF",
     "clinicId": "cli-001",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   },
@@ -91,7 +91,7 @@
     "phone": "+91-9876543215",
     "role": "STAFF",
     "clinicId": "cli-002",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-04T00:00:00.000Z",
     "updatedAt": "2024-01-04T00:00:00.000Z"
   },
@@ -103,7 +103,7 @@
     "phone": "+91-9876543214",
     "role": "DOCTOR",
     "clinicId": "cli-001",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -115,7 +115,7 @@
     "phone": "+91-9876543215",
     "role": "DOCTOR",
     "clinicId": "cli-001",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -127,7 +127,7 @@
     "phone": "+91-9876543216",
     "role": "DOCTOR",
     "clinicId": "cli-002",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
@@ -139,7 +139,7 @@
     "phone": "+91-9876543217",
     "role": "DOCTOR",
     "clinicId": "cli-002",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
@@ -151,7 +151,7 @@
     "phone": "+91-9876543218",
     "role": "DOCTOR",
     "clinicId": "cli-003",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   },
@@ -163,7 +163,7 @@
     "phone": "+91-9876543219",
     "role": "DOCTOR",
     "clinicId": "cli-003",
-    "isActive": true,
+    "isActive": 1,
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   }

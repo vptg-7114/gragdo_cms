@@ -1,6 +1,7 @@
 [
   {
     "id": "bed-001",
+    "bedId": "BED123456",
     "bedNumber": 1,
     "roomId": "room-001",
     "status": "OCCUPIED",
@@ -14,6 +15,7 @@
   },
   {
     "id": "bed-002",
+    "bedId": "BED234567",
     "bedNumber": 2,
     "roomId": "room-001",
     "status": "AVAILABLE",
@@ -24,6 +26,7 @@
   },
   {
     "id": "bed-003",
+    "bedId": "BED345678",
     "bedNumber": 3,
     "roomId": "room-001",
     "status": "AVAILABLE",
@@ -34,6 +37,7 @@
   },
   {
     "id": "bed-004",
+    "bedId": "BED456789",
     "bedNumber": 1,
     "roomId": "room-002",
     "status": "OCCUPIED",
@@ -47,6 +51,7 @@
   },
   {
     "id": "bed-005",
+    "bedId": "BED567890",
     "bedNumber": 2,
     "roomId": "room-002",
     "status": "OCCUPIED",
@@ -60,6 +65,7 @@
   },
   {
     "id": "bed-006",
+    "bedId": "BED678901",
     "bedNumber": 1,
     "roomId": "room-004",
     "status": "OCCUPIED",

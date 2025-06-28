@@ -6,6 +6,7 @@
     "phone": "+91-9876543210",
     "email": "info@vishnuclinic.com",
     "description": "A modern healthcare facility providing comprehensive medical services",
+    "createdById": "sa-001",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
@@ -16,6 +17,7 @@
     "phone": "+91-9876543211",
     "email": "info@cityhealthcenter.com",
     "description": "Providing quality healthcare services to urban communities",
+    "createdById": "sa-001",
     "createdAt": "2024-01-02T00:00:00.000Z",
     "updatedAt": "2024-01-02T00:00:00.000Z"
   },
@@ -26,6 +28,7 @@
     "phone": "+91-9876543212",
     "email": "info@ruralmedical.com",
     "description": "Bringing healthcare services to rural communities",
+    "createdById": "sa-001",
     "createdAt": "2024-01-03T00:00:00.000Z",
     "updatedAt": "2024-01-03T00:00:00.000Z"
   },
@@ -36,6 +39,7 @@
     "phone": "+91-9876543213",
     "email": "info@familycare.com",
     "description": "Comprehensive healthcare for the entire family",
+    "createdById": "sa-001",
     "createdAt": "2024-01-04T00:00:00.000Z",
     "updatedAt": "2024-01-04T00:00:00.000Z"
   },
@@ -46,6 +50,7 @@
     "phone": "+91-9876543214",
     "email": "info@specialtymedical.com",
     "description": "Advanced care for specialized medical conditions",
+    "createdById": "sa-001",
     "createdAt": "2024-01-05T00:00:00.000Z",
     "updatedAt": "2024-01-05T00:00:00.000Z"
   }
