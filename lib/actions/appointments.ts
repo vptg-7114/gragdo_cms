@@ -1,22 +1,7 @@
 "use server";
 
 import { appointmentsApi } from '@/lib/services/api';
-import { AppointmentStatus, AppointmentType, Appointment } from "@/lib/models";
-
-interface AppointmentWithDetails extends Appointment {
-  patient?: {
-    id: string;
-    patientId: string;
-    name: string;
-    phone: string;
-    gender: string;
-    age: number;
-  };
-  doctor?: {
-    id: string;
-    name: string;
-  };
-}
+import { AppointmentStatus, AppointmentType } from "@/lib/types";
 
 export async function createAppointmentRecord(data: {
   patientId: string;

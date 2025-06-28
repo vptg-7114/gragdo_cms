@@ -3,7 +3,24 @@ export enum AppointmentStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED"
+  CANCELLED = "CANCELLED",
+  SCHEDULED = "SCHEDULED",
+  CONFIRMED = "CONFIRMED",
+  CHECKED_IN = "CHECKED_IN",
+  NO_SHOW = "NO_SHOW",
+  RESCHEDULED = "RESCHEDULED"
+}
+
+// Define the appointment type enum
+export enum AppointmentType {
+  REGULAR = "REGULAR",
+  EMERGENCY = "EMERGENCY",
+  FOLLOW_UP = "FOLLOW_UP",
+  CONSULTATION = "CONSULTATION",
+  PROCEDURE = "PROCEDURE",
+  CHECKUP = "CHECKUP",
+  VACCINATION = "VACCINATION",
+  LABORATORY = "LABORATORY"
 }
 
 // Define the gender enum
@@ -19,6 +36,30 @@ export enum UserRole {
   ADMIN = "ADMIN",
   STAFF = "STAFF",
   DOCTOR = "DOCTOR"
+}
+
+// Define the blood group enum
+export enum BloodGroup {
+  A_POSITIVE = "A+",
+  A_NEGATIVE = "A-",
+  B_POSITIVE = "B+",
+  B_NEGATIVE = "B-",
+  AB_POSITIVE = "AB+",
+  AB_NEGATIVE = "AB-",
+  O_POSITIVE = "O+",
+  O_NEGATIVE = "O-"
+}
+
+// Define the document type enum
+export enum DocumentType {
+  REPORT = "REPORT",
+  PRESCRIPTION = "PRESCRIPTION",
+  INVOICE = "INVOICE",
+  RECEIPT = "RECEIPT",
+  CONSENT_FORM = "CONSENT_FORM",
+  MEDICAL_RECORD = "MEDICAL_RECORD",
+  INSURANCE = "INSURANCE",
+  OTHER = "OTHER"
 }
 
 // Define the base model interface with common fields
@@ -77,16 +118,29 @@ export interface Doctor extends BaseModel {
 // Define the patient interface
 export interface Patient extends BaseModel {
   patientId: string; // Unique patient identifier (e.g., PAT123456)
-  name: string;
+  firstName: string;
+  lastName: string;
+  name?: string; // Computed from firstName and lastName
   email?: string;
   phone: string;
   gender: Gender;
+  dateOfBirth: string; // ISO string
   age: number;
+  bloodGroup?: BloodGroup;
   address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   medicalHistory?: string;
   allergies?: string;
+  emergencyContact?: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
   clinicId: string; // Reference to Clinic
   createdById: string; // Reference to User who created this patient
+  isActive: boolean;
   // Relationships
   clinic?: Clinic; // The clinic this patient belongs to
   appointments?: Appointment[]; // Appointments for this patient
@@ -95,15 +149,34 @@ export interface Patient extends BaseModel {
 
 // Define the appointment interface
 export interface Appointment extends BaseModel {
+  appointmentId: string; // Unique appointment identifier (e.g., APT123456)
   patientId: string; // Reference to Patient
   doctorId: string; // Reference to Doctor
   clinicId: string; // Reference to Clinic
   appointmentDate: string; // ISO string
-  duration: number;
+  startTime: string; // 24-hour format (HH:MM)
+  endTime: string; // 24-hour format (HH:MM)
+  duration: number; // In minutes
+  type: AppointmentType;
+  status: AppointmentStatus;
   concern: string;
   notes?: string;
-  status: AppointmentStatus;
+  vitals?: {
+    temperature?: number;
+    bloodPressure?: string;
+    heartRate?: number;
+    respiratoryRate?: number;
+    oxygenSaturation?: number;
+    weight?: number;
+    height?: number;
+  };
   createdById: string; // Reference to User who created this appointment
+  cancelledAt?: string; // ISO string
+  cancelledById?: string; // Reference to User who cancelled this appointment
+  cancelReason?: string;
+  followUpDate?: string; // ISO string
+  isFollowUp: boolean;
+  previousAppointmentId?: string; // Reference to previous Appointment
   // Relationships
   patient?: Patient; // The patient for this appointment
   doctor?: Doctor; // The doctor for this appointment
@@ -113,97 +186,33 @@ export interface Appointment extends BaseModel {
 
 // Define the prescription interface
 export interface Prescription extends BaseModel {
+  prescriptionId: string; // Unique prescription identifier (e.g., PRE123456)
   patientId: string; // Reference to Patient
   doctorId: string; // Reference to Doctor
   clinicId: string; // Reference to Clinic
+  appointmentId: string; // Reference to Appointment
   diagnosis: string;
-  medications: string;
+  medications: string | Medication[];
   instructions?: string;
-  followUpDate?: string;
+  followUpDate?: string; // ISO string
+  isActive: boolean;
+  documentUrl?: string; // URL to the prescription document
   // Relationships
   patient?: Patient; // The patient for this prescription
   doctor?: Doctor; // The doctor who wrote this prescription
   clinic?: Clinic; // The clinic where this prescription was written
 }
 
-// Define the transaction interface
-export interface Transaction extends BaseModel {
-  amount: number;
-  type: "INCOME" | "EXPENSE";
-  description: string;
-  paymentStatus: "PAID" | "PENDING" | "CANCELLED";
-  appointmentId?: string; // Reference to Appointment (optional)
-  patientId?: string; // Reference to Patient (optional)
-  doctorId?: string; // Reference to Doctor (optional)
-  clinicId: string; // Reference to Clinic
-  createdById: string; // Reference to User who created this transaction
-  // Relationships
-  appointment?: Appointment; // The appointment associated with this transaction
-  patient?: Patient; // The patient associated with this transaction
-  doctor?: Doctor; // The doctor associated with this transaction
-  clinic?: Clinic; // The clinic where this transaction took place
-  createdBy?: User; // The user who created this transaction
-}
-
-// Define the medicine interface
-export interface Medicine extends BaseModel {
+// Define the medication interface
+export interface Medication {
+  id: string;
   name: string;
-  manufacturer: string;
-  batchNumber: string;
-  type: string;
   dosage: string;
-  manufacturedDate: string;
-  expiryDate: string;
-  price: number;
-  stock: number;
-  clinicId: string; // Reference to Clinic
-  createdById: string; // Reference to User who created this medicine
-  // Relationships
-  clinic?: Clinic; // The clinic where this medicine is stocked
-  createdBy?: User; // The user who created this medicine
-}
-
-// Define the treatment interface
-export interface Treatment extends BaseModel {
-  name: string;
-  description?: string;
-  cost: number;
-  duration?: number;
-  clinicId: string; // Reference to Clinic
-  createdById: string; // Reference to User who created this treatment
-  // Relationships
-  clinic?: Clinic; // The clinic where this treatment is offered
-  createdBy?: User; // The user who created this treatment
-}
-
-// Define the room interface
-export interface Room extends BaseModel {
-  roomNumber: string;
-  roomType: string;
-  totalBeds: number;
-  clinicId: string; // Reference to Clinic
-  createdById: string; // Reference to User who created this room
-  // Relationships
-  clinic?: Clinic; // The clinic where this room is located
-  createdBy?: User; // The user who created this room
-  beds?: Bed[]; // Beds in this room
-}
-
-// Define the bed interface
-export interface Bed extends BaseModel {
-  bedNumber: number;
-  roomId: string; // Reference to Room
-  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MAINTENANCE";
-  patientId?: string; // Reference to Patient (optional)
-  admissionDate?: string;
-  dischargeDate?: string;
-  clinicId: string; // Reference to Clinic
-  createdById: string; // Reference to User who created this bed
-  // Relationships
-  room?: Room; // The room this bed is in
-  patient?: Patient; // The patient currently occupying this bed
-  clinic?: Clinic; // The clinic where this bed is located
-  createdBy?: User; // The user who created this bed
+  frequency: string;
+  duration: string;
+  instructions?: string;
+  medicineId?: string; // Reference to Medicine in inventory
+  quantity: number;
 }
 
 // Define the enhanced prescription interface for client-side use
