@@ -46,33 +46,38 @@ export function LoginForm() {
       
       if (result.success) {
         // Redirect based on role
-        switch (role) {
-          case "SUPER_ADMIN":
-            router.push("/clinics")
-            break
-          case "ADMIN":
-            if (result.user?.clinicId) {
-              router.push(`/${result.user.clinicId}/admin/${result.user.id}/dashboard`)
-            } else {
-              router.push("/admin/dashboard")
-            }
-            break
-          case "STAFF":
-            if (result.user?.clinicId && result.user?.id) {
-              router.push(`/${result.user.clinicId}/staff/${result.user.id}/dashboard`)
-            } else {
-              router.push("/staff/dashboard")
-            }
-            break
-          case "DOCTOR":
-            if (result.user?.clinicId && result.user?.id) {
-              router.push(`/${result.user.clinicId}/doctor/${result.user.id}/dashboard`)
-            } else {
-              router.push("/doctor/dashboard")
-            }
-            break
-          default:
-            router.push("/")
+        if (result.user) {
+          switch (role) {
+            case "SUPER_ADMIN":
+              router.push("/clinics")
+              break
+            case "ADMIN":
+              if (result.user?.clinicId) {
+                router.push(`/${result.user.clinicId}/admin/${result.user.id}/dashboard`)
+              } else {
+                router.push("/admin/dashboard")
+              }
+              break
+            case "STAFF":
+              if (result.user?.clinicId && result.user?.id) {
+                router.push(`/${result.user.clinicId}/staff/${result.user.id}/dashboard`)
+              } else {
+                router.push("/staff/dashboard")
+              }
+              break
+            case "DOCTOR":
+              if (result.user?.clinicId && result.user?.id) {
+                router.push(`/${result.user.clinicId}/doctor/${result.user.id}/dashboard`)
+              } else {
+                router.push("/doctor/dashboard")
+              }
+              break
+            default:
+              router.push("/")
+          }
+        } else {
+          // If no user data is returned, redirect to home page
+          router.push("/")
         }
       } else {
         setError(result.error || "Login failed")

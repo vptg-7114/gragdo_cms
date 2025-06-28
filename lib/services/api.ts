@@ -31,6 +31,7 @@ export const apiClient = {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies
+        cache: 'no-store', // Disable caching
       });
       
       if (!response.ok) {
@@ -59,6 +60,7 @@ export const apiClient = {
         },
         body: JSON.stringify(data),
         credentials: 'include', // Include cookies
+        cache: 'no-store', // Disable caching
       });
       
       if (!response.ok) {
@@ -87,6 +89,7 @@ export const apiClient = {
         },
         body: JSON.stringify(data),
         credentials: 'include', // Include cookies
+        cache: 'no-store', // Disable caching
       });
       
       if (!response.ok) {
@@ -113,6 +116,7 @@ export const apiClient = {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies
+        cache: 'no-store', // Disable caching
       });
       
       if (!response.ok) {
@@ -148,6 +152,7 @@ export const apiClient = {
         method: 'POST',
         body: formData,
         credentials: 'include', // Include cookies
+        cache: 'no-store', // Disable caching
       });
       
       if (!response.ok) {
