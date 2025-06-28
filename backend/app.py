@@ -1,273 +1,322 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
-import os
-import jwt
-from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+import uuid
+import os
+import json
+from functools import wraps
 from dotenv import load_dotenv
 
-# Import database and models
-from database import init_db, get_db
-from models import (
-    User, Clinic, Doctor, Patient, Appointment, Prescription, 
-    Medicine, Room, Bed, Transaction, Invoice, Treatment, Document
-)
+from database import get_db, init_db, seed_demo_data
+from models import User, Clinic, Doctor, Patient, Appointment, Prescription, Medicine, Room, Bed, Transaction, Invoice, Treatment, Document
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
 
-# Configure JWT
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'fallback-secret-key-for-development-only')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
+# Configure CORS
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
+CORS(app, resources={r"/api/*": {"origins": cors_origins}}, supports_credentials=True)
 
 # Initialize database
 init_db()
 
-# Helper functions
-def generate_token(user_data):
-    """Generate a JWT token for a user"""
-    payload = {
-        'id': user_data['id'],
-        'name': user_data['name'],
-        'email': user_data['email'],
-        'role': user_data['role'],
-        'clinicId': user_data.get('clinicId'),
-        'clinicIds': user_data.get('clinicIds'),
-        'exp': datetime.utcnow() + timedelta(days=7)
-    }
-    return jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+# Seed demo data
+seed_demo_data()
 
-def verify_token(token):
-    """Verify a JWT token"""
-    try:
-        return jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
-    except:
-        return None
-
-def get_current_user():
-    """Get the current user from the request"""
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return None
+# Token required decorator
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Check for token in cookies
+        if 'auth-token' in request.cookies:
+            token = request.cookies.get('auth-token')
+        
+        # Check for token in Authorization header
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'Token is missing!'}), 401
+        
+        try:
+            # Decode the token
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            
+            # Get the user from the database
+            db = get_db()
+            current_user = User.find_by_id(db, data['id'])
+            db.close()
+            
+            if not current_user:
+                return jsonify({'success': False, 'error': 'Invalid token!'}), 401
+            
+        except Exception as e:
+            return jsonify({'success': False, 'error': 'Invalid token!'}), 401
+        
+        return f(current_user, *args, **kwargs)
     
-    token = auth_header.split(' ')[1]
-    return verify_token(token)
+    return decorated
 
 # Routes
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok', 'message': 'API is running'})
-
-# Auth routes
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Login a user"""
-    data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role')
+    data = request.get_json()
     
-    if not email or not password or not role:
+    if not data or not data.get('email') or not data.get('password') or not data.get('role'):
         return jsonify({'success': False, 'error': 'Missing required fields'}), 400
     
     db = get_db()
-    user = User.find_by_email_and_role(db, email, role)
+    user = User.find_by_email_and_role(db, data['email'], data['role'])
     
-    if not user or not check_password_hash(user['password'], password):
+    if not user:
+        db.close()
         return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
     
-    # Generate token
-    token = generate_token(user)
-    
-    # Set token in cookie
-    response = jsonify({
-        'success': True,
-        'user': {
+    if check_password_hash(user['password'], data['password']):
+        # Generate token
+        token = jwt.encode({
             'id': user['id'],
-            'name': user['name'],
             'email': user['email'],
             'role': user['role'],
-            'clinicId': user.get('clinicId'),
-            'clinicIds': user.get('clinicIds')
-        }
-    })
-    response.set_cookie('auth-token', token, httponly=True, secure=False, max_age=60*60*24*7)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        }, app.config['SECRET_KEY'], algorithm="HS256")
+        
+        # Create response
+        response = jsonify({
+            'success': True,
+            'user': {
+                'id': user['id'],
+                'name': user['name'],
+                'email': user['email'],
+                'role': user['role'],
+                'clinicId': user.get('clinicId'),
+                'clinicIds': json.loads(user['clinicIds']) if user.get('clinicIds') else None
+            }
+        })
+        
+        # Set cookie
+        response.set_cookie(
+            'auth-token',
+            token,
+            httponly=True,
+            secure=False,  # Set to True in production with HTTPS
+            samesite='Lax',
+            max_age=60*60*24*7  # 7 days
+        )
+        
+        db.close()
+        return response
     
-    return response
+    db.close()
+    return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
 
 @app.route('/api/auth/signup', methods=['POST'])
 def signup():
-    """Register a new user"""
-    data = request.json
+    data = request.get_json()
     
     required_fields = ['firstName', 'lastName', 'email', 'phone', 'role', 'password']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
+    # Check if email already exists
     db = get_db()
-    
-    # Check if user already exists
     existing_user = User.find_by_email(db, data['email'])
-    if existing_user:
-        return jsonify({'success': False, 'error': 'Email already in use'}), 400
     
-    # Create user
-    full_name = f"{data['firstName']} {data['lastName']}".strip()
+    if existing_user:
+        db.close()
+        return jsonify({'success': False, 'error': 'Email already exists'}), 400
+    
+    # Create new user
+    now = datetime.datetime.utcnow().isoformat()
+    
+    # For roles that require a clinic ID
+    if data['role'] in ['ADMIN', 'STAFF', 'DOCTOR'] and not data.get('clinicId'):
+        db.close()
+        return jsonify({'success': False, 'error': 'Clinic ID is required for this role'}), 400
+    
+    # Hash the password
     hashed_password = generate_password_hash(data['password'])
     
+    # Create user object
+    user_id = str(uuid.uuid4())
     user_data = {
-        'name': full_name,
+        'id': user_id,
+        'name': f"{data['firstName']} {data['lastName']}",
         'email': data['email'],
         'password': hashed_password,
         'phone': data['phone'],
         'role': data['role'],
         'clinicId': data.get('clinicId'),
-        'isActive': True,
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'clinicIds': json.dumps([data.get('clinicId')]) if data.get('clinicId') and data['role'] == 'SUPER_ADMIN' else None,
+        'isActive': 1,
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    user_id = User.create(db, user_data)
-    user_data['id'] = user_id
+    # Insert user into database
+    User.create(db, user_data)
     
     # Generate token
-    token = generate_token(user_data)
+    token = jwt.encode({
+        'id': user_id,
+        'email': data['email'],
+        'role': data['role'],
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    }, app.config['SECRET_KEY'], algorithm="HS256")
     
-    # Set token in cookie
+    # Create response
     response = jsonify({
         'success': True,
         'user': {
             'id': user_id,
-            'name': full_name,
+            'name': user_data['name'],
             'email': data['email'],
             'role': data['role'],
-            'clinicId': data.get('clinicId')
+            'clinicId': data.get('clinicId'),
+            'clinicIds': json.loads(user_data['clinicIds']) if user_data.get('clinicIds') else None
         }
     })
-    response.set_cookie('auth-token', token, httponly=True, secure=False, max_age=60*60*24*7)
     
+    # Set cookie
+    response.set_cookie(
+        'auth-token',
+        token,
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite='Lax',
+        max_age=60*60*24*7  # 7 days
+    )
+    
+    db.close()
     return response
 
 @app.route('/api/auth/forgot-password', methods=['POST'])
 def forgot_password():
-    """Request a password reset"""
-    data = request.json
-    email = data.get('email')
+    data = request.get_json()
     
-    if not email:
+    if not data or not data.get('email'):
         return jsonify({'success': False, 'error': 'Email is required'}), 400
     
-    # In a real app, you would send a password reset email
-    # For demo purposes, we'll just return success
+    # Check if user exists
+    db = get_db()
+    user = User.find_by_email(db, data['email'])
     
-    return jsonify({'success': True, 'message': 'Password reset email sent'})
+    if not user:
+        db.close()
+        # Don't reveal that the user doesn't exist for security reasons
+        return jsonify({'success': True, 'message': 'If your email is registered, you will receive a password reset link'}), 200
+    
+    # In a real application, you would send an email with a reset link
+    # For this demo, we'll just generate a token
+    reset_token = jwt.encode({
+        'id': user['id'],
+        'email': user['email'],
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }, app.config['SECRET_KEY'], algorithm="HS256")
+    
+    # In a real app, you would store this token in the database and send an email
+    # For now, we'll just return it in the response for testing
+    db.close()
+    return jsonify({
+        'success': True,
+        'message': 'If your email is registered, you will receive a password reset link',
+        'token': reset_token  # Remove this in production
+    }), 200
 
 @app.route('/api/auth/reset-password', methods=['POST'])
 def reset_password():
-    """Reset a password"""
-    data = request.json
-    token = data.get('token')
-    new_password = data.get('newPassword')
+    data = request.get_json()
     
-    if not token or not new_password:
+    if not data or not data.get('token') or not data.get('newPassword'):
         return jsonify({'success': False, 'error': 'Token and new password are required'}), 400
     
-    # In a real app, you would validate the token and update the user's password
-    # For demo purposes, we'll just return success
-    
-    return jsonify({'success': True, 'message': 'Password reset successful'})
+    try:
+        # Decode the token
+        token_data = jwt.decode(data['token'], app.config['SECRET_KEY'], algorithms=["HS256"])
+        
+        # Check if token is expired
+        if datetime.datetime.fromtimestamp(token_data['exp']) < datetime.datetime.utcnow():
+            return jsonify({'success': False, 'error': 'Token has expired'}), 400
+        
+        # Get the user from the database
+        db = get_db()
+        user = User.find_by_id(db, token_data['id'])
+        
+        if not user:
+            db.close()
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Update the password
+        hashed_password = generate_password_hash(data['newPassword'])
+        User.update(db, user['id'], {'password': hashed_password, 'updatedAt': datetime.datetime.utcnow().isoformat()})
+        
+        db.close()
+        return jsonify({'success': True, 'message': 'Password has been reset successfully'}), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Invalid token'}), 400
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
-    """Logout a user"""
     response = jsonify({'success': True})
     response.delete_cookie('auth-token')
     return response
 
 @app.route('/api/auth/me', methods=['GET'])
-def get_current_user_route():
-    """Get the current user"""
-    # Get token from cookie
-    token = request.cookies.get('auth-token')
-    
-    if not token:
-        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
+@token_required
+def get_current_user(current_user):
     return jsonify({
         'success': True,
         'user': {
-            'id': user_data['id'],
-            'name': user_data['name'],
-            'email': user_data['email'],
-            'role': user_data['role'],
-            'clinicId': user_data.get('clinicId'),
-            'clinicIds': user_data.get('clinicIds')
+            'id': current_user['id'],
+            'name': current_user['name'],
+            'email': current_user['email'],
+            'role': current_user['role'],
+            'clinicId': current_user.get('clinicId'),
+            'clinicIds': json.loads(current_user['clinicIds']) if current_user.get('clinicIds') else None
         }
     })
 
 # Profile routes
 @app.route('/api/profile', methods=['GET'])
-def get_profile():
-    """Get a user profile"""
-    user_id = request.args.get('userId')
-    
-    # Get current user from token if no userId provided
-    if not user_id:
-        token = request.cookies.get('auth-token')
-        if not token:
-            return jsonify({'success': False, 'error': 'Authentication required'}), 401
-        
-        user_data = verify_token(token)
-        if not user_data:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
-        
-        user_id = user_data['id']
+@token_required
+def get_profile(current_user):
+    user_id = request.args.get('userId', current_user['id'])
     
     db = get_db()
     user = User.find_by_id(db, user_id)
     
     if not user:
+        db.close()
         return jsonify({'success': False, 'error': 'User not found'}), 404
     
     # Get clinic details if applicable
     clinic = None
-    clinics = []
+    if user.get('clinicId'):
+        clinic = Clinic.find_by_id(db, user['clinicId'])
     
+    # Get clinics for super admin
+    clinics = []
     if user['role'] == 'SUPER_ADMIN' and user.get('clinicIds'):
-        clinic_ids = user['clinicIds']
-        if isinstance(clinic_ids, str):
-            import json
-            try:
-                clinic_ids = json.loads(clinic_ids)
-            except:
-                clinic_ids = []
-        
+        clinic_ids = json.loads(user['clinicIds'])
         for clinic_id in clinic_ids:
-            clinic_data = Clinic.find_by_id(db, clinic_id)
-            if clinic_data:
+            c = Clinic.find_by_id(db, clinic_id)
+            if c:
                 clinics.append({
-                    'id': clinic_data['id'],
-                    'name': clinic_data['name'],
-                    'address': clinic_data['address']
+                    'id': c['id'],
+                    'name': c['name'],
+                    'address': c['address']
                 })
-    elif user.get('clinicId'):
-        clinic_data = Clinic.find_by_id(db, user['clinicId'])
-        if clinic_data:
-            clinic = {
-                'id': clinic_data['id'],
-                'name': clinic_data['name'],
-                'address': clinic_data['address']
-            }
     
     profile = {
         'id': user['id'],
@@ -275,213 +324,299 @@ def get_profile():
         'email': user['email'],
         'phone': user.get('phone'),
         'role': user['role'],
-        'address': None,  # Add these fields to User model if needed
-        'bio': None,
-        'profileImage': None,
-        'clinicId': user.get('clinicId'),
-        'clinic': clinic,
-        'clinicIds': user.get('clinicIds'),
+        'clinic': {
+            'id': clinic['id'],
+            'name': clinic['name'],
+            'address': clinic['address']
+        } if clinic else None,
+        'clinicIds': json.loads(user['clinicIds']) if user.get('clinicIds') else None,
         'clinics': clinics,
         'createdAt': user['createdAt']
     }
     
+    db.close()
     return jsonify({'success': True, 'profile': profile})
 
 @app.route('/api/profile', methods=['PATCH'])
-def update_profile():
-    """Update a user profile"""
-    data = request.json
-    user_id = data.get('userId')
+@token_required
+def update_profile(current_user):
+    data = request.get_json()
     
-    if not user_id:
+    if not data or not data.get('userId'):
         return jsonify({'success': False, 'error': 'User ID is required'}), 400
     
+    # Check if the user is updating their own profile or has admin rights
+    if data['userId'] != current_user['id'] and current_user['role'] not in ['SUPER_ADMIN', 'ADMIN']:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
     db = get_db()
-    user = User.find_by_id(db, user_id)
+    user = User.find_by_id(db, data['userId'])
     
     if not user:
+        db.close()
         return jsonify({'success': False, 'error': 'User not found'}), 404
     
-    # Update fields
-    update_data = {}
-    for field in ['name', 'email', 'phone', 'address', 'bio', 'profileImage']:
-        if field in data:
-            update_data[field] = data[field]
+    # Update user data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
     
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+    if data.get('name'):
+        update_data['name'] = data['name']
     
-    User.update(db, user_id, update_data)
+    if data.get('email'):
+        update_data['email'] = data['email']
     
+    if data.get('phone'):
+        update_data['phone'] = data['phone']
+    
+    User.update(db, data['userId'], update_data)
+    
+    db.close()
     return jsonify({'success': True})
 
 # Clinic routes
 @app.route('/api/clinics', methods=['GET'])
-def get_clinics():
-    """Get all clinics"""
+@token_required
+def get_clinics(current_user):
     db = get_db()
     clinics = Clinic.get_all(db)
     
-    # Add stats for each clinic
+    # Enhance clinics with stats
     for clinic in clinics:
-        patients = Patient.find_by_clinic(db, clinic['id'])
-        appointments = Appointment.find_by_clinic(db, clinic['id'])
-        doctors = Doctor.find_by_clinic(db, clinic['id'])
+        # Get patient count
+        cursor = db.cursor()
+        cursor.execute('SELECT COUNT(*) as count FROM patients WHERE clinicId = ?', (clinic['id'],))
+        patient_count = cursor.fetchone()['count']
+        
+        # Get appointment count
+        cursor.execute('SELECT COUNT(*) as count FROM appointments WHERE clinicId = ?', (clinic['id'],))
+        appointment_count = cursor.fetchone()['count']
+        
+        # Get doctor count
+        cursor.execute('SELECT COUNT(*) as count FROM doctors WHERE clinicId = ?', (clinic['id'],))
+        doctor_count = cursor.fetchone()['count']
         
         clinic['stats'] = {
-            'patients': len(patients),
-            'appointments': len(appointments),
-            'doctors': len(doctors)
+            'patients': patient_count,
+            'appointments': appointment_count,
+            'doctors': doctor_count
         }
     
+    db.close()
     return jsonify({'success': True, 'clinics': clinics})
 
 @app.route('/api/clinics/<id>', methods=['GET'])
-def get_clinic(id):
-    """Get a clinic by ID"""
+@token_required
+def get_clinic(current_user, id):
     db = get_db()
     clinic = Clinic.find_by_id(db, id)
     
     if not clinic:
+        db.close()
         return jsonify({'success': False, 'error': 'Clinic not found'}), 404
     
-    # Add stats
-    patients = Patient.find_by_clinic(db, id)
-    appointments = Appointment.find_by_clinic(db, id)
-    doctors = Doctor.find_by_clinic(db, id)
+    # Get stats
+    cursor = db.cursor()
+    
+    # Get patient count
+    cursor.execute('SELECT COUNT(*) as count FROM patients WHERE clinicId = ?', (id,))
+    patient_count = cursor.fetchone()['count']
+    
+    # Get appointment count
+    cursor.execute('SELECT COUNT(*) as count FROM appointments WHERE clinicId = ?', (id,))
+    appointment_count = cursor.fetchone()['count']
+    
+    # Get doctor count
+    cursor.execute('SELECT COUNT(*) as count FROM doctors WHERE clinicId = ?', (id,))
+    doctor_count = cursor.fetchone()['count']
     
     clinic['stats'] = {
-        'patients': len(patients),
-        'appointments': len(appointments),
-        'doctors': len(doctors)
+        'patients': patient_count,
+        'appointments': appointment_count,
+        'doctors': doctor_count
     }
     
+    db.close()
     return jsonify({'success': True, 'clinic': clinic})
 
 @app.route('/api/clinics', methods=['POST'])
-def create_clinic():
-    """Create a new clinic"""
-    data = request.json
+@token_required
+def create_clinic(current_user):
+    data = request.get_json()
     
     required_fields = ['name', 'address', 'phone']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+    # Create clinic
+    now = datetime.datetime.utcnow().isoformat()
     
     clinic_data = {
+        'id': str(uuid.uuid4()),
         'name': data['name'],
         'address': data['address'],
         'phone': data['phone'],
         'email': data.get('email'),
         'description': data.get('description'),
-        'createdById': user_data['id'],
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdById': current_user['id'],
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    clinic_id = Clinic.create(db, clinic_data)
-    clinic_data['id'] = clinic_id
+    db = get_db()
+    Clinic.create(db, clinic_data)
     
+    # If the user is a super admin, add this clinic to their clinicIds
+    if current_user['role'] == 'SUPER_ADMIN':
+        clinic_ids = json.loads(current_user.get('clinicIds', '[]')) if current_user.get('clinicIds') else []
+        clinic_ids.append(clinic_data['id'])
+        User.update(db, current_user['id'], {'clinicIds': json.dumps(clinic_ids), 'updatedAt': now})
+    
+    db.close()
     return jsonify({'success': True, 'clinic': clinic_data})
 
 @app.route('/api/clinics/<id>', methods=['PATCH'])
-def update_clinic(id):
-    """Update a clinic"""
-    data = request.json
+@token_required
+def update_clinic(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     clinic = Clinic.find_by_id(db, id)
     
     if not clinic:
+        db.close()
         return jsonify({'success': False, 'error': 'Clinic not found'}), 404
     
-    # Update fields
-    update_data = {}
-    for field in ['name', 'address', 'phone', 'email', 'description']:
-        if field in data:
-            update_data[field] = data[field]
+    # Check if user has permission to update this clinic
+    if current_user['role'] != 'SUPER_ADMIN' and (current_user['role'] != 'ADMIN' or current_user.get('clinicId') != id):
+        db.close()
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
     
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+    # Update clinic data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
+    
+    if data.get('name'):
+        update_data['name'] = data['name']
+    
+    if data.get('address'):
+        update_data['address'] = data['address']
+    
+    if data.get('phone'):
+        update_data['phone'] = data['phone']
+    
+    if 'email' in data:
+        update_data['email'] = data['email']
+    
+    if 'description' in data:
+        update_data['description'] = data['description']
     
     Clinic.update(db, id, update_data)
     
     # Get updated clinic
     updated_clinic = Clinic.find_by_id(db, id)
     
+    db.close()
     return jsonify({'success': True, 'clinic': updated_clinic})
 
 @app.route('/api/clinics/<id>', methods=['DELETE'])
-def delete_clinic(id):
-    """Delete a clinic"""
+@token_required
+def delete_clinic(current_user, id):
+    # Only super admins can delete clinics
+    if current_user['role'] != 'SUPER_ADMIN':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
     db = get_db()
     clinic = Clinic.find_by_id(db, id)
     
     if not clinic:
+        db.close()
         return jsonify({'success': False, 'error': 'Clinic not found'}), 404
     
-    # Check if clinic has associated data
-    patients = Patient.find_by_clinic(db, id)
-    if patients:
+    # Check if clinic has any associated data
+    cursor = db.cursor()
+    
+    # Check for doctors
+    cursor.execute('SELECT COUNT(*) as count FROM doctors WHERE clinicId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
+        return jsonify({'success': False, 'error': 'Cannot delete clinic with associated doctors'}), 400
+    
+    # Check for patients
+    cursor.execute('SELECT COUNT(*) as count FROM patients WHERE clinicId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
         return jsonify({'success': False, 'error': 'Cannot delete clinic with associated patients'}), 400
     
+    # Check for appointments
+    cursor.execute('SELECT COUNT(*) as count FROM appointments WHERE clinicId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
+        return jsonify({'success': False, 'error': 'Cannot delete clinic with associated appointments'}), 400
+    
+    # Delete clinic
     Clinic.delete(db, id)
     
+    # Remove clinic from super admin's clinicIds
+    if current_user.get('clinicIds'):
+        clinic_ids = json.loads(current_user['clinicIds'])
+        if id in clinic_ids:
+            clinic_ids.remove(id)
+            User.update(db, current_user['id'], {
+                'clinicIds': json.dumps(clinic_ids),
+                'updatedAt': datetime.datetime.utcnow().isoformat()
+            })
+    
+    db.close()
     return jsonify({'success': True})
 
 # Doctor routes
 @app.route('/api/doctors', methods=['GET'])
-def get_doctors():
-    """Get all doctors"""
+@token_required
+def get_doctors(current_user):
     clinic_id = request.args.get('clinicId')
     
     db = get_db()
-    doctors = Doctor.get_all(db, clinic_id)
     
+    if clinic_id:
+        doctors = Doctor.find_by_clinic(db, clinic_id)
+    else:
+        doctors = Doctor.get_all(db)
+    
+    db.close()
     return jsonify({'success': True, 'doctors': doctors})
 
 @app.route('/api/doctors/<id>', methods=['GET'])
-def get_doctor(id):
-    """Get a doctor by ID"""
+@token_required
+def get_doctor(current_user, id):
     db = get_db()
     doctor = Doctor.find_by_id(db, id)
     
     if not doctor:
+        db.close()
         return jsonify({'success': False, 'error': 'Doctor not found'}), 404
     
+    db.close()
     return jsonify({'success': True, 'doctor': doctor})
 
 @app.route('/api/doctors', methods=['POST'])
-def create_doctor():
-    """Create a new doctor"""
-    data = request.json
+@token_required
+def create_doctor(current_user):
+    data = request.get_json()
     
     required_fields = ['name', 'phone', 'specialization', 'clinicId']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+    # Create doctor
+    now = datetime.datetime.utcnow().isoformat()
     
     doctor_data = {
+        'id': str(uuid.uuid4()),
         'name': data['name'],
         'email': data.get('email'),
         'phone': data['phone'],
@@ -489,112 +624,154 @@ def create_doctor():
         'qualification': data.get('qualification'),
         'experience': data.get('experience'),
         'consultationFee': data.get('consultationFee'),
-        'isAvailable': True,
+        'isAvailable': 1,
         'clinicId': data['clinicId'],
-        'createdById': user_data['id'],
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdById': current_user['id'],
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    doctor_id = Doctor.create(db, doctor_data)
-    doctor_data['id'] = doctor_id
+    db = get_db()
+    Doctor.create(db, doctor_data)
     
+    db.close()
     return jsonify({'success': True, 'doctor': doctor_data})
 
 @app.route('/api/doctors/<id>', methods=['PATCH'])
-def update_doctor(id):
-    """Update a doctor"""
-    data = request.json
+@token_required
+def update_doctor(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     doctor = Doctor.find_by_id(db, id)
     
     if not doctor:
+        db.close()
         return jsonify({'success': False, 'error': 'Doctor not found'}), 404
     
-    # Update fields
-    update_data = {}
-    for field in ['name', 'email', 'phone', 'specialization', 'qualification', 'experience', 'consultationFee', 'isAvailable']:
-        if field in data:
-            update_data[field] = data[field]
+    # Update doctor data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
     
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+    if data.get('name'):
+        update_data['name'] = data['name']
+    
+    if 'email' in data:
+        update_data['email'] = data['email']
+    
+    if data.get('phone'):
+        update_data['phone'] = data['phone']
+    
+    if data.get('specialization'):
+        update_data['specialization'] = data['specialization']
+    
+    if 'qualification' in data:
+        update_data['qualification'] = data['qualification']
+    
+    if 'experience' in data:
+        update_data['experience'] = data['experience']
+    
+    if 'consultationFee' in data:
+        update_data['consultationFee'] = data['consultationFee']
+    
+    if 'isAvailable' in data:
+        update_data['isAvailable'] = 1 if data['isAvailable'] else 0
     
     Doctor.update(db, id, update_data)
     
     # Get updated doctor
     updated_doctor = Doctor.find_by_id(db, id)
     
+    db.close()
     return jsonify({'success': True, 'doctor': updated_doctor})
 
 @app.route('/api/doctors/<id>', methods=['DELETE'])
-def delete_doctor(id):
-    """Delete a doctor"""
+@token_required
+def delete_doctor(current_user, id):
     db = get_db()
     doctor = Doctor.find_by_id(db, id)
     
     if not doctor:
+        db.close()
         return jsonify({'success': False, 'error': 'Doctor not found'}), 404
     
-    # Check if doctor has associated appointments
-    appointments = Appointment.find_by_doctor(db, id)
-    if appointments:
+    # Check if doctor has any associated appointments
+    cursor = db.cursor()
+    cursor.execute('SELECT COUNT(*) as count FROM appointments WHERE doctorId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
         return jsonify({'success': False, 'error': 'Cannot delete doctor with associated appointments'}), 400
     
+    # Delete doctor
     Doctor.delete(db, id)
     
+    db.close()
     return jsonify({'success': True})
 
 # Patient routes
 @app.route('/api/patients', methods=['GET'])
-def get_patients():
-    """Get all patients"""
+@token_required
+def get_patients(current_user):
     clinic_id = request.args.get('clinicId')
     
     db = get_db()
-    patients = Patient.get_all(db, clinic_id)
     
+    if clinic_id:
+        patients = Patient.find_by_clinic(db, clinic_id)
+    else:
+        patients = Patient.get_all(db)
+    
+    # Format patient names
+    for patient in patients:
+        patient['name'] = f"{patient['firstName']} {patient['lastName']}"
+    
+    db.close()
     return jsonify({'success': True, 'patients': patients})
 
 @app.route('/api/patients/<id>', methods=['GET'])
-def get_patient(id):
-    """Get a patient by ID"""
+@token_required
+def get_patient(current_user, id):
     db = get_db()
     patient = Patient.find_by_id(db, id)
     
     if not patient:
+        db.close()
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
     
+    # Format patient name
+    patient['name'] = f"{patient['firstName']} {patient['lastName']}"
+    
+    db.close()
     return jsonify({'success': True, 'patient': patient})
 
 @app.route('/api/patients', methods=['POST'])
-def create_patient():
-    """Create a new patient"""
-    data = request.json
+@token_required
+def create_patient(current_user):
+    data = request.get_json()
     
     required_fields = ['firstName', 'lastName', 'phone', 'gender', 'dateOfBirth', 'clinicId']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-    
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
     # Calculate age from date of birth
-    from datetime import datetime
-    birth_date = datetime.fromisoformat(data['dateOfBirth'].replace('Z', '+00:00'))
-    today = datetime.utcnow()
-    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    try:
+        dob = datetime.datetime.fromisoformat(data['dateOfBirth'].replace('Z', '+00:00'))
+        today = datetime.datetime.utcnow()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    except:
+        age = 0
+    
+    # Create patient
+    now = datetime.datetime.utcnow().isoformat()
+    
+    # Generate a unique patient ID
+    patient_id = f"PAT{uuid.uuid4().hex[:6].upper()}"
     
     patient_data = {
+        'id': str(uuid.uuid4()),
+        'patientId': patient_id,
         'firstName': data['firstName'],
         'lastName': data['lastName'],
         'email': data.get('email'),
@@ -608,164 +785,199 @@ def create_patient():
         'state': data.get('state'),
         'postalCode': data.get('postalCode'),
         'medicalHistory': data.get('medicalHistory'),
-        'allergies': data.get('allergies'),
+        'allergies': json.dumps(data.get('allergies', [])) if isinstance(data.get('allergies'), list) else data.get('allergies'),
+        'emergencyContact': json.dumps(data.get('emergencyContact')) if data.get('emergencyContact') else None,
         'clinicId': data['clinicId'],
-        'createdById': user_data['id'],
-        'isActive': True,
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdById': current_user['id'],
+        'isActive': 1,
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    patient_id = Patient.create(db, patient_data)
-    patient_data['id'] = patient_id
+    db = get_db()
+    Patient.create(db, patient_data)
     
+    # Format patient name for response
+    patient_data['name'] = f"{patient_data['firstName']} {patient_data['lastName']}"
+    
+    db.close()
     return jsonify({'success': True, 'patient': patient_data})
 
 @app.route('/api/patients/<id>', methods=['PATCH'])
-def update_patient(id):
-    """Update a patient"""
-    data = request.json
+@token_required
+def update_patient(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     patient = Patient.find_by_id(db, id)
     
     if not patient:
+        db.close()
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
     
-    # Update fields
-    update_data = {}
+    # Update patient data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
+    
+    # Update fields if provided
     fields = [
         'firstName', 'lastName', 'email', 'phone', 'gender', 'dateOfBirth',
         'bloodGroup', 'address', 'city', 'state', 'postalCode',
-        'medicalHistory', 'allergies', 'isActive'
+        'medicalHistory', 'isActive'
     ]
     
     for field in fields:
         if field in data:
             update_data[field] = data[field]
     
-    # Recalculate age if date of birth is updated
-    if 'dateOfBirth' in update_data:
-        from datetime import datetime
-        birth_date = datetime.fromisoformat(update_data['dateOfBirth'].replace('Z', '+00:00'))
-        today = datetime.utcnow()
-        update_data['age'] = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    # Special handling for allergies and emergencyContact
+    if 'allergies' in data:
+        update_data['allergies'] = json.dumps(data['allergies']) if isinstance(data['allergies'], list) else data['allergies']
     
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+    if 'emergencyContact' in data:
+        update_data['emergencyContact'] = json.dumps(data['emergencyContact']) if data['emergencyContact'] else None
+    
+    # Recalculate age if date of birth is updated
+    if 'dateOfBirth' in data:
+        try:
+            dob = datetime.datetime.fromisoformat(data['dateOfBirth'].replace('Z', '+00:00'))
+            today = datetime.datetime.utcnow()
+            update_data['age'] = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        except:
+            pass
     
     Patient.update(db, id, update_data)
     
     # Get updated patient
     updated_patient = Patient.find_by_id(db, id)
     
+    # Format patient name
+    updated_patient['name'] = f"{updated_patient['firstName']} {updated_patient['lastName']}"
+    
+    db.close()
     return jsonify({'success': True, 'patient': updated_patient})
 
 @app.route('/api/patients/<id>', methods=['DELETE'])
-def delete_patient(id):
-    """Delete a patient"""
+@token_required
+def delete_patient(current_user, id):
     db = get_db()
     patient = Patient.find_by_id(db, id)
     
     if not patient:
+        db.close()
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
     
-    # Check if patient has associated appointments
-    appointments = Appointment.find_by_patient(db, id)
-    if appointments:
+    # Check if patient has any associated appointments
+    cursor = db.cursor()
+    cursor.execute('SELECT COUNT(*) as count FROM appointments WHERE patientId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
         return jsonify({'success': False, 'error': 'Cannot delete patient with associated appointments'}), 400
     
+    # Delete patient
     Patient.delete(db, id)
     
+    db.close()
     return jsonify({'success': True})
 
 # Appointment routes
 @app.route('/api/appointments', methods=['GET'])
-def get_appointments():
-    """Get all appointments"""
+@token_required
+def get_appointments(current_user):
     clinic_id = request.args.get('clinicId')
     doctor_id = request.args.get('doctorId')
     patient_id = request.args.get('patientId')
     status = request.args.get('status')
     
     db = get_db()
-    appointments = Appointment.get_all(db, clinic_id, doctor_id, patient_id, status)
     
-    # Enrich appointments with patient and doctor data
+    # Build conditions
+    conditions = {}
+    if clinic_id:
+        conditions['clinicId'] = clinic_id
+    if doctor_id:
+        conditions['doctorId'] = doctor_id
+    if patient_id:
+        conditions['patientId'] = patient_id
+    if status:
+        conditions['status'] = status
+    
+    appointments = Appointment.get_all(db, conditions if conditions else None)
+    
+    # Enhance appointments with patient and doctor details
+    enhanced_appointments = []
     for appointment in appointments:
         patient = Patient.find_by_id(db, appointment['patientId'])
         doctor = Doctor.find_by_id(db, appointment['doctorId'])
         
-        if patient:
-            appointment['patient'] = {
-                'id': patient['id'],
-                'patientId': patient.get('patientId', ''),
-                'name': f"{patient['firstName']} {patient['lastName']}",
-                'phone': patient['phone'],
-                'gender': patient['gender'],
-                'age': patient['age']
+        if patient and doctor:
+            enhanced_appointment = {
+                **appointment,
+                'patient': {
+                    'patientId': patient['patientId'],
+                    'name': f"{patient['firstName']} {patient['lastName']}",
+                    'phone': patient['phone'],
+                    'gender': patient['gender'],
+                    'age': patient['age']
+                },
+                'doctor': {
+                    'name': doctor['name']
+                }
             }
-        
-        if doctor:
-            appointment['doctor'] = {
-                'id': doctor['id'],
-                'name': doctor['name']
-            }
+            enhanced_appointments.append(enhanced_appointment)
     
-    return jsonify({'success': True, 'appointments': appointments})
+    db.close()
+    return jsonify({'success': True, 'appointments': enhanced_appointments})
 
 @app.route('/api/appointments/<id>', methods=['GET'])
-def get_appointment(id):
-    """Get an appointment by ID"""
+@token_required
+def get_appointment(current_user, id):
     db = get_db()
     appointment = Appointment.find_by_id(db, id)
     
     if not appointment:
+        db.close()
         return jsonify({'success': False, 'error': 'Appointment not found'}), 404
     
-    # Enrich appointment with patient and doctor data
+    # Get patient and doctor details
     patient = Patient.find_by_id(db, appointment['patientId'])
     doctor = Doctor.find_by_id(db, appointment['doctorId'])
     
-    if patient:
+    if patient and doctor:
         appointment['patient'] = {
-            'id': patient['id'],
-            'patientId': patient.get('patientId', ''),
+            'patientId': patient['patientId'],
             'name': f"{patient['firstName']} {patient['lastName']}",
             'phone': patient['phone'],
             'gender': patient['gender'],
             'age': patient['age']
         }
-    
-    if doctor:
         appointment['doctor'] = {
-            'id': doctor['id'],
             'name': doctor['name']
         }
     
+    db.close()
     return jsonify({'success': True, 'appointment': appointment})
 
 @app.route('/api/appointments', methods=['POST'])
-def create_appointment():
-    """Create a new appointment"""
-    data = request.json
+@token_required
+def create_appointment(current_user):
+    data = request.get_json()
     
     required_fields = ['patientId', 'doctorId', 'clinicId', 'appointmentDate', 'startTime', 'endTime', 'duration', 'concern']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+    # Create appointment
+    now = datetime.datetime.utcnow().isoformat()
     
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+    # Generate a unique appointment ID
+    appointment_id = f"APT{uuid.uuid4().hex[:6].upper()}"
     
     appointment_data = {
+        'id': str(uuid.uuid4()),
+        'appointmentId': appointment_id,
         'patientId': data['patientId'],
         'doctorId': data['doctorId'],
         'clinicId': data['clinicId'],
@@ -774,55 +986,57 @@ def create_appointment():
         'endTime': data['endTime'],
         'duration': data['duration'],
         'type': data.get('type', 'REGULAR'),
+        'status': 'SCHEDULED',
         'concern': data['concern'],
         'notes': data.get('notes'),
-        'status': 'SCHEDULED',
-        'isFollowUp': data.get('isFollowUp', False),
+        'createdById': current_user['id'],
+        'isFollowUp': 1 if data.get('isFollowUp') else 0,
         'previousAppointmentId': data.get('previousAppointmentId'),
-        'createdById': user_data['id'],
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    appointment_id = Appointment.create(db, appointment_data)
-    appointment_data['id'] = appointment_id
+    db = get_db()
+    Appointment.create(db, appointment_data)
     
-    # Get patient and doctor for response
+    # Get patient and doctor details for response
     patient = Patient.find_by_id(db, data['patientId'])
     doctor = Doctor.find_by_id(db, data['doctorId'])
     
-    if patient:
+    if patient and doctor:
         appointment_data['patient'] = {
-            'id': patient['id'],
-            'patientId': patient.get('patientId', ''),
+            'patientId': patient['patientId'],
             'name': f"{patient['firstName']} {patient['lastName']}",
             'phone': patient['phone'],
             'gender': patient['gender'],
             'age': patient['age']
         }
-    
-    if doctor:
         appointment_data['doctor'] = {
-            'id': doctor['id'],
             'name': doctor['name']
         }
     
+    db.close()
     return jsonify({'success': True, 'appointment': appointment_data})
 
 @app.route('/api/appointments/<id>', methods=['PATCH'])
-def update_appointment(id):
-    """Update an appointment"""
-    data = request.json
+@token_required
+def update_appointment(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     appointment = Appointment.find_by_id(db, id)
     
     if not appointment:
+        db.close()
         return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+    
+    # Update appointment data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
     
     # Handle different types of updates based on the action
     action = data.get('action')
-    update_data = {}
     
     if action == 'checkIn':
         update_data['status'] = 'CHECKED_IN'
@@ -830,11 +1044,15 @@ def update_appointment(id):
         update_data['status'] = 'IN_PROGRESS'
     elif action == 'complete':
         update_data['status'] = 'COMPLETED'
-        update_data['vitals'] = data.get('vitals')
-        update_data['notes'] = data.get('notes')
-        update_data['followUpDate'] = data.get('followUpDate')
+        if data.get('vitals'):
+            update_data['vitals'] = json.dumps(data['vitals'])
+        if data.get('notes'):
+            update_data['notes'] = data['notes']
+        if data.get('followUpDate'):
+            update_data['followUpDate'] = data['followUpDate']
     elif action == 'reschedule':
-        if not all(field in data for field in ['appointmentDate', 'startTime', 'endTime', 'duration']):
+        if not all(data.get(field) for field in ['appointmentDate', 'startTime', 'endTime', 'duration']):
+            db.close()
             return jsonify({'success': False, 'error': 'Required fields for rescheduling are missing'}), 400
         
         update_data['appointmentDate'] = data['appointmentDate']
@@ -844,345 +1062,533 @@ def update_appointment(id):
         update_data['status'] = 'RESCHEDULED'
     elif action == 'cancel':
         if not data.get('cancelReason') or not data.get('cancelledById'):
+            db.close()
             return jsonify({'success': False, 'error': 'Reason and canceller ID are required for cancellation'}), 400
         
         update_data['status'] = 'CANCELLED'
-        update_data['cancelledAt'] = datetime.utcnow().isoformat()
+        update_data['cancelledAt'] = datetime.datetime.utcnow().isoformat()
         update_data['cancelledById'] = data['cancelledById']
         update_data['cancelReason'] = data['cancelReason']
     else:
         # Regular update
-        fields = ['appointmentDate', 'startTime', 'endTime', 'duration', 'type', 'concern', 'notes', 'status', 'vitals', 'followUpDate']
+        fields = [
+            'appointmentDate', 'startTime', 'endTime', 'duration', 'type',
+            'concern', 'notes', 'status', 'followUpDate'
+        ]
+        
         for field in fields:
             if field in data:
                 update_data[field] = data[field]
-    
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+        
+        if data.get('vitals'):
+            update_data['vitals'] = json.dumps(data['vitals'])
     
     Appointment.update(db, id, update_data)
     
     # Get updated appointment
     updated_appointment = Appointment.find_by_id(db, id)
     
-    # Enrich appointment with patient and doctor data
+    # Get patient and doctor details for response
     patient = Patient.find_by_id(db, updated_appointment['patientId'])
     doctor = Doctor.find_by_id(db, updated_appointment['doctorId'])
     
-    if patient:
+    if patient and doctor:
         updated_appointment['patient'] = {
-            'id': patient['id'],
-            'patientId': patient.get('patientId', ''),
+            'patientId': patient['patientId'],
             'name': f"{patient['firstName']} {patient['lastName']}",
             'phone': patient['phone'],
             'gender': patient['gender'],
             'age': patient['age']
         }
-    
-    if doctor:
         updated_appointment['doctor'] = {
-            'id': doctor['id'],
             'name': doctor['name']
         }
     
+    db.close()
     return jsonify({'success': True, 'appointment': updated_appointment})
 
 @app.route('/api/appointments/<id>', methods=['DELETE'])
-def delete_appointment(id):
-    """Delete an appointment"""
+@token_required
+def delete_appointment(current_user, id):
     db = get_db()
     appointment = Appointment.find_by_id(db, id)
     
     if not appointment:
+        db.close()
         return jsonify({'success': False, 'error': 'Appointment not found'}), 404
     
+    # Check if appointment has any associated prescriptions
+    cursor = db.cursor()
+    cursor.execute('SELECT COUNT(*) as count FROM prescriptions WHERE appointmentId = ?', (id,))
+    if cursor.fetchone()['count'] > 0:
+        db.close()
+        return jsonify({'success': False, 'error': 'Cannot delete appointment with associated prescriptions'}), 400
+    
+    # Delete appointment
     Appointment.delete(db, id)
     
+    db.close()
     return jsonify({'success': True})
 
 # Prescription routes
 @app.route('/api/prescriptions', methods=['GET'])
-def get_prescriptions():
-    """Get all prescriptions"""
+@token_required
+def get_prescriptions(current_user):
     clinic_id = request.args.get('clinicId')
     doctor_id = request.args.get('doctorId')
     patient_id = request.args.get('patientId')
     
     db = get_db()
-    prescriptions = Prescription.get_all(db, clinic_id, doctor_id, patient_id)
     
-    # Enrich prescriptions with patient and doctor data
+    # Build conditions
+    conditions = {}
+    if clinic_id:
+        conditions['clinicId'] = clinic_id
+    if doctor_id:
+        conditions['doctorId'] = doctor_id
+    if patient_id:
+        conditions['patientId'] = patient_id
+    
+    prescriptions = Prescription.get_all(db, conditions if conditions else None)
+    
+    # Enhance prescriptions with patient and doctor details
+    enhanced_prescriptions = []
     for prescription in prescriptions:
         patient = Patient.find_by_id(db, prescription['patientId'])
         doctor = Doctor.find_by_id(db, prescription['doctorId'])
         
-        if patient:
-            prescription['patientName'] = f"{patient['firstName']} {patient['lastName']}"
-            prescription['patientGender'] = patient['gender']
-            prescription['patientAge'] = patient['age']
-        
-        if doctor:
-            prescription['doctorName'] = doctor['name']
+        if patient and doctor:
+            # Parse medications JSON
+            medications = json.loads(prescription['medications']) if isinstance(prescription['medications'], str) else prescription['medications']
+            
+            # Create enhanced prescription
+            enhanced_prescription = {
+                **prescription,
+                'patientName': f"{patient['firstName']} {patient['lastName']}",
+                'doctorName': doctor['name'],
+                'gender': patient['gender'],
+                'age': patient['age'],
+                'concern': medications[0]['name'] if medications and len(medications) > 0 else 'General checkup',
+                'reports': [],
+                'prescriptions': []
+            }
+            
+            # Add document URL if available
+            if prescription.get('documentUrl'):
+                enhanced_prescription['prescriptions'].append({
+                    'id': prescription['id'],
+                    'name': f"Prescription_{prescription['prescriptionId']}.pdf",
+                    'type': 'PDF',
+                    'url': prescription['documentUrl']
+                })
+            
+            enhanced_prescriptions.append(enhanced_prescription)
     
-    return jsonify({'success': True, 'prescriptions': prescriptions})
+    db.close()
+    return jsonify({'success': True, 'prescriptions': enhanced_prescriptions})
 
 @app.route('/api/prescriptions/<id>', methods=['GET'])
-def get_prescription(id):
-    """Get a prescription by ID"""
+@token_required
+def get_prescription(current_user, id):
     db = get_db()
     prescription = Prescription.find_by_id(db, id)
     
     if not prescription:
+        db.close()
         return jsonify({'success': False, 'error': 'Prescription not found'}), 404
     
-    # Enrich prescription with patient and doctor data
+    # Get patient and doctor details
     patient = Patient.find_by_id(db, prescription['patientId'])
     doctor = Doctor.find_by_id(db, prescription['doctorId'])
     
-    if patient:
-        prescription['patient'] = patient
+    if patient and doctor:
+        prescription['patientName'] = f"{patient['firstName']} {patient['lastName']}"
+        prescription['doctorName'] = doctor['name']
+        prescription['gender'] = patient['gender']
+        prescription['age'] = patient['age']
     
-    if doctor:
-        prescription['doctor'] = doctor
+    # Parse medications JSON
+    prescription['medications'] = json.loads(prescription['medications']) if isinstance(prescription['medications'], str) else prescription['medications']
     
+    db.close()
     return jsonify({'success': True, 'prescription': prescription})
 
 @app.route('/api/prescriptions', methods=['POST'])
-def create_prescription():
-    """Create a new prescription"""
-    data = request.json
+@token_required
+def create_prescription(current_user):
+    data = request.get_json()
     
     required_fields = ['patientId', 'doctorId', 'clinicId', 'appointmentId', 'diagnosis', 'medications']
     for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+    # Create prescription
+    now = datetime.datetime.utcnow().isoformat()
     
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+    # Generate a unique prescription ID
+    prescription_id = f"PRE{uuid.uuid4().hex[:6].upper()}"
     
     prescription_data = {
+        'id': str(uuid.uuid4()),
+        'prescriptionId': prescription_id,
         'patientId': data['patientId'],
         'doctorId': data['doctorId'],
         'clinicId': data['clinicId'],
         'appointmentId': data['appointmentId'],
         'diagnosis': data['diagnosis'],
-        'medications': data['medications'],
+        'medications': json.dumps(data['medications']),
         'instructions': data.get('instructions'),
         'followUpDate': data.get('followUpDate'),
-        'isActive': True,
+        'isActive': 1,
         'documentUrl': data.get('documentUrl'),
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    prescription_id = Prescription.create(db, prescription_data)
-    prescription_data['id'] = prescription_id
+    db = get_db()
+    Prescription.create(db, prescription_data)
     
+    # Get patient and doctor details for response
+    patient = Patient.find_by_id(db, data['patientId'])
+    doctor = Doctor.find_by_id(db, data['doctorId'])
+    
+    if patient and doctor:
+        prescription_data['patientName'] = f"{patient['firstName']} {patient['lastName']}"
+        prescription_data['doctorName'] = doctor['name']
+        prescription_data['gender'] = patient['gender']
+        prescription_data['age'] = patient['age']
+    
+    # Parse medications JSON for response
+    prescription_data['medications'] = data['medications']
+    
+    db.close()
     return jsonify({'success': True, 'prescription': prescription_data})
 
 @app.route('/api/prescriptions/<id>', methods=['PATCH'])
-def update_prescription(id):
-    """Update a prescription"""
-    data = request.json
+@token_required
+def update_prescription(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     prescription = Prescription.find_by_id(db, id)
     
     if not prescription:
+        db.close()
         return jsonify({'success': False, 'error': 'Prescription not found'}), 404
     
-    # Update fields
-    update_data = {}
-    fields = ['diagnosis', 'medications', 'instructions', 'followUpDate', 'isActive', 'documentUrl']
+    # Update prescription data
+    update_data = {
+        'updatedAt': datetime.datetime.utcnow().isoformat()
+    }
     
-    for field in fields:
-        if field in data:
-            update_data[field] = data[field]
+    if data.get('diagnosis'):
+        update_data['diagnosis'] = data['diagnosis']
     
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
+    if data.get('medications'):
+        update_data['medications'] = json.dumps(data['medications'])
+    
+    if 'instructions' in data:
+        update_data['instructions'] = data['instructions']
+    
+    if 'followUpDate' in data:
+        update_data['followUpDate'] = data['followUpDate']
+    
+    if 'isActive' in data:
+        update_data['isActive'] = 1 if data['isActive'] else 0
+    
+    if 'documentUrl' in data:
+        update_data['documentUrl'] = data['documentUrl']
     
     Prescription.update(db, id, update_data)
     
     # Get updated prescription
     updated_prescription = Prescription.find_by_id(db, id)
     
+    # Get patient and doctor details for response
+    patient = Patient.find_by_id(db, updated_prescription['patientId'])
+    doctor = Doctor.find_by_id(db, updated_prescription['doctorId'])
+    
+    if patient and doctor:
+        updated_prescription['patientName'] = f"{patient['firstName']} {patient['lastName']}"
+        updated_prescription['doctorName'] = doctor['name']
+        updated_prescription['gender'] = patient['gender']
+        updated_prescription['age'] = patient['age']
+    
+    # Parse medications JSON for response
+    updated_prescription['medications'] = json.loads(updated_prescription['medications']) if isinstance(updated_prescription['medications'], str) else updated_prescription['medications']
+    
+    db.close()
     return jsonify({'success': True, 'prescription': updated_prescription})
 
 @app.route('/api/prescriptions/<id>', methods=['DELETE'])
-def delete_prescription(id):
-    """Delete a prescription"""
+@token_required
+def delete_prescription(current_user, id):
     db = get_db()
     prescription = Prescription.find_by_id(db, id)
     
     if not prescription:
+        db.close()
         return jsonify({'success': False, 'error': 'Prescription not found'}), 404
     
+    # Delete prescription
     Prescription.delete(db, id)
     
+    db.close()
     return jsonify({'success': True})
 
 # Dashboard routes
 @app.route('/api/dashboard/stats', methods=['GET'])
-def get_dashboard_stats():
-    """Get dashboard statistics"""
+@token_required
+def get_dashboard_stats(current_user):
     clinic_id = request.args.get('clinicId')
     doctor_id = request.args.get('doctorId')
     
     db = get_db()
+    cursor = db.cursor()
     
-    # Get appointments and patients
-    appointments = Appointment.get_all(db, clinic_id, doctor_id)
-    patients = Patient.get_all(db, clinic_id)
-    doctors = Doctor.get_all(db, clinic_id)
+    stats = {}
     
-    # Get today's appointments and patients
-    today = datetime.utcnow().date()
-    today_appointments = [a for a in appointments if datetime.fromisoformat(a['appointmentDate'].replace('Z', '+00:00')).date() == today]
-    today_patient_ids = set(a['patientId'] for a in today_appointments)
-    today_patients = len(today_patient_ids)
+    # Get today's date
+    today = datetime.datetime.utcnow().date().isoformat()
     
-    # Get patient demographics
-    male_patients = len([p for p in patients if p['gender'] == 'MALE'])
-    female_patients = len([p for p in patients if p['gender'] == 'FEMALE'])
-    child_patients = len([p for p in patients if p['age'] < 18])
+    # Build query conditions
+    clinic_condition = f"clinicId = '{clinic_id}'" if clinic_id else "1=1"
+    doctor_condition = f"doctorId = '{doctor_id}'" if doctor_id else "1=1"
     
-    # Get available doctors
-    available_doctors = len([d for d in doctors if d.get('isAvailable', True)])
+    # Today's appointments
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM appointments 
+    WHERE {clinic_condition} AND {doctor_condition} AND date(appointmentDate) = ?
+    ''', (today,))
+    stats['todayAppointments'] = cursor.fetchone()['count']
     
-    # Get check-ins (patients who have arrived for their appointments)
-    # For demo purposes, we'll use a percentage of today's appointments
-    check_ins = len([a for a in today_appointments if a['status'] in ['CHECKED_IN', 'IN_PROGRESS', 'COMPLETED']])
+    # Today's patients (unique patients with appointments today)
+    cursor.execute(f'''
+    SELECT COUNT(DISTINCT patientId) as count FROM appointments 
+    WHERE {clinic_condition} AND {doctor_condition} AND date(appointmentDate) = ?
+    ''', (today,))
+    stats['todayPatients'] = cursor.fetchone()['count']
     
-    return jsonify({
-        'success': True,
-        'stats': {
-            'todayAppointments': len(today_appointments),
-            'todayPatients': today_patients,
-            'totalPatients': len(patients),
-            'malePatients': male_patients,
-            'femalePatients': female_patients,
-            'childPatients': child_patients,
-            'availableDoctors': available_doctors,
-            'checkIns': check_ins,
-            'appointments': len(today_appointments)  # For StatsCards component
-        }
-    })
+    # Total patients
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM patients 
+    WHERE {clinic_condition}
+    ''')
+    stats['totalPatients'] = cursor.fetchone()['count']
+    
+    # Male patients
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM patients 
+    WHERE {clinic_condition} AND gender = 'MALE'
+    ''')
+    stats['malePatients'] = cursor.fetchone()['count']
+    
+    # Female patients
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM patients 
+    WHERE {clinic_condition} AND gender = 'FEMALE'
+    ''')
+    stats['femalePatients'] = cursor.fetchone()['count']
+    
+    # Child patients (age < 18)
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM patients 
+    WHERE {clinic_condition} AND age < 18
+    ''')
+    stats['childPatients'] = cursor.fetchone()['count']
+    
+    # Available doctors
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM doctors 
+    WHERE {clinic_condition} AND isAvailable = 1
+    ''')
+    stats['availableDoctors'] = cursor.fetchone()['count']
+    
+    # Check-ins (appointments with status CHECKED_IN or IN_PROGRESS)
+    cursor.execute(f'''
+    SELECT COUNT(*) as count FROM appointments 
+    WHERE {clinic_condition} AND {doctor_condition} AND date(appointmentDate) = ? 
+    AND (status = 'CHECKED_IN' OR status = 'IN_PROGRESS')
+    ''', (today,))
+    stats['checkIns'] = cursor.fetchone()['count']
+    
+    # For admin dashboard
+    if not doctor_id:
+        # Total doctors
+        cursor.execute(f'''
+        SELECT COUNT(*) as count FROM doctors 
+        WHERE {clinic_condition}
+        ''')
+        stats['doctors'] = cursor.fetchone()['count']
+        
+        # Total staff
+        cursor.execute(f'''
+        SELECT COUNT(*) as count FROM users 
+        WHERE {clinic_condition} AND role = 'STAFF'
+        ''')
+        stats['staff'] = cursor.fetchone()['count']
+    
+    db.close()
+    return jsonify({'success': True, 'stats': stats})
 
 @app.route('/api/dashboard/appointments', methods=['GET'])
-def get_recent_appointments():
-    """Get recent appointments"""
+@token_required
+def get_recent_appointments(current_user):
     clinic_id = request.args.get('clinicId')
     doctor_id = request.args.get('doctorId')
     
     db = get_db()
     
-    # Get appointments
-    appointments = Appointment.get_all(db, clinic_id, doctor_id)
+    # Build conditions
+    conditions = {}
+    if clinic_id:
+        conditions['clinicId'] = clinic_id
+    if doctor_id:
+        conditions['doctorId'] = doctor_id
     
-    # Sort by date descending and take the first 5
-    appointments.sort(key=lambda a: a['appointmentDate'], reverse=True)
-    recent_appointments = appointments[:5]
+    # Get recent appointments (limit to 10)
+    cursor = db.cursor()
     
-    # Enrich appointments with patient and doctor data
-    for appointment in recent_appointments:
+    query = '''
+    SELECT * FROM appointments 
+    WHERE 1=1
+    '''
+    
+    params = []
+    
+    if clinic_id:
+        query += ' AND clinicId = ?'
+        params.append(clinic_id)
+    
+    if doctor_id:
+        query += ' AND doctorId = ?'
+        params.append(doctor_id)
+    
+    query += ' ORDER BY appointmentDate DESC LIMIT 10'
+    
+    cursor.execute(query, params)
+    appointments = cursor.fetchall()
+    
+    # Enhance appointments with patient and doctor details
+    enhanced_appointments = []
+    for appointment in appointments:
         patient = Patient.find_by_id(db, appointment['patientId'])
         doctor = Doctor.find_by_id(db, appointment['doctorId'])
         
-        if patient:
-            appointment['patient'] = {
-                'id': patient['id'],
-                'patientId': patient.get('patientId', ''),
-                'name': f"{patient['firstName']} {patient['lastName']}",
-                'phone': patient['phone'],
-                'gender': patient['gender'],
-                'age': patient['age']
+        if patient and doctor:
+            enhanced_appointment = {
+                **appointment,
+                'patient': {
+                    'patientId': patient['patientId'],
+                    'name': f"{patient['firstName']} {patient['lastName']}",
+                    'phone': patient['phone'],
+                    'gender': patient['gender'],
+                    'age': patient['age']
+                },
+                'doctor': {
+                    'name': doctor['name']
+                }
             }
-        
-        if doctor:
-            appointment['doctor'] = {
-                'id': doctor['id'],
-                'name': doctor['name']
-            }
+            enhanced_appointments.append(enhanced_appointment)
     
-    return jsonify({'success': True, 'appointments': recent_appointments})
+    db.close()
+    return jsonify({'success': True, 'appointments': enhanced_appointments})
 
 @app.route('/api/dashboard/doctors-activity', methods=['GET'])
-def get_doctors_activity():
-    """Get doctors activity"""
+@token_required
+def get_doctors_activity(current_user):
     clinic_id = request.args.get('clinicId')
     
     db = get_db()
     
     # Get doctors
-    doctors = Doctor.get_all(db, clinic_id)
+    doctors = Doctor.find_by_clinic(db, clinic_id) if clinic_id else Doctor.get_all(db)
     
-    # Get appointments
-    appointments = Appointment.get_all(db, clinic_id)
-    
-    doctors_activity = []
+    # Enhance doctors with appointment stats
+    enhanced_doctors = []
     for doctor in doctors:
-        doctor_appointments = [a for a in appointments if a['doctorId'] == doctor['id']]
-        in_progress = len([a for a in doctor_appointments if a['status'] == 'IN_PROGRESS'])
-        completed = len([a for a in doctor_appointments if a['status'] == 'COMPLETED'])
-        pending = len([a for a in doctor_appointments if a['status'] in ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN']])
+        # Get appointment counts
+        cursor = db.cursor()
         
-        doctors_activity.append({
+        # In progress appointments
+        cursor.execute('''
+        SELECT COUNT(*) as count FROM appointments 
+        WHERE doctorId = ? AND status = 'IN_PROGRESS'
+        ''', (doctor['id'],))
+        in_progress = cursor.fetchone()['count']
+        
+        # Completed appointments
+        cursor.execute('''
+        SELECT COUNT(*) as count FROM appointments 
+        WHERE doctorId = ? AND status = 'COMPLETED'
+        ''', (doctor['id'],))
+        completed = cursor.fetchone()['count']
+        
+        # Pending appointments
+        cursor.execute('''
+        SELECT COUNT(*) as count FROM appointments 
+        WHERE doctorId = ? AND (status = 'SCHEDULED' OR status = 'CONFIRMED')
+        ''', (doctor['id'],))
+        pending = cursor.fetchone()['count']
+        
+        # Total appointments
+        total = in_progress + completed + pending
+        
+        enhanced_doctor = {
             'id': doctor['id'],
             'name': doctor['name'],
             'specialization': doctor['specialization'],
-            'isAvailable': doctor.get('isAvailable', True),
+            'isAvailable': bool(doctor['isAvailable']),
             'appointments': {
                 'inProgress': in_progress,
                 'completed': completed,
                 'pending': pending,
-                'total': len(doctor_appointments)
+                'total': total
             }
-        })
+        }
+        
+        enhanced_doctors.append(enhanced_doctor)
     
-    return jsonify({'success': True, 'doctorsActivity': doctors_activity})
+    db.close()
+    return jsonify({'success': True, 'doctorsActivity': enhanced_doctors})
 
 @app.route('/api/dashboard/reports', methods=['GET'])
-def get_recent_reports():
-    """Get recent reports"""
-    # In a real app, you would fetch reports from the database
-    # For demo purposes, we'll return mock data
+@token_required
+def get_recent_reports(current_user):
+    clinic_id = request.args.get('clinicId')
+    
+    # Mock data for reports
     reports = [
         {
             'id': '1',
             'title': 'Monthly Patient Report',
-            'type': 'Patient Analytics',
-            'generatedDate': (datetime.utcnow() - timedelta(days=15)).isoformat(),
-            'size': '2.4 MB',
+            'type': 'Patient Statistics',
+            'generatedDate': datetime.datetime.utcnow() - datetime.timedelta(days=2),
+            'size': '2.5 MB',
             'format': 'PDF'
         },
         {
             'id': '2',
-            'title': 'Revenue Analysis Q4',
+            'title': 'Revenue Analysis',
             'type': 'Financial Report',
-            'generatedDate': (datetime.utcnow() - timedelta(days=10)).isoformat(),
+            'generatedDate': datetime.datetime.utcnow() - datetime.timedelta(days=5),
             'size': '1.8 MB',
             'format': 'Excel'
         },
         {
             'id': '3',
-            'title': 'Doctor Performance Report',
-            'type': 'Performance Analytics',
-            'generatedDate': (datetime.utcnow() - timedelta(days=8)).isoformat(),
+            'title': 'Doctor Performance',
+            'type': 'Staff Report',
+            'generatedDate': datetime.datetime.utcnow() - datetime.timedelta(days=7),
             'size': '3.2 MB',
             'format': 'PDF'
         },
         {
             'id': '4',
-            'title': 'Appointment Statistics',
-            'type': 'Operational Report',
-            'generatedDate': (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            'title': 'Inventory Status',
+            'type': 'Inventory Report',
+            'generatedDate': datetime.datetime.utcnow() - datetime.timedelta(days=10),
             'size': '1.5 MB',
             'format': 'PDF'
         }
@@ -1190,253 +1596,291 @@ def get_recent_reports():
     
     return jsonify({'success': True, 'reports': reports})
 
-# Admin routes
+# Admin dashboard routes
 @app.route('/api/admin/stats', methods=['GET'])
-def get_admin_stats():
-    """Get admin dashboard statistics"""
+@token_required
+def get_admin_stats(current_user):
     clinic_id = request.args.get('clinicId')
+    
     if not clinic_id:
         return jsonify({'success': False, 'error': 'Clinic ID is required'}), 400
     
     db = get_db()
+    cursor = db.cursor()
     
-    # Get patients, appointments, doctors, and staff
-    patients = Patient.find_by_clinic(db, clinic_id)
-    appointments = Appointment.find_by_clinic(db, clinic_id)
-    doctors = Doctor.find_by_clinic(db, clinic_id)
-    staff = User.find_by_clinic_and_role(db, clinic_id, 'STAFF')
+    stats = {}
     
-    return jsonify({
-        'success': True,
-        'stats': {
-            'totalPatients': len(patients),
-            'appointments': len(appointments),
-            'doctors': len(doctors),
-            'staff': len(staff)
-        }
-    })
+    # Total patients
+    cursor.execute('''
+    SELECT COUNT(*) as count FROM patients 
+    WHERE clinicId = ?
+    ''', (clinic_id,))
+    stats['totalPatients'] = cursor.fetchone()['count']
+    
+    # Today's appointments
+    today = datetime.datetime.utcnow().date().isoformat()
+    cursor.execute('''
+    SELECT COUNT(*) as count FROM appointments 
+    WHERE clinicId = ? AND date(appointmentDate) = ?
+    ''', (clinic_id, today))
+    stats['appointments'] = cursor.fetchone()['count']
+    
+    # Total doctors
+    cursor.execute('''
+    SELECT COUNT(*) as count FROM doctors 
+    WHERE clinicId = ?
+    ''', (clinic_id,))
+    stats['doctors'] = cursor.fetchone()['count']
+    
+    # Total staff
+    cursor.execute('''
+    SELECT COUNT(*) as count FROM users 
+    WHERE clinicId = ? AND role = 'STAFF'
+    ''', (clinic_id,))
+    stats['staff'] = cursor.fetchone()['count']
+    
+    db.close()
+    return jsonify({'success': True, 'stats': stats})
 
 @app.route('/api/admin/doctors', methods=['GET'])
-def get_admin_doctors():
-    """Get doctors for admin dashboard"""
+@token_required
+def get_admin_doctors(current_user):
     clinic_id = request.args.get('clinicId')
+    
     if not clinic_id:
         return jsonify({'success': False, 'error': 'Clinic ID is required'}), 400
     
     db = get_db()
-    
-    # Get doctors
     doctors = Doctor.find_by_clinic(db, clinic_id)
     
-    # Format for display
-    formatted_doctors = []
-    for doctor in doctors:
-        formatted_doctors.append({
-            'id': doctor['id'],
-            'name': doctor['name'],
-            'specialization': doctor['specialization'],
-            'isAvailable': doctor.get('isAvailable', True),
-            'avatar': None  # Add avatar field to Doctor model if needed
-        })
-    
-    return jsonify({'success': True, 'doctors': formatted_doctors})
+    db.close()
+    return jsonify({'success': True, 'doctors': doctors})
 
 @app.route('/api/admin/staff', methods=['GET'])
-def get_admin_staff():
-    """Get staff for admin dashboard"""
+@token_required
+def get_admin_staff(current_user):
     clinic_id = request.args.get('clinicId')
+    
     if not clinic_id:
         return jsonify({'success': False, 'error': 'Clinic ID is required'}), 400
     
     db = get_db()
-    
-    # Get staff
     staff = User.find_by_clinic_and_role(db, clinic_id, 'STAFF')
     
-    # Format for display
-    formatted_staff = []
-    for staff_member in staff:
-        formatted_staff.append({
-            'id': staff_member['id'],
-            'name': staff_member['name'],
-            'role': 'Staff',
-            'isAvailable': staff_member.get('isActive', True),
-            'avatar': None  # Add avatar field to User model if needed
-        })
-    
-    return jsonify({'success': True, 'staff': formatted_staff})
+    db.close()
+    return jsonify({'success': True, 'staff': staff})
 
 @app.route('/api/admin/transactions', methods=['GET'])
-def get_admin_transactions():
-    """Get transactions for admin dashboard"""
+@token_required
+def get_admin_transactions(current_user):
     clinic_id = request.args.get('clinicId')
+    
     if not clinic_id:
         return jsonify({'success': False, 'error': 'Clinic ID is required'}), 400
     
     db = get_db()
     
-    # Get transactions
-    transactions = Transaction.find_by_clinic(db, clinic_id)
+    # Get recent transactions (limit to 10)
+    cursor = db.cursor()
+    cursor.execute('''
+    SELECT * FROM transactions 
+    WHERE clinicId = ? 
+    ORDER BY createdAt DESC LIMIT 10
+    ''', (clinic_id,))
     
-    # Sort by date descending and take the first 5
-    transactions.sort(key=lambda t: t['createdAt'], reverse=True)
-    recent_transactions = transactions[:5]
+    transactions = cursor.fetchall()
     
-    return jsonify({'success': True, 'transactions': recent_transactions})
+    # Format transactions for the dashboard
+    formatted_transactions = []
+    for transaction in transactions:
+        # Get doctor name if available
+        doctor_name = None
+        if transaction.get('doctorId'):
+            doctor = Doctor.find_by_id(db, transaction['doctorId'])
+            if doctor:
+                doctor_name = doctor['name']
+        
+        # Get patient name if available
+        patient_name = None
+        if transaction.get('patientId'):
+            patient = Patient.find_by_id(db, transaction['patientId'])
+            if patient:
+                patient_name = f"{patient['firstName']} {patient['lastName']}"
+        
+        formatted_transaction = {
+            'id': transaction['id'],
+            'doctorName': doctor_name or 'N/A',
+            'testName': transaction['description'],
+            'date': transaction['createdAt'].split('T')[0] if 'T' in transaction['createdAt'] else transaction['createdAt'],
+            'amount': transaction['amount']
+        }
+        
+        formatted_transactions.append(formatted_transaction)
+    
+    db.close()
+    return jsonify({'success': True, 'transactions': formatted_transactions})
 
 @app.route('/api/admin/appointments', methods=['GET'])
-def get_admin_appointments():
-    """Get appointments for admin dashboard"""
+@token_required
+def get_admin_appointments(current_user):
     clinic_id = request.args.get('clinicId')
+    
     if not clinic_id:
         return jsonify({'success': False, 'error': 'Clinic ID is required'}), 400
     
     db = get_db()
     
-    # Get appointments
-    appointments = Appointment.find_by_clinic(db, clinic_id)
+    # Get recent appointments (limit to 10)
+    cursor = db.cursor()
+    cursor.execute('''
+    SELECT * FROM appointments 
+    WHERE clinicId = ? 
+    ORDER BY appointmentDate DESC LIMIT 10
+    ''', (clinic_id,))
     
-    # Sort by date descending and take the first 5
-    appointments.sort(key=lambda a: a['createdAt'], reverse=True)
-    recent_appointments = appointments[:5]
+    appointments = cursor.fetchall()
     
-    # Format for display
+    # Format appointments for the dashboard
     formatted_appointments = []
-    for i, appointment in enumerate(recent_appointments):
+    for appointment in appointments:
+        # Get patient details
         patient = Patient.find_by_id(db, appointment['patientId'])
-        
-        formatted_appointments.append({
-            'id': appointment['id'],
-            'sNo': i + 1,
-            'name': f"{patient['firstName']} {patient['lastName']}" if patient else 'Unknown',
-            'phoneNumber': patient['phone'] if patient else 'N/A',
-            'email': patient.get('email', 'N/A') if patient else 'N/A',
-            'age': patient['age'] if patient else 0,
-            'gender': patient['gender'] if patient else 'N/A',
-            'action': 'Accept'
-        })
+        if patient:
+            formatted_appointment = {
+                'id': appointment['id'],
+                'sNo': len(formatted_appointments) + 1,
+                'name': f"{patient['firstName']} {patient['lastName']}",
+                'phoneNumber': patient['phone'],
+                'email': patient.get('email', 'N/A'),
+                'age': patient['age'],
+                'gender': patient['gender'],
+                'action': 'Accept' if appointment['status'] in ['SCHEDULED', 'CONFIRMED'] else 'Decline'
+            }
+            
+            formatted_appointments.append(formatted_appointment)
     
+    db.close()
     return jsonify({'success': True, 'appointments': formatted_appointments})
 
 # Analytics routes
 @app.route('/api/analytics', methods=['GET'])
-def get_analytics_data():
-    """Get analytics data"""
-    db = get_db()
-    
-    # Get patients, appointments, and transactions
-    patients = Patient.get_all(db)
-    appointments = Appointment.get_all(db)
-    transactions = Transaction.get_all(db)
-    
-    # Calculate revenue
-    now = datetime.utcnow()
-    this_month_start = datetime(now.year, now.month, 1)
-    last_month_start = datetime(now.year, now.month - 1 if now.month > 1 else 12, 1)
-    last_month_end = this_month_start - timedelta(days=1)
-    
-    # Filter transactions for this month and last month
-    this_month_transactions = [tx for tx in transactions if 
-                              datetime.fromisoformat(tx['createdAt'].replace('Z', '+00:00')) >= this_month_start and 
-                              datetime.fromisoformat(tx['createdAt'].replace('Z', '+00:00')) <= now and 
-                              tx['type'] == 'INCOME']
-    
-    last_month_transactions = [tx for tx in transactions if 
-                              datetime.fromisoformat(tx['createdAt'].replace('Z', '+00:00')) >= last_month_start and 
-                              datetime.fromisoformat(tx['createdAt'].replace('Z', '+00:00')) <= last_month_end and 
-                              tx['type'] == 'INCOME']
-    
-    # Calculate revenue
-    this_month_revenue = sum(tx['amount'] for tx in this_month_transactions)
-    last_month_revenue = sum(tx['amount'] for tx in last_month_transactions)
-    
-    # Calculate growth
-    revenue_growth = 0
-    if last_month_revenue > 0:
-        revenue_growth = round(((this_month_revenue - last_month_revenue) / last_month_revenue) * 100)
-    
-    # Calculate patient growth
-    last_month_patients = len([p for p in patients if 
-                              datetime.fromisoformat(p['createdAt'].replace('Z', '+00:00')) < this_month_start])
-    
-    patient_growth = 0
-    if last_month_patients > 0:
-        patient_growth = round(((len(patients) - last_month_patients) / last_month_patients) * 100)
-    
-    # Calculate appointment completion rate
-    completed_appointments = len([a for a in appointments if a['status'] == 'COMPLETED'])
-    completion_rate = 0
-    if appointments:
-        completion_rate = round((completed_appointments / len(appointments)) * 100)
-    
-    return jsonify({
-        'success': True,
-        'data': {
-            'revenue': {
-                'thisMonth': this_month_revenue or 250000,  # Default value for demo
-                'lastMonth': last_month_revenue or 220000,  # Default value for demo
-                'growth': revenue_growth or 13  # Default value for demo
-            },
-            'patients': {
-                'total': len(patients) or 2427,  # Default value for demo
-                'growth': patient_growth or 8  # Default value for demo
-            },
-            'appointments': {
-                'completionRate': completion_rate or 85,  # Default value for demo
-                'total': len(appointments) or 1850  # Default value for demo
-            }
+@token_required
+def get_analytics(current_user):
+    # Mock data for analytics
+    analytics_data = {
+        'revenue': {
+            'thisMonth': 250000,
+            'lastMonth': 220000,
+            'growth': 13
+        },
+        'patients': {
+            'total': 2427,
+            'growth': 8
+        },
+        'appointments': {
+            'completionRate': 85,
+            'total': 1850
         }
-    })
+    }
+    
+    return jsonify({'success': True, 'data': analytics_data})
 
-# Medicine routes
+# Treatments routes
+@app.route('/api/treatments', methods=['GET'])
+@token_required
+def get_treatments(current_user):
+    db = get_db()
+    treatments = Treatment.get_all(db)
+    
+    # Format treatments for the client
+    formatted_treatments = []
+    for treatment in treatments:
+        formatted_treatment = {
+            'id': treatment['id'],
+            'treatmentName': treatment['name'],
+            'treatmentInCharge': 'K. Vijay',  # Mock data
+            'treatmentCost': treatment['cost'],
+            'createdAt': treatment['createdAt']
+        }
+        
+        formatted_treatments.append(formatted_treatment)
+    
+    db.close()
+    return jsonify({'success': True, 'treatments': formatted_treatments})
+
+@app.route('/api/treatments/<id>', methods=['DELETE'])
+@token_required
+def delete_treatment(current_user, id):
+    db = get_db()
+    treatment = Treatment.find_by_id(db, id)
+    
+    if not treatment:
+        db.close()
+        return jsonify({'success': False, 'error': 'Treatment not found'}), 404
+    
+    # Delete treatment
+    Treatment.delete(db, id)
+    
+    db.close()
+    return jsonify({'success': True})
+
+# Medicines routes
 @app.route('/api/medicines', methods=['GET'])
-def get_medicines():
-    """Get all medicines"""
+@token_required
+def get_medicines(current_user):
     clinic_id = request.args.get('clinicId')
     is_active = request.args.get('isActive')
     
-    if is_active is not None:
-        is_active = is_active.lower() == 'true'
-    
     db = get_db()
-    medicines = Medicine.get_all(db, clinic_id, is_active)
     
+    # Build conditions
+    conditions = {}
+    if clinic_id:
+        conditions['clinicId'] = clinic_id
+    if is_active is not None:
+        conditions['isActive'] = 1 if is_active == 'true' else 0
+    
+    medicines = Medicine.get_all(db, conditions if conditions else None)
+    
+    db.close()
     return jsonify({'success': True, 'medicines': medicines})
 
 @app.route('/api/medicines/<id>', methods=['GET'])
-def get_medicine(id):
-    """Get a medicine by ID"""
+@token_required
+def get_medicine(current_user, id):
     db = get_db()
     medicine = Medicine.find_by_id(db, id)
     
     if not medicine:
+        db.close()
         return jsonify({'success': False, 'error': 'Medicine not found'}), 404
     
+    db.close()
     return jsonify({'success': True, 'medicine': medicine})
 
 @app.route('/api/medicines', methods=['POST'])
-def create_medicine():
-    """Create a new medicine"""
-    data = request.json
+@token_required
+def create_medicine(current_user):
+    data = request.get_json()
     
-    required_fields = ['name', 'manufacturer', 'batchNumber', 'type', 'dosage', 
-                      'manufacturedDate', 'expiryDate', 'price', 'stock', 'clinicId']
+    required_fields = [
+        'name', 'manufacturer', 'batchNumber', 'type', 'dosage',
+        'manufacturedDate', 'expiryDate', 'price', 'stock', 'clinicId'
+    ]
+    
     for field in required_fields:
         if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
     
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+    # Create medicine
+    now = datetime.datetime.utcnow().isoformat()
     
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
+    # Generate a unique medicine ID
+    medicine_id = f"MED{uuid.uuid4().hex[:6].upper()}"
     
     medicine_data = {
+        'id': str(uuid.uuid4()),
+        'medicineId': medicine_id,
         'name': data['name'],
         'manufacturer': data['manufacturer'],
         'batchNumber': data['batchNumber'],
@@ -1448,452 +1892,88 @@ def create_medicine():
         'stock': data['stock'],
         'reorderLevel': data.get('reorderLevel', 10),
         'clinicId': data['clinicId'],
-        'createdById': user_data['id'],
-        'isActive': True,
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
+        'createdById': current_user['id'],
+        'isActive': 1,
+        'createdAt': now,
+        'updatedAt': now
     }
     
-    medicine_id = Medicine.create(db, medicine_data)
-    medicine_data['id'] = medicine_id
+    db = get_db()
+    Medicine.create(db, medicine_data)
     
+    db.close()
     return jsonify({'success': True, 'medicine': medicine_data})
 
 @app.route('/api/medicines/<id>', methods=['PATCH'])
-def update_medicine(id):
-    """Update a medicine"""
-    data = request.json
+@token_required
+def update_medicine(current_user, id):
+    data = request.get_json()
     
     db = get_db()
     medicine = Medicine.find_by_id(db, id)
     
     if not medicine:
+        db.close()
         return jsonify({'success': False, 'error': 'Medicine not found'}), 404
     
     # Handle stock updates separately
     if data.get('action') == 'updateStock':
         if 'quantity' not in data or 'isAddition' not in data:
+            db.close()
             return jsonify({'success': False, 'error': 'Quantity and isAddition are required for stock updates'}), 400
         
         current_stock = medicine['stock']
-        quantity = data['quantity']
-        is_addition = data['isAddition']
+        quantity = int(data['quantity'])
         
-        if is_addition:
+        if data['isAddition']:
             new_stock = current_stock + quantity
         else:
             new_stock = current_stock - quantity
             if new_stock < 0:
+                db.close()
                 return jsonify({'success': False, 'error': 'Insufficient stock'}), 400
         
         update_data = {
             'stock': new_stock,
-            'updatedAt': datetime.utcnow().isoformat()
+            'updatedAt': datetime.datetime.utcnow().isoformat()
         }
     else:
         # Regular update
-        update_data = {}
-        fields = ['name', 'manufacturer', 'batchNumber', 'type', 'dosage', 
-                 'manufacturedDate', 'expiryDate', 'price', 'stock', 'reorderLevel', 'isActive']
+        update_data = {
+            'updatedAt': datetime.datetime.utcnow().isoformat()
+        }
+        
+        fields = [
+            'name', 'manufacturer', 'batchNumber', 'type', 'dosage',
+            'manufacturedDate', 'expiryDate', 'price', 'stock', 'reorderLevel', 'isActive'
+        ]
         
         for field in fields:
             if field in data:
                 update_data[field] = data[field]
-        
-        update_data['updatedAt'] = datetime.utcnow().isoformat()
     
     Medicine.update(db, id, update_data)
     
     # Get updated medicine
     updated_medicine = Medicine.find_by_id(db, id)
     
+    db.close()
     return jsonify({'success': True, 'medicine': updated_medicine})
 
 @app.route('/api/medicines/<id>', methods=['DELETE'])
-def delete_medicine(id):
-    """Delete a medicine"""
+@token_required
+def delete_medicine(current_user, id):
     db = get_db()
     medicine = Medicine.find_by_id(db, id)
     
     if not medicine:
+        db.close()
         return jsonify({'success': False, 'error': 'Medicine not found'}), 404
     
+    # Delete medicine
     Medicine.delete(db, id)
     
-    return jsonify({'success': True})
-
-# Treatment routes
-@app.route('/api/treatments', methods=['GET'])
-def get_treatments():
-    """Get all treatments"""
-    clinic_id = request.args.get('clinicId')
-    
-    db = get_db()
-    treatments = Treatment.get_all(db, clinic_id)
-    
-    return jsonify({'success': True, 'treatments': treatments})
-
-@app.route('/api/treatments/<id>', methods=['DELETE'])
-def delete_treatment(id):
-    """Delete a treatment"""
-    db = get_db()
-    treatment = Treatment.find_by_id(db, id)
-    
-    if not treatment:
-        return jsonify({'success': False, 'error': 'Treatment not found'}), 404
-    
-    Treatment.delete(db, id)
-    
-    return jsonify({'success': True})
-
-# Room routes
-@app.route('/api/rooms', methods=['GET'])
-def get_rooms():
-    """Get all rooms"""
-    clinic_id = request.args.get('clinicId')
-    is_active = request.args.get('isActive')
-    
-    if is_active is not None:
-        is_active = is_active.lower() == 'true'
-    
-    db = get_db()
-    rooms = Room.get_all(db, clinic_id, is_active)
-    
-    # Get bed counts for each room
-    for room in rooms:
-        room_beds = Bed.find_by_room(db, room['id'])
-        available_beds = len([b for b in room_beds if b['status'] == 'AVAILABLE'])
-        occupied_beds = len([b for b in room_beds if b['status'] == 'OCCUPIED'])
-        reserved_beds = len([b for b in room_beds if b['status'] == 'RESERVED'])
-        
-        room['bedCounts'] = {
-            'total': len(room_beds),
-            'available': available_beds,
-            'occupied': occupied_beds,
-            'reserved': reserved_beds
-        }
-    
-    return jsonify({'success': True, 'rooms': rooms})
-
-@app.route('/api/rooms/<id>', methods=['GET'])
-def get_room(id):
-    """Get a room by ID"""
-    db = get_db()
-    room = Room.find_by_id(db, id)
-    
-    if not room:
-        return jsonify({'success': False, 'error': 'Room not found'}), 404
-    
-    # Get beds for this room
-    room_beds = Bed.find_by_room(db, id)
-    
-    # Get patient details for occupied beds
-    for bed in room_beds:
-        if bed['status'] == 'OCCUPIED' and bed.get('patientId'):
-            patient = Patient.find_by_id(db, bed['patientId'])
-            if patient:
-                bed['patient'] = {
-                    'id': patient['id'],
-                    'patientId': patient.get('patientId', ''),
-                    'name': f"{patient['firstName']} {patient['lastName']}",
-                    'gender': patient['gender'],
-                    'age': patient['age']
-                }
-    
-    room['beds'] = room_beds
-    room['bedCounts'] = {
-        'total': len(room_beds),
-        'available': len([b for b in room_beds if b['status'] == 'AVAILABLE']),
-        'occupied': len([b for b in room_beds if b['status'] == 'OCCUPIED']),
-        'reserved': len([b for b in room_beds if b['status'] == 'RESERVED'])
-    }
-    
-    return jsonify({'success': True, 'room': room})
-
-@app.route('/api/rooms', methods=['POST'])
-def create_room():
-    """Create a new room"""
-    data = request.json
-    
-    required_fields = ['roomNumber', 'roomType', 'floor', 'totalBeds', 'clinicId']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-    
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
-    
-    # Check if room number already exists in this clinic
-    existing_rooms = Room.find_by_clinic(db, data['clinicId'])
-    if any(r['roomNumber'] == data['roomNumber'] for r in existing_rooms):
-        return jsonify({'success': False, 'error': 'Room number already exists in this clinic'}), 400
-    
-    room_data = {
-        'roomNumber': data['roomNumber'],
-        'roomType': data['roomType'],
-        'floor': data['floor'],
-        'totalBeds': data['totalBeds'],
-        'clinicId': data['clinicId'],
-        'createdById': user_data['id'],
-        'isActive': True,
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
-    }
-    
-    room_id = Room.create(db, room_data)
-    room_data['id'] = room_id
-    
-    return jsonify({'success': True, 'room': room_data})
-
-@app.route('/api/rooms/<id>', methods=['PATCH'])
-def update_room(id):
-    """Update a room"""
-    data = request.json
-    
-    db = get_db()
-    room = Room.find_by_id(db, id)
-    
-    if not room:
-        return jsonify({'success': False, 'error': 'Room not found'}), 404
-    
-    # Check if room number is being changed and already exists
-    if 'roomNumber' in data and data['roomNumber'] != room['roomNumber']:
-        existing_rooms = Room.find_by_clinic(db, room['clinicId'])
-        if any(r['roomNumber'] == data['roomNumber'] and r['id'] != id for r in existing_rooms):
-            return jsonify({'success': False, 'error': 'Room number already exists in this clinic'}), 400
-    
-    # Update fields
-    update_data = {}
-    fields = ['roomNumber', 'roomType', 'floor', 'totalBeds', 'isActive']
-    
-    for field in fields:
-        if field in data:
-            update_data[field] = data[field]
-    
-    update_data['updatedAt'] = datetime.utcnow().isoformat()
-    
-    Room.update(db, id, update_data)
-    
-    # Get updated room
-    updated_room = Room.find_by_id(db, id)
-    
-    return jsonify({'success': True, 'room': updated_room})
-
-@app.route('/api/rooms/<id>', methods=['DELETE'])
-def delete_room(id):
-    """Delete a room"""
-    db = get_db()
-    room = Room.find_by_id(db, id)
-    
-    if not room:
-        return jsonify({'success': False, 'error': 'Room not found'}), 404
-    
-    # Check if room has beds
-    room_beds = Bed.find_by_room(db, id)
-    if room_beds:
-        return jsonify({'success': False, 'error': 'Cannot delete a room with beds. Delete the beds first.'}), 400
-    
-    Room.delete(db, id)
-    
-    return jsonify({'success': True})
-
-# Bed routes
-@app.route('/api/beds/room/<room_id>', methods=['GET'])
-def get_beds_by_room(room_id):
-    """Get beds by room"""
-    db = get_db()
-    beds = Bed.find_by_room(db, room_id)
-    
-    # Get patient details for occupied beds
-    for bed in beds:
-        if bed['status'] == 'OCCUPIED' and bed.get('patientId'):
-            patient = Patient.find_by_id(db, bed['patientId'])
-            if patient:
-                bed['patient'] = {
-                    'id': patient['id'],
-                    'patientId': patient.get('patientId', ''),
-                    'name': f"{patient['firstName']} {patient['lastName']}",
-                    'gender': patient['gender'],
-                    'age': patient['age']
-                }
-    
-    return jsonify({'success': True, 'beds': beds})
-
-@app.route('/api/beds/<id>', methods=['GET'])
-def get_bed(id):
-    """Get a bed by ID"""
-    db = get_db()
-    bed = Bed.find_by_id(db, id)
-    
-    if not bed:
-        return jsonify({'success': False, 'error': 'Bed not found'}), 404
-    
-    # Get patient details if bed is occupied
-    if bed['status'] == 'OCCUPIED' and bed.get('patientId'):
-        patient = Patient.find_by_id(db, bed['patientId'])
-        if patient:
-            bed['patient'] = {
-                'id': patient['id'],
-                'patientId': patient.get('patientId', ''),
-                'name': f"{patient['firstName']} {patient['lastName']}",
-                'gender': patient['gender'],
-                'age': patient['age']
-            }
-    
-    # Get room details
-    room = Room.find_by_id(db, bed['roomId'])
-    if room:
-        bed['room'] = {
-            'id': room['id'],
-            'roomNumber': room['roomNumber'],
-            'roomType': room['roomType']
-        }
-    
-    return jsonify({'success': True, 'bed': bed})
-
-@app.route('/api/beds', methods=['POST'])
-def create_bed():
-    """Create a new bed"""
-    data = request.json
-    
-    required_fields = ['bedNumber', 'roomId', 'clinicId']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-    
-    # Get current user from token
-    token = request.cookies.get('auth-token')
-    if not token:
-        return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
-    user_data = verify_token(token)
-    if not user_data:
-        return jsonify({'success': False, 'error': 'Invalid token'}), 401
-    
-    db = get_db()
-    
-    # Check if room exists
-    room = Room.find_by_id(db, data['roomId'])
-    if not room:
-        return jsonify({'success': False, 'error': 'Room not found'}), 404
-    
-    # Check if bed number already exists in this room
-    existing_beds = Bed.find_by_room(db, data['roomId'])
-    if any(b['bedNumber'] == data['bedNumber'] for b in existing_beds):
-        return jsonify({'success': False, 'error': 'Bed number already exists in this room'}), 400
-    
-    bed_data = {
-        'bedNumber': data['bedNumber'],
-        'roomId': data['roomId'],
-        'status': 'AVAILABLE',
-        'clinicId': data['clinicId'],
-        'createdById': user_data['id'],
-        'notes': data.get('notes'),
-        'createdAt': datetime.utcnow().isoformat(),
-        'updatedAt': datetime.utcnow().isoformat()
-    }
-    
-    bed_id = Bed.create(db, bed_data)
-    bed_data['id'] = bed_id
-    
-    return jsonify({'success': True, 'bed': bed_data})
-
-@app.route('/api/beds/<id>', methods=['PATCH'])
-def update_bed(id):
-    """Update a bed"""
-    data = request.json
-    
-    db = get_db()
-    bed = Bed.find_by_id(db, id)
-    
-    if not bed:
-        return jsonify({'success': False, 'error': 'Bed not found'}), 404
-    
-    # Handle different types of updates based on the action
-    action = data.get('action')
-    
-    if action == 'assign':
-        if not data.get('patientId') or not data.get('admissionDate'):
-            return jsonify({'success': False, 'error': 'Patient ID and admission date are required for assignment'}), 400
-        
-        # Check if bed is available
-        if bed['status'] != 'AVAILABLE':
-            return jsonify({'success': False, 'error': 'Bed is not available'}), 400
-        
-        # Check if patient exists
-        patient = Patient.find_by_id(db, data['patientId'])
-        if not patient:
-            return jsonify({'success': False, 'error': 'Patient not found'}), 404
-        
-        update_data = {
-            'status': 'OCCUPIED',
-            'patientId': data['patientId'],
-            'admissionDate': data['admissionDate'],
-            'dischargeDate': data.get('dischargeDate'),
-            'updatedAt': datetime.utcnow().isoformat()
-        }
-    elif action == 'discharge':
-        # Check if bed is occupied
-        if bed['status'] != 'OCCUPIED':
-            return jsonify({'success': False, 'error': 'Bed is not occupied'}), 400
-        
-        update_data = {
-            'status': 'AVAILABLE',
-            'patientId': None,
-            'admissionDate': None,
-            'dischargeDate': None,
-            'updatedAt': datetime.utcnow().isoformat()
-        }
-    elif action == 'reserve':
-        # Check if bed is available
-        if bed['status'] != 'AVAILABLE':
-            return jsonify({'success': False, 'error': 'Bed is not available'}), 400
-        
-        update_data = {
-            'status': 'RESERVED',
-            'updatedAt': datetime.utcnow().isoformat()
-        }
-    else:
-        # Regular update
-        update_data = {}
-        fields = ['bedNumber', 'status', 'notes']
-        
-        for field in fields:
-            if field in data:
-                update_data[field] = data[field]
-        
-        update_data['updatedAt'] = datetime.utcnow().isoformat()
-    
-    Bed.update(db, id, update_data)
-    
-    # Get updated bed
-    updated_bed = Bed.find_by_id(db, id)
-    
-    return jsonify({'success': True, 'bed': updated_bed})
-
-@app.route('/api/beds/<id>', methods=['DELETE'])
-def delete_bed(id):
-    """Delete a bed"""
-    db = get_db()
-    bed = Bed.find_by_id(db, id)
-    
-    if not bed:
-        return jsonify({'success': False, 'error': 'Bed not found'}), 404
-    
-    # Check if bed is occupied or reserved
-    if bed['status'] in ['OCCUPIED', 'RESERVED']:
-        return jsonify({'success': False, 'error': 'Cannot delete an occupied or reserved bed'}), 400
-    
-    Bed.delete(db, id)
-    
+    db.close()
     return jsonify({'success': True})
 
 # Run the app

@@ -30,6 +30,28 @@ This is the backend API for the DigiGo Care Clinic Management System. It's built
 
 The API will be available at http://localhost:5000/api
 
+## Database Seeding
+
+The application automatically initializes the database and creates a default super admin user. If you want to seed the database with demo data from the JSON files in the `data` directory, you can run:
+
+```
+python seed.py
+```
+
+This will import data from the following JSON files (if they exist):
+- users.json
+- clinics.json
+- doctors.json
+- patients.json
+- appointments.json
+- prescriptions.json
+- medicines.json
+- rooms.json
+- beds.json
+- transactions.json
+- invoices.json
+- treatments.json
+
 ## API Documentation
 
 The API provides endpoints for managing:
