@@ -49,9 +49,19 @@ def seed_data():
                 cursor.execute(f"SELECT id FROM {table}")
                 existing_ids = [row['id'] for row in cursor.fetchall()]
                 
+                # For email uniqueness in users table
+                existing_emails = []
+                if table == 'users':
+                    cursor.execute("SELECT email FROM users")
+                    existing_emails = [row['email'] for row in cursor.fetchall()]
+                
                 for record in records:
                     # Skip if record already exists
                     if record.get('id') in existing_ids:
+                        continue
+                    
+                    # Skip if email already exists (for users table)
+                    if table == 'users' and record.get('email') in existing_emails:
                         continue
                         
                     # Filter out keys that don't exist in the table schema
