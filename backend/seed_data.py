@@ -58,6 +58,11 @@ def transform_patient_data():
         # Transform each patient
         transformed_patients = []
         for patient in patients:
+            # Skip if already transformed
+            if 'firstName' in patient and 'lastName' in patient:
+                transformed_patients.append(patient)
+                continue
+                
             # Split name into first and last name if needed
             if 'name' in patient and ('firstName' not in patient or 'lastName' not in patient):
                 name_parts = patient['name'].split(' ', 1)
@@ -97,13 +102,14 @@ def transform_prescription_data():
                 medications = prescription['medications'].split(', ')
                 prescription['medications'] = [
                     {
-                        'name': med.split(' ')[0],
-                        'dosage': ' '.join(med.split(' ')[1:]),
-                        'frequency': 'Once daily',
-                        'duration': '7 days',
-                        'quantity': 7
+                        "id": f"med-{i+1}",
+                        "name": med.split(' ')[0],
+                        "dosage": ' '.join(med.split(' ')[1:]),
+                        "frequency": "Once daily",
+                        "duration": "7 days",
+                        "quantity": 7
                     }
-                    for med in medications
+                    for i, med in enumerate(medications)
                 ]
         
         # Write the transformed data back to the file

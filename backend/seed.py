@@ -28,7 +28,7 @@ def seed_data():
     ]
     
     # Get the data directory path
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
     
     for table in tables:
         json_file = os.path.join(data_dir, f'{table}.json')
@@ -45,7 +45,15 @@ def seed_data():
                 with open(json_file, 'r') as f:
                     records = json.load(f)
                 
+                # Check existing records to avoid duplicates
+                cursor.execute(f"SELECT id FROM {table}")
+                existing_ids = [row['id'] for row in cursor.fetchall()]
+                
                 for record in records:
+                    # Skip if record already exists
+                    if record.get('id') in existing_ids:
+                        continue
+                        
                     # Filter out keys that don't exist in the table schema
                     filtered_record = {k: v for k, v in record.items() if k in table_columns}
                     
