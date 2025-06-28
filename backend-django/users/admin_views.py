@@ -9,12 +9,15 @@ from clinics.models import Clinic
 from doctors.models import Doctor
 from appointments.models import Appointment
 from transactions.models import Transaction
+from users.permissions import IsAdmin
 
 User = get_user_model()
 
 
 class AdminStatsView(APIView):
     """View for admin dashboard statistics."""
+    
+    permission_classes = [IsAdmin]
     
     def get(self, request):
         clinic_id = request.query_params.get('clinicId')
@@ -26,6 +29,19 @@ class AdminStatsView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         clinic = get_object_or_404(Clinic, id=clinic_id)
+        
+        # Check if user has permission to access this clinic
+        if request.user.role == 'ADMIN' and request.user.clinic != clinic:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.user.role == 'SUPER_ADMIN' and clinic_id not in request.user.clinic_ids:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
         
         # Get counts
         total_patients = clinic.patients.count()
@@ -47,6 +63,8 @@ class AdminStatsView(APIView):
 class AdminDoctorsView(APIView):
     """View for admin doctors management."""
     
+    permission_classes = [IsAdmin]
+    
     def get(self, request):
         clinic_id = request.query_params.get('clinicId')
         
@@ -57,6 +75,20 @@ class AdminDoctorsView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         clinic = get_object_or_404(Clinic, id=clinic_id)
+        
+        # Check if user has permission to access this clinic
+        if request.user.role == 'ADMIN' and request.user.clinic != clinic:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.user.role == 'SUPER_ADMIN' and clinic_id not in request.user.clinic_ids:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         doctors = Doctor.objects.filter(clinic=clinic)
         
         # Serialize doctors with appointment counts
@@ -80,6 +112,8 @@ class AdminDoctorsView(APIView):
 class AdminStaffView(APIView):
     """View for admin staff management."""
     
+    permission_classes = [IsAdmin]
+    
     def get(self, request):
         clinic_id = request.query_params.get('clinicId')
         
@@ -90,6 +124,20 @@ class AdminStaffView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         clinic = get_object_or_404(Clinic, id=clinic_id)
+        
+        # Check if user has permission to access this clinic
+        if request.user.role == 'ADMIN' and request.user.clinic != clinic:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.user.role == 'SUPER_ADMIN' and clinic_id not in request.user.clinic_ids:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         staff = User.objects.filter(clinic=clinic, role='STAFF')
         
         staff_data = [{
@@ -108,6 +156,8 @@ class AdminStaffView(APIView):
 class AdminTransactionsView(APIView):
     """View for admin transactions management."""
     
+    permission_classes = [IsAdmin]
+    
     def get(self, request):
         clinic_id = request.query_params.get('clinicId')
         
@@ -118,6 +168,20 @@ class AdminTransactionsView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         clinic = get_object_or_404(Clinic, id=clinic_id)
+        
+        # Check if user has permission to access this clinic
+        if request.user.role == 'ADMIN' and request.user.clinic != clinic:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.user.role == 'SUPER_ADMIN' and clinic_id not in request.user.clinic_ids:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         transactions = Transaction.objects.filter(clinic=clinic).order_by('-created_at')[:10]
         
         transactions_data = [{
@@ -137,6 +201,8 @@ class AdminTransactionsView(APIView):
 class AdminAppointmentsView(APIView):
     """View for admin appointments management."""
     
+    permission_classes = [IsAdmin]
+    
     def get(self, request):
         clinic_id = request.query_params.get('clinicId')
         
@@ -147,6 +213,20 @@ class AdminAppointmentsView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         clinic = get_object_or_404(Clinic, id=clinic_id)
+        
+        # Check if user has permission to access this clinic
+        if request.user.role == 'ADMIN' and request.user.clinic != clinic:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        if request.user.role == 'SUPER_ADMIN' and clinic_id not in request.user.clinic_ids:
+            return Response({
+                'success': False,
+                'error': 'You do not have permission to access this clinic'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         appointments = Appointment.objects.filter(clinic=clinic).order_by('-created_at')[:10]
         
         appointments_data = [{
