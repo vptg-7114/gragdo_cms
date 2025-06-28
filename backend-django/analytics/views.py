@@ -7,10 +7,13 @@ from datetime import timedelta
 from patients.models import Patient
 from appointments.models import Appointment
 from transactions.models import Transaction
+from users.permissions import IsAdmin, IsStaff
 
 
 class AnalyticsView(APIView):
     """View for analytics data."""
+    
+    permission_classes = [IsAdmin | IsStaff]
     
     def get(self, request):
         # Get date ranges
@@ -19,17 +22,27 @@ class AnalyticsView(APIView):
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
         
+        # Filter based on user's role and clinic
+        user = request.user
+        clinic_filter = {}
+        if user.role == 'SUPER_ADMIN' and user.clinic_ids:
+            clinic_filter = {'clinic_id__in': user.clinic_ids}
+        elif user.role in ['ADMIN', 'STAFF'] and user.clinic:
+            clinic_filter = {'clinic': user.clinic}
+        
         # Revenue analytics
         this_month_revenue = Transaction.objects.filter(
             type='INCOME',
             created_at__date__gte=this_month_start,
-            created_at__date__lte=today
+            created_at__date__lte=today,
+            **clinic_filter
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         last_month_revenue = Transaction.objects.filter(
             type='INCOME',
             created_at__date__gte=last_month_start,
-            created_at__date__lte=last_month_end
+            created_at__date__lte=last_month_end,
+            **clinic_filter
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Calculate growth percentage
@@ -39,15 +52,17 @@ class AnalyticsView(APIView):
             revenue_growth = 100 if this_month_revenue > 0 else 0
         
         # Patient analytics
-        total_patients = Patient.objects.count()
+        total_patients = Patient.objects.filter(**clinic_filter).count()
         last_month_patients = Patient.objects.filter(
             created_at__date__gte=last_month_start,
-            created_at__date__lte=last_month_end
+            created_at__date__lte=last_month_end,
+            **clinic_filter
         ).count()
         
         this_month_patients = Patient.objects.filter(
             created_at__date__gte=this_month_start,
-            created_at__date__lte=today
+            created_at__date__lte=today,
+            **clinic_filter
         ).count()
         
         # Calculate patient growth percentage
@@ -57,8 +72,8 @@ class AnalyticsView(APIView):
             patient_growth = 100 if this_month_patients > 0 else 0
         
         # Appointment analytics
-        total_appointments = Appointment.objects.count()
-        completed_appointments = Appointment.objects.filter(status='COMPLETED').count()
+        total_appointments = Appointment.objects.filter(**clinic_filter).count()
+        completed_appointments = Appointment.objects.filter(status='COMPLETED', **clinic_filter).count()
         
         # Calculate completion rate
         if total_appointments > 0:
