@@ -1,8 +1,6 @@
 "use server";
 
-import { Clinic } from "@/lib/types";
 import { clinicsApi } from '@/lib/services/api';
-import { generateId } from "@/lib/utils";
 
 export async function createClinic(data: {
   name: string;
