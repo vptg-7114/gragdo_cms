@@ -14,7 +14,7 @@ export const apiClient = {
    */
   async get(endpoint: string, params?: Record<string, string>) {
     try {
-      const url = new URL(`${config.api.baseUrl}${endpoint}`);
+      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`);
       
       // Add query parameters if provided
       if (params) {
@@ -52,7 +52,7 @@ export const apiClient = {
    */
   async post(endpoint: string, data: any) {
     try {
-      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export const apiClient = {
    */
   async patch(endpoint: string, data: any) {
     try {
-      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export const apiClient = {
    */
   async delete(endpoint: string) {
     try {
-      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export const apiClient = {
         });
       }
       
-      const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || config.api.baseUrl}${endpoint}`, {
         method: 'POST',
         body: formData,
         credentials: 'include', // Include cookies

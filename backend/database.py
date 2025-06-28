@@ -2,9 +2,10 @@ import sqlite3
 import os
 import json
 from datetime import datetime
+import urllib.parse
 
-# Database file path
-DB_FILE = os.path.join(os.path.dirname(__file__), 'digigo_care.db')
+# Database connection URL - can be overridden by environment variable
+DB_URL = os.environ.get('DATABASE_URL', 'sqlite:///digigo_care.db')
 
 def dict_factory(cursor, row):
     """Convert database row to dictionary"""
@@ -15,7 +16,18 @@ def dict_factory(cursor, row):
 
 def get_db():
     """Get database connection"""
-    conn = sqlite3.connect(DB_FILE)
+    # Parse the database URL
+    parsed_url = urllib.parse.urlparse(DB_URL)
+    
+    if parsed_url.scheme == 'sqlite':
+        # Local SQLite file
+        db_path = parsed_url.netloc + parsed_url.path
+        conn = sqlite3.connect(db_path)
+    else:
+        # Remote SQLite URL (assuming format: scheme://netloc/path)
+        db_path = parsed_url.netloc + parsed_url.path
+        conn = sqlite3.connect(db_path)
+    
     conn.row_factory = dict_factory
     return conn
 
