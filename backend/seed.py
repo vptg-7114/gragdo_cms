@@ -55,6 +55,8 @@ def seed_data():
                     cursor.execute("SELECT email FROM users")
                     existing_emails = [row['email'] for row in cursor.fetchall()]
                 
+                from werkzeug.security import generate_password_hash
+                
                 for record in records:
                     # Skip if record already exists
                     if record.get('id') in existing_ids:
@@ -68,7 +70,12 @@ def seed_data():
                     filtered_record = {k: v for k, v in record.items() if k in table_columns}
                     
                     # Handle special cases for each table
-                    if table == 'patients':
+                    if table == 'users':
+                        # Hash the password
+                        if 'password' in filtered_record:
+                            filtered_record['password'] = generate_password_hash(filtered_record['password'])
+                    
+                    elif table == 'patients':
                         # Handle name field if it exists but firstName/lastName are required
                         if 'name' in record and 'firstName' not in filtered_record and 'lastName' not in filtered_record:
                             name_parts = record['name'].split(' ', 1)

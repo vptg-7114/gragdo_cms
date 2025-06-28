@@ -120,6 +120,38 @@ def transform_prescription_data():
     except Exception as e:
         print(f"Error transforming prescription data: {e}")
 
+def transform_user_data():
+    """Ensure user passwords are properly hashed"""
+    # Path to user data file
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    user_file = os.path.join(data_dir, 'users.json')
+    
+    if not os.path.exists(user_file):
+        print("User data file not found")
+        return
+    
+    try:
+        # Import password hashing function
+        from werkzeug.security import generate_password_hash
+        
+        # Read the user data
+        with open(user_file, 'r') as f:
+            users = json.load(f)
+        
+        # Transform each user to ensure password is hashed
+        for user in users:
+            if 'password' in user and not user['password'].startswith('pbkdf2:sha256:'):
+                # Only hash if not already hashed
+                user['password'] = generate_password_hash(user['password'])
+        
+        # Write the transformed data back to the file
+        with open(user_file, 'w') as f:
+            json.dump(users, f, indent=2)
+        
+        print("Successfully transformed user data with hashed passwords")
+    except Exception as e:
+        print(f"Error transforming user data: {e}")
+
 def main():
     """Main function to prepare and seed data"""
     print("Starting data preparation...")
@@ -130,6 +162,7 @@ def main():
     # Transform data to match database schema
     transform_patient_data()
     transform_prescription_data()
+    transform_user_data()
     
     # Initialize the database
     init_db()
