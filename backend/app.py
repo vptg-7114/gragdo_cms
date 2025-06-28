@@ -5,6 +5,7 @@ import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import json
 from dotenv import load_dotenv
 from database import init_db, get_db, seed_demo_data
 from models import User, Clinic, Doctor, Patient, Appointment, Prescription, Medicine, Room, Bed, Transaction, Invoice, Treatment
