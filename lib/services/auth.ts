@@ -33,3 +33,28 @@ export async function verifyToken(token: string): Promise<any> {
     return null;
   }
 }
+
+/**
+ * Refresh an access token using a refresh token
+ */
+export async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to refresh token');
+    }
+    
+    const data = await response.json();
+    return data.access;
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    return null;
+  }
+}
