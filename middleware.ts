@@ -8,7 +8,13 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh-token')?.value
 
   // Define public paths that don't require authentication
-  const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password']
+  const publicPaths = [
+    '/login', 
+    '/signup', 
+    '/forgot-password', 
+    '/reset-password',
+    '/verify-email'
+  ]
   
   // Check if the current path is a public path
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
@@ -51,6 +57,11 @@ export async function middleware(request: NextRequest) {
       // If refresh token is invalid, redirect to login
       return NextResponse.redirect(new URL('/login', request.url))
     }
+  }
+  
+  // If token is invalid and we couldn't refresh it, redirect to login
+  if (!payload && !refreshToken) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
   
   // Allow access to protected routes if auth token is valid

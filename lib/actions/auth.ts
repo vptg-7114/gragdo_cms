@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { UserRole } from "@/lib/types"
 import { authApi } from '@/lib/services/api'
+import { changePassword as changePasswordService, verifyEmail as verifyEmailService } from '@/lib/services/auth'
 
 interface LoginCredentials {
   email: string
@@ -172,22 +173,14 @@ export async function refreshToken() {
       return { success: false, error: 'No refresh token found' }
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/token/refresh/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh: refreshToken }),
-    })
+    const response = await authApi.refreshToken(refreshToken)
     
-    if (!response.ok) {
+    if (!response.access) {
       return { success: false, error: 'Failed to refresh token' }
     }
     
-    const data = await response.json()
-    
     // Set the new access token in a cookie
-    cookies().set('auth-token', data.access, {
+    cookies().set('auth-token', response.access, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60, // 7 days
@@ -198,5 +191,28 @@ export async function refreshToken() {
   } catch (error) {
     console.error('Error refreshing token:', error)
     return { success: false, error: 'An error occurred while refreshing token' }
+  }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  try {
+    return await changePasswordService(currentPassword, newPassword)
+  } catch (error) {
+    console.error('Error changing password:', error)
+    return { success: false, error: 'An error occurred while changing password' }
+  }
+}
+
+export async function verifyEmail(token: string) {
+  try {
+    const success = await verifyEmailService(token)
+    
+    return { 
+      success, 
+      message: success ? 'Email verified successfully' : 'Failed to verify email' 
+    }
+  } catch (error) {
+    console.error('Error verifying email:', error)
+    return { success: false, error: 'An error occurred while verifying email' }
   }
 }

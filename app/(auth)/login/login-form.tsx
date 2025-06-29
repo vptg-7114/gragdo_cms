@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { login } from "@/lib/actions/auth"
 import { UserRole } from "@/lib/types"
+import { Eye, EyeOff } from "lucide-react"
 
 export function LoginForm() {
   const router = useRouter()
@@ -25,6 +26,22 @@ export function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Check for saved credentials in localStorage
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('digigo_email')
+    const savedRole = localStorage.getItem('digigo_role')
+    
+    if (savedEmail) {
+      setEmail(savedEmail)
+      setRememberMe(true)
+    }
+    
+    if (savedRole) {
+      setRole(savedRole as UserRole)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +62,16 @@ export function LoginForm() {
       })
       
       if (result.success) {
+        // Save credentials if remember me is checked
+        if (rememberMe) {
+          localStorage.setItem('digigo_email', email)
+          localStorage.setItem('digigo_role', role)
+        } else {
+          // Clear saved credentials if remember me is unchecked
+          localStorage.removeItem('digigo_email')
+          localStorage.removeItem('digigo_role')
+        }
+        
         // Redirect based on role
         if (result.user) {
           switch (role) {
@@ -128,15 +155,24 @@ export function LoginForm() {
       
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Password"
-          className="h-12 rounded-lg"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            className="h-12 rounded-lg pr-10"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
       </div>
       
       <div className="flex items-center justify-between">

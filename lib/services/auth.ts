@@ -58,3 +58,68 @@ export async function refreshAccessToken(refreshToken: string): Promise<string |
     return null;
   }
 }
+
+/**
+ * Verify an email using a token
+ */
+export async function verifyEmail(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/verify-email/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to verify email');
+    }
+    
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    return false;
+  }
+}
+
+/**
+ * Change a user's password
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{success: boolean, message?: string, error?: string}> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/auth/change-password/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for authentication
+      body: JSON.stringify({ 
+        current_password: currentPassword, 
+        new_password: newPassword, 
+        confirm_password: newPassword 
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return { 
+        success: false, 
+        error: data.error || 'Failed to change password' 
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: data.message || 'Password changed successfully' 
+    };
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return { 
+      success: false, 
+      error: 'An error occurred while changing password' 
+    };
+  }
+}

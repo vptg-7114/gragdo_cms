@@ -244,6 +244,38 @@ export const authApi = {
    */
   async getCurrentUser() {
     return apiClient.get('/auth/me/');
+  },
+  
+  /**
+   * Refresh the access token
+   * @param refreshToken Refresh token
+   * @returns New access token
+   */
+  async refreshToken(refreshToken: string) {
+    return apiClient.post('/auth/token/refresh/', { refresh: refreshToken });
+  },
+  
+  /**
+   * Change the user's password
+   * @param currentPassword Current password
+   * @param newPassword New password
+   * @returns Password change response
+   */
+  async changePassword(currentPassword: string, newPassword: string) {
+    return apiClient.post('/auth/change-password/', {
+      current_password: currentPassword,
+      new_password: newPassword,
+      confirm_password: newPassword
+    });
+  },
+  
+  /**
+   * Verify the user's email
+   * @param token Verification token
+   * @returns Email verification response
+   */
+  async verifyEmail(token: string) {
+    return apiClient.post('/auth/verify-email/', { token });
   }
 };
 
