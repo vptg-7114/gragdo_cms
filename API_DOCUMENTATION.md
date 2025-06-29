@@ -1,3620 +1,3613 @@
 # DigiGo Care API Documentation
 
+This document provides a comprehensive reference for all API endpoints available in the DigiGo Care system.
+
 ## Base URL
 
-- Production: `https://digigocare.com/api`
-- Development: `http://localhost:8000/api`
+```
+https://api.digigocare.com/api
+```
+
+For local development:
+
+```
+http://localhost:8000/api
+```
 
 ## Authentication
 
-The API uses JWT (JSON Web Token) for authentication. Most endpoints require authentication.
+Most endpoints require authentication. The API uses JWT (JSON Web Token) for authentication.
 
-### JWT Authentication
+### Headers
 
-Include the JWT token in the Authorization header:
+For authenticated requests, include the following header:
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-## API Endpoints
+## Authentication Endpoints
 
-### Authentication
+### Login
 
-#### Login
+Authenticate a user and get access and refresh tokens.
 
 - **URL**: `/auth/login/`
 - **Method**: `POST`
-- **Description**: Authenticate a user and get access and refresh tokens
-- **Request Body**:
-  ```json
-  {
-    "email": "string",
-    "password": "string",
-    "role": "string" // "SUPER_ADMIN", "ADMIN", "STAFF", "DOCTOR"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "user": {
-      "id": "string",
-      "email": "string",
-      "name": "string",
-      "role": "string",
-      "clinicId": "string",
-      "clinicIds": ["string"] // For SUPER_ADMIN role
-    },
-    "access": "string", // JWT access token
-    "refresh": "string" // JWT refresh token
-  }
-  ```
+- **Auth Required**: No
 
-#### Signup
+**Request Body**:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "your-password",
+  "role": "ADMIN" // One of: "SUPER_ADMIN", "ADMIN", "STAFF", "DOCTOR"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "user": {
+    "id": "user-id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "role": "ADMIN",
+    "clinicId": "clinic-id",
+    "clinicIds": ["clinic-id-1", "clinic-id-2"] // Only for SUPER_ADMIN
+  },
+  "access": "access-token",
+  "refresh": "refresh-token"
+}
+```
+
+### Signup
+
+Register a new user.
 
 - **URL**: `/auth/signup/`
 - **Method**: `POST`
-- **Description**: Register a new user
-- **Request Body**:
-  ```json
-  {
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "phone": "string",
-    "role": "string", // "SUPER_ADMIN", "ADMIN", "STAFF", "DOCTOR"
-    "clinicId": "string", // Required for ADMIN, STAFF, DOCTOR roles
-    "password": "string",
-    "confirm_password": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "user": {
-      "id": "string",
-      "email": "string",
-      "name": "string",
-      "role": "string",
-      "clinicId": "string",
-      "clinicIds": ["string"] // For SUPER_ADMIN role
-    },
-    "access": "string", // JWT access token
-    "refresh": "string" // JWT refresh token
-  }
-  ```
+- **Auth Required**: No
 
-#### Forgot Password
+**Request Body**:
 
-- **URL**: `/auth/forgot-password/`
-- **Method**: `POST`
-- **Description**: Request a password reset link
-- **Request Body**:
-  ```json
-  {
-    "email": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "message": "Password reset email sent"
-  }
-  ```
+```json
+{
+  "name": "User Name",
+  "email": "user@example.com",
+  "phone": "1234567890",
+  "role": "ADMIN", // One of: "SUPER_ADMIN", "ADMIN", "STAFF", "DOCTOR"
+  "clinic": "clinic-id", // Optional, required for ADMIN, STAFF, DOCTOR
+  "password": "your-password",
+  "confirm_password": "your-password"
+}
+```
 
-#### Reset Password
+**Response**:
 
-- **URL**: `/auth/reset-password/`
-- **Method**: `POST`
-- **Description**: Reset a user's password using a token
-- **Request Body**:
-  ```json
-  {
-    "token": "string",
-    "new_password": "string",
-    "confirm_password": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "message": "Password reset successful"
-  }
-  ```
+```json
+{
+  "success": true,
+  "user": {
+    "id": "user-id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "role": "ADMIN",
+    "clinicId": "clinic-id"
+  },
+  "access": "access-token",
+  "refresh": "refresh-token"
+}
+```
 
-#### Logout
+### Logout
+
+Log out a user by invalidating their tokens.
 
 - **URL**: `/auth/logout/`
 - **Method**: `POST`
-- **Description**: Log out a user by clearing their token
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Get Current User
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Get Current User
+
+Get the currently authenticated user's information.
 
 - **URL**: `/auth/me/`
 - **Method**: `GET`
-- **Description**: Get the currently authenticated user's information
-- **Authentication**: Required
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "user": {
-      "id": "string",
-      "email": "string",
-      "name": "string",
-      "role": "string",
-      "clinicId": "string",
-      "clinicIds": ["string"] // For SUPER_ADMIN role
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Refresh Token
+**Response**:
+
+```json
+{
+  "success": true,
+  "user": {
+    "id": "user-id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "role": "ADMIN",
+    "clinicId": "clinic-id",
+    "clinicIds": ["clinic-id-1", "clinic-id-2"] // Only for SUPER_ADMIN
+  }
+}
+```
+
+### Forgot Password
+
+Request a password reset link.
+
+- **URL**: `/auth/forgot-password/`
+- **Method**: `POST`
+- **Auth Required**: No
+
+**Request Body**:
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "If your email is registered, you will receive a password reset link"
+}
+```
+
+### Reset Password
+
+Reset a user's password using a token.
+
+- **URL**: `/auth/reset-password/`
+- **Method**: `POST`
+- **Auth Required**: No
+
+**Request Body**:
+
+```json
+{
+  "token": "reset-token",
+  "new_password": "new-password",
+  "confirm_password": "new-password"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "Password reset successful"
+}
+```
+
+### Refresh Token
+
+Get a new access token using a refresh token.
 
 - **URL**: `/auth/token/refresh/`
 - **Method**: `POST`
-- **Description**: Get a new access token using a refresh token
-- **Request Body**:
-  ```json
-  {
-    "refresh": "string" // JWT refresh token
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "access": "string" // New JWT access token
-  }
-  ```
+- **Auth Required**: No
 
-#### Change Password
+**Request Body**:
+
+```json
+{
+  "refresh": "refresh-token"
+}
+```
+
+**Response**:
+
+```json
+{
+  "access": "new-access-token"
+}
+```
+
+### Change Password
+
+Change the password of the currently authenticated user.
 
 - **URL**: `/auth/change-password/`
 - **Method**: `POST`
-- **Description**: Change a user's password
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "current_password": "string",
-    "new_password": "string",
-    "confirm_password": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "message": "Password changed successfully"
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Verify Email
+**Request Body**:
+
+```json
+{
+  "current_password": "current-password",
+  "new_password": "new-password",
+  "confirm_password": "new-password"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "Password changed successfully"
+}
+```
+
+### Verify Email
+
+Verify a user's email address using a token.
 
 - **URL**: `/auth/verify-email/`
 - **Method**: `POST`
-- **Description**: Verify a user's email address
-- **Request Body**:
-  ```json
-  {
-    "token": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "message": "Email verified successfully"
-  }
-  ```
+- **Auth Required**: No
 
-### Profile
+**Request Body**:
 
-#### Get Profile
+```json
+{
+  "token": "verification-token"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "Email verified successfully"
+}
+```
+
+### Resend Verification Email
+
+Resend the email verification link.
+
+- **URL**: `/auth/resend-verification-email/`
+- **Method**: `POST`
+- **Auth Required**: No
+
+**Request Body**:
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "message": "Verification email sent"
+}
+```
+
+## Profile Endpoints
+
+### Get User Profile
+
+Get a user's profile information.
 
 - **URL**: `/profile/`
 - **Method**: `GET`
-- **Description**: Get a user's profile information
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
-  - `userId` (optional): User ID (if not provided, returns the current user's profile)
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "profile": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "phone": "string",
-      "role": "string",
-      "address": "string",
-      "bio": "string",
-      "profileImage": "string",
-      "clinic": {
-        "id": "string",
-        "name": "string",
-        "address": "string"
-      },
-      "clinicIds": ["string"],
-      "clinics": [
-        {
-          "id": "string",
-          "name": "string",
-          "address": "string"
-        }
-      ],
-      "createdAt": "string"
-    }
-  }
-  ```
+  - `userId` (optional): Get another user's profile (requires appropriate permissions)
 
-#### Update Profile
+**Response**:
+
+```json
+{
+  "success": true,
+  "profile": {
+    "id": "user-id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "phone": "1234567890",
+    "role": "ADMIN",
+    "address": "123 Main St",
+    "bio": "User bio",
+    "profileImage": "profile-image-url",
+    "clinic": {
+      "id": "clinic-id",
+      "name": "Clinic Name",
+      "address": "Clinic Address"
+    },
+    "createdAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update User Profile
+
+Update a user's profile information.
 
 - **URL**: `/profile/`
 - **Method**: `PATCH`
-- **Description**: Update a user's profile information
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "userId": "string",
-    "name": "string",
-    "email": "string",
-    "phone": "string",
-    "address": "string",
-    "bio": "string",
-    "profileImage": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
+- **Auth Required**: Yes
 
-### Clinics
+**Request Body**:
 
-#### Get All Clinics
+```json
+{
+  "userId": "user-id",
+  "name": "Updated Name",
+  "email": "updated@example.com",
+  "phone": "9876543210",
+  "address": "456 New St",
+  "bio": "Updated bio",
+  "profileImage": "new-profile-image-url"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+## Clinic Endpoints
+
+### Get All Clinics
+
+Get a list of all clinics.
 
 - **URL**: `/clinics/`
 - **Method**: `GET`
-- **Description**: Get a list of all clinics
-- **Authentication**: Required
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "clinics": [
-      {
-        "id": "string",
-        "name": "string",
-        "address": "string",
-        "phone": "string",
-        "email": "string",
-        "description": "string",
-        "stats": {
-          "patients": 0,
-          "appointments": 0,
-          "doctors": 0
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Get Clinic
+**Response**:
+
+```json
+{
+  "success": true,
+  "clinics": [
+    {
+      "id": "clinic-id",
+      "name": "Clinic Name",
+      "address": "Clinic Address",
+      "phone": "1234567890",
+      "email": "clinic@example.com",
+      "description": "Clinic description",
+      "stats": {
+        "patients": 100,
+        "appointments": 50,
+        "doctors": 5
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Clinic by ID
+
+Get a specific clinic by ID.
 
 - **URL**: `/clinics/{id}/`
 - **Method**: `GET`
-- **Description**: Get a clinic by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "clinic": {
-      "id": "string",
-      "name": "string",
-      "address": "string",
-      "phone": "string",
-      "email": "string",
-      "description": "string",
-      "stats": {
-        "patients": 0,
-        "appointments": 0,
-        "doctors": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Clinic
+**Response**:
+
+```json
+{
+  "success": true,
+  "clinic": {
+    "id": "clinic-id",
+    "name": "Clinic Name",
+    "address": "Clinic Address",
+    "phone": "1234567890",
+    "email": "clinic@example.com",
+    "description": "Clinic description",
+    "stats": {
+      "patients": 100,
+      "appointments": 50,
+      "doctors": 5
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Clinic
+
+Create a new clinic.
 
 - **URL**: `/clinics/`
 - **Method**: `POST`
-- **Description**: Create a new clinic
-- **Authentication**: Required (SUPER_ADMIN role)
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "address": "string",
-    "phone": "string",
-    "email": "string",
-    "description": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "clinic": {
-      "id": "string",
-      "name": "string",
-      "address": "string",
-      "phone": "string",
-      "email": "string",
-      "description": "string",
-      "stats": {
-        "patients": 0,
-        "appointments": 0,
-        "doctors": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes (SUPER_ADMIN only)
 
-#### Update Clinic
+**Request Body**:
+
+```json
+{
+  "name": "New Clinic",
+  "address": "Clinic Address",
+  "phone": "1234567890",
+  "email": "clinic@example.com",
+  "description": "Clinic description"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "clinic": {
+    "id": "clinic-id",
+    "name": "New Clinic",
+    "address": "Clinic Address",
+    "phone": "1234567890",
+    "email": "clinic@example.com",
+    "description": "Clinic description",
+    "stats": {
+      "patients": 0,
+      "appointments": 0,
+      "doctors": 0
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Clinic
+
+Update a clinic.
 
 - **URL**: `/clinics/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a clinic by ID
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
-- **Path Parameters**:
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN of the clinic)
+- **URL Parameters**:
   - `id`: Clinic ID
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "address": "string",
-    "phone": "string",
-    "email": "string",
-    "description": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "clinic": {
-      "id": "string",
-      "name": "string",
-      "address": "string",
-      "phone": "string",
-      "email": "string",
-      "description": "string",
-      "stats": {
-        "patients": 0,
-        "appointments": 0,
-        "doctors": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Clinic
+**Request Body**:
+
+```json
+{
+  "name": "Updated Clinic",
+  "address": "Updated Address",
+  "phone": "9876543210",
+  "email": "updated@example.com",
+  "description": "Updated description"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "clinic": {
+    "id": "clinic-id",
+    "name": "Updated Clinic",
+    "address": "Updated Address",
+    "phone": "9876543210",
+    "email": "updated@example.com",
+    "description": "Updated description",
+    "stats": {
+      "patients": 100,
+      "appointments": 50,
+      "doctors": 5
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Clinic
+
+Delete a clinic.
 
 - **URL**: `/clinics/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a clinic by ID
-- **Authentication**: Required (SUPER_ADMIN role)
-- **Path Parameters**:
+- **Auth Required**: Yes (SUPER_ADMIN only)
+- **URL Parameters**:
   - `id`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-### Doctors
+**Response**:
 
-#### Get All Doctors
+```json
+{
+  "success": true
+}
+```
+
+## Doctor Endpoints
+
+### Get All Doctors
+
+Get a list of all doctors, optionally filtered by clinic.
 
 - **URL**: `/doctors/`
 - **Method**: `GET`
-- **Description**: Get a list of all doctors, optionally filtered by clinic
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctors": [
-      {
-        "id": "string",
-        "name": "string",
-        "email": "string",
-        "phone": "string",
-        "specialization": "string",
-        "qualification": "string",
-        "experience": 0,
-        "consultationFee": 0,
-        "isAvailable": true,
-        "clinic": "string",
-        "schedules": [
-          {
-            "id": "string",
-            "dayOfWeek": 0,
-            "dayName": "string",
-            "startTime": "string",
-            "endTime": "string",
-            "isActive": true
-          }
-        ],
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Doctor
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctors": [
+    {
+      "id": "doctor-id",
+      "name": "Doctor Name",
+      "email": "doctor@example.com",
+      "phone": "1234567890",
+      "specialization": "Cardiology",
+      "qualification": "MBBS, MD",
+      "experience": 5,
+      "consultationFee": 500,
+      "isAvailable": true,
+      "clinicId": "clinic-id",
+      "schedules": [
+        {
+          "id": "schedule-id",
+          "dayOfWeek": 1,
+          "startTime": "09:00",
+          "endTime": "17:00",
+          "isActive": true
+        }
+      ],
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Doctor by ID
+
+Get a specific doctor by ID.
 
 - **URL**: `/doctors/{id}/`
 - **Method**: `GET`
-- **Description**: Get a doctor by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Doctor ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctor": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "phone": "string",
-      "specialization": "string",
-      "qualification": "string",
-      "experience": 0,
-      "consultationFee": 0,
-      "isAvailable": true,
-      "clinic": "string",
-      "schedules": [
-        {
-          "id": "string",
-          "dayOfWeek": 0,
-          "dayName": "string",
-          "startTime": "string",
-          "endTime": "string",
-          "isActive": true
-        }
-      ],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Doctor
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctor": {
+    "id": "doctor-id",
+    "name": "Doctor Name",
+    "email": "doctor@example.com",
+    "phone": "1234567890",
+    "specialization": "Cardiology",
+    "qualification": "MBBS, MD",
+    "experience": 5,
+    "consultationFee": 500,
+    "isAvailable": true,
+    "clinicId": "clinic-id",
+    "schedules": [
+      {
+        "id": "schedule-id",
+        "dayOfWeek": 1,
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "isActive": true
+      }
+    ],
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Doctor
+
+Create a new doctor.
 
 - **URL**: `/doctors/`
 - **Method**: `POST`
-- **Description**: Create a new doctor
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "email": "string",
-    "phone": "string",
-    "specialization": "string",
-    "qualification": "string",
-    "experience": 0,
-    "consultationFee": 0,
-    "clinicId": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctor": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "phone": "string",
-      "specialization": "string",
-      "qualification": "string",
-      "experience": 0,
-      "consultationFee": 0,
-      "isAvailable": true,
-      "clinic": "string",
-      "schedules": [],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 
-#### Update Doctor
+**Request Body**:
+
+```json
+{
+  "name": "New Doctor",
+  "email": "doctor@example.com",
+  "phone": "1234567890",
+  "specialization": "Cardiology",
+  "qualification": "MBBS, MD",
+  "experience": 5,
+  "consultationFee": 500,
+  "clinicId": "clinic-id"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctor": {
+    "id": "doctor-id",
+    "name": "New Doctor",
+    "email": "doctor@example.com",
+    "phone": "1234567890",
+    "specialization": "Cardiology",
+    "qualification": "MBBS, MD",
+    "experience": 5,
+    "consultationFee": 500,
+    "isAvailable": true,
+    "clinicId": "clinic-id",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Doctor
+
+Update a doctor.
 
 - **URL**: `/doctors/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a doctor by ID
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
-- **Path Parameters**:
+- **Auth Required**: Yes (SUPER_ADMIN, ADMIN, or the doctor themselves)
+- **URL Parameters**:
   - `id`: Doctor ID
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "email": "string",
-    "phone": "string",
-    "specialization": "string",
-    "qualification": "string",
-    "experience": 0,
-    "consultationFee": 0,
-    "isAvailable": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctor": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "phone": "string",
-      "specialization": "string",
-      "qualification": "string",
-      "experience": 0,
-      "consultationFee": 0,
-      "isAvailable": true,
-      "clinic": "string",
-      "schedules": [
-        {
-          "id": "string",
-          "dayOfWeek": 0,
-          "dayName": "string",
-          "startTime": "string",
-          "endTime": "string",
-          "isActive": true
-        }
-      ],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Doctor
+**Request Body**:
+
+```json
+{
+  "name": "Updated Doctor",
+  "email": "updated@example.com",
+  "phone": "9876543210",
+  "specialization": "Neurology",
+  "qualification": "MBBS, MD, DM",
+  "experience": 10,
+  "consultationFee": 1000,
+  "isAvailable": false
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctor": {
+    "id": "doctor-id",
+    "name": "Updated Doctor",
+    "email": "updated@example.com",
+    "phone": "9876543210",
+    "specialization": "Neurology",
+    "qualification": "MBBS, MD, DM",
+    "experience": 10,
+    "consultationFee": 1000,
+    "isAvailable": false,
+    "clinicId": "clinic-id",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Doctor
+
+Delete a doctor.
 
 - **URL**: `/doctors/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a doctor by ID
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
-- **Path Parameters**:
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
+- **URL Parameters**:
   - `id`: Doctor ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Toggle Doctor Availability
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Toggle Doctor Availability
+
+Toggle a doctor's availability status.
 
 - **URL**: `/doctors/{id}/toggle-availability/`
 - **Method**: `POST`
-- **Description**: Toggle a doctor's availability
-- **Authentication**: Required (SUPER_ADMIN, ADMIN, or DOCTOR role)
-- **Path Parameters**:
+- **Auth Required**: Yes (SUPER_ADMIN, ADMIN, or the doctor themselves)
+- **URL Parameters**:
   - `id`: Doctor ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctor": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "phone": "string",
-      "specialization": "string",
-      "qualification": "string",
-      "experience": 0,
-      "consultationFee": 0,
-      "isAvailable": true,
-      "clinic": "string",
-      "schedules": [
-        {
-          "id": "string",
-          "dayOfWeek": 0,
-          "dayName": "string",
-          "startTime": "string",
-          "endTime": "string",
-          "isActive": true
-        }
-      ],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctor": {
+    "id": "doctor-id",
+    "name": "Doctor Name",
+    "isAvailable": false,
+    // Other doctor fields...
   }
-  ```
+}
+```
 
-### Patients
+## Patient Endpoints
 
-#### Get All Patients
+### Get All Patients
+
+Get a list of all patients, optionally filtered by clinic.
 
 - **URL**: `/patients/`
 - **Method**: `GET`
-- **Description**: Get a list of all patients, optionally filtered by clinic
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "patients": [
-      {
-        "id": "string",
-        "patientId": "string",
-        "firstName": "string",
-        "lastName": "string",
-        "email": "string",
-        "phone": "string",
-        "gender": "string",
-        "dateOfBirth": "string",
-        "age": 0,
-        "bloodGroup": "string",
-        "address": "string",
-        "city": "string",
-        "state": "string",
-        "postalCode": "string",
-        "medicalHistory": "string",
-        "allergies": "string",
-        "emergencyContact": {
-          "name": "string",
-          "relationship": "string",
-          "phone": "string"
-        },
-        "clinic": "string",
-        "isActive": true,
-        "documents": [
-          {
-            "id": "string",
-            "documentId": "string",
-            "name": "string",
-            "type": "string",
-            "fileUrl": "string",
-            "size": 0,
-            "patient": "string",
-            "appointment": "string",
-            "clinic": "string",
-            "tags": ["string"],
-            "notes": "string",
-            "createdAt": "string",
-            "updatedAt": "string"
-          }
-        ],
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Patient
+**Response**:
+
+```json
+{
+  "success": true,
+  "patients": [
+    {
+      "id": "patient-id",
+      "patientId": "PAT123456",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "patient@example.com",
+      "phone": "1234567890",
+      "gender": "MALE",
+      "dateOfBirth": "1990-01-01",
+      "age": 33,
+      "bloodGroup": "O+",
+      "address": "123 Patient St",
+      "city": "City",
+      "state": "State",
+      "postalCode": "12345",
+      "medicalHistory": "None",
+      "allergies": ["Peanuts"],
+      "emergencyContact": {
+        "name": "Jane Doe",
+        "relationship": "Spouse",
+        "phone": "9876543210"
+      },
+      "clinicId": "clinic-id",
+      "isActive": true,
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Patient by ID
+
+Get a specific patient by ID.
 
 - **URL**: `/patients/{id}/`
 - **Method**: `GET`
-- **Description**: Get a patient by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Patient ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "patient": {
-      "id": "string",
-      "patientId": "string",
-      "firstName": "string",
-      "lastName": "string",
-      "email": "string",
-      "phone": "string",
-      "gender": "string",
-      "dateOfBirth": "string",
-      "age": 0,
-      "bloodGroup": "string",
-      "address": "string",
-      "city": "string",
-      "state": "string",
-      "postalCode": "string",
-      "medicalHistory": "string",
-      "allergies": "string",
-      "emergencyContact": {
-        "name": "string",
-        "relationship": "string",
-        "phone": "string"
-      },
-      "clinic": "string",
-      "isActive": true,
-      "documents": [
-        {
-          "id": "string",
-          "documentId": "string",
-          "name": "string",
-          "type": "string",
-          "fileUrl": "string",
-          "size": 0,
-          "patient": "string",
-          "appointment": "string",
-          "clinic": "string",
-          "tags": ["string"],
-          "notes": "string",
-          "createdAt": "string",
-          "updatedAt": "string"
-        }
-      ],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Patient
+**Response**:
+
+```json
+{
+  "success": true,
+  "patient": {
+    "id": "patient-id",
+    "patientId": "PAT123456",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "patient@example.com",
+    "phone": "1234567890",
+    "gender": "MALE",
+    "dateOfBirth": "1990-01-01",
+    "age": 33,
+    "bloodGroup": "O+",
+    "address": "123 Patient St",
+    "city": "City",
+    "state": "State",
+    "postalCode": "12345",
+    "medicalHistory": "None",
+    "allergies": ["Peanuts"],
+    "emergencyContact": {
+      "name": "Jane Doe",
+      "relationship": "Spouse",
+      "phone": "9876543210"
+    },
+    "clinicId": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Patient
+
+Create a new patient.
 
 - **URL**: `/patients/`
 - **Method**: `POST`
-- **Description**: Create a new patient
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "phone": "string",
-    "gender": "string",
-    "dateOfBirth": "string",
-    "bloodGroup": "string",
-    "address": "string",
-    "city": "string",
-    "state": "string",
-    "postalCode": "string",
-    "medicalHistory": "string",
-    "allergies": "string",
-    "emergencyContact": {
-      "name": "string",
-      "relationship": "string",
-      "phone": "string"
-    },
-    "clinicId": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "patient": {
-      "id": "string",
-      "patientId": "string",
-      "firstName": "string",
-      "lastName": "string",
-      "email": "string",
-      "phone": "string",
-      "gender": "string",
-      "dateOfBirth": "string",
-      "age": 0,
-      "bloodGroup": "string",
-      "address": "string",
-      "city": "string",
-      "state": "string",
-      "postalCode": "string",
-      "medicalHistory": "string",
-      "allergies": "string",
-      "emergencyContact": {
-        "name": "string",
-        "relationship": "string",
-        "phone": "string"
-      },
-      "clinic": "string",
-      "isActive": true,
-      "documents": [],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Update Patient
+**Request Body**:
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "patient@example.com",
+  "phone": "1234567890",
+  "gender": "MALE",
+  "dateOfBirth": "1990-01-01",
+  "bloodGroup": "O+",
+  "address": "123 Patient St",
+  "city": "City",
+  "state": "State",
+  "postalCode": "12345",
+  "medicalHistory": "None",
+  "allergies": ["Peanuts"],
+  "emergencyContact": {
+    "name": "Jane Doe",
+    "relationship": "Spouse",
+    "phone": "9876543210"
+  },
+  "clinicId": "clinic-id"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "patient": {
+    "id": "patient-id",
+    "patientId": "PAT123456",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "patient@example.com",
+    "phone": "1234567890",
+    "gender": "MALE",
+    "dateOfBirth": "1990-01-01",
+    "age": 33,
+    "bloodGroup": "O+",
+    "address": "123 Patient St",
+    "city": "City",
+    "state": "State",
+    "postalCode": "12345",
+    "medicalHistory": "None",
+    "allergies": ["Peanuts"],
+    "emergencyContact": {
+      "name": "Jane Doe",
+      "relationship": "Spouse",
+      "phone": "9876543210"
+    },
+    "clinicId": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Patient
+
+Update a patient.
 
 - **URL**: `/patients/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a patient by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Patient ID
-- **Request Body**:
-  ```json
-  {
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "phone": "string",
-    "gender": "string",
-    "dateOfBirth": "string",
-    "bloodGroup": "string",
-    "address": "string",
-    "city": "string",
-    "state": "string",
-    "postalCode": "string",
-    "medicalHistory": "string",
-    "allergies": "string",
-    "emergencyContact": {
-      "name": "string",
-      "relationship": "string",
-      "phone": "string"
-    },
-    "isActive": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "patient": {
-      "id": "string",
-      "patientId": "string",
-      "firstName": "string",
-      "lastName": "string",
-      "email": "string",
-      "phone": "string",
-      "gender": "string",
-      "dateOfBirth": "string",
-      "age": 0,
-      "bloodGroup": "string",
-      "address": "string",
-      "city": "string",
-      "state": "string",
-      "postalCode": "string",
-      "medicalHistory": "string",
-      "allergies": "string",
-      "emergencyContact": {
-        "name": "string",
-        "relationship": "string",
-        "phone": "string"
-      },
-      "clinic": "string",
-      "isActive": true,
-      "documents": [
-        {
-          "id": "string",
-          "documentId": "string",
-          "name": "string",
-          "type": "string",
-          "fileUrl": "string",
-          "size": 0,
-          "patient": "string",
-          "appointment": "string",
-          "clinic": "string",
-          "tags": ["string"],
-          "notes": "string",
-          "createdAt": "string",
-          "updatedAt": "string"
-        }
-      ],
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Patient
+**Request Body**:
+
+```json
+{
+  "firstName": "Updated",
+  "lastName": "Patient",
+  "email": "updated@example.com",
+  "phone": "9876543210",
+  "gender": "FEMALE",
+  "dateOfBirth": "1995-01-01",
+  "bloodGroup": "A+",
+  "address": "456 Updated St",
+  "city": "New City",
+  "state": "New State",
+  "postalCode": "54321",
+  "medicalHistory": "Updated history",
+  "allergies": ["Shellfish"],
+  "emergencyContact": {
+    "name": "John Doe",
+    "relationship": "Spouse",
+    "phone": "1234567890"
+  },
+  "isActive": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "patient": {
+    "id": "patient-id",
+    "patientId": "PAT123456",
+    "firstName": "Updated",
+    "lastName": "Patient",
+    "email": "updated@example.com",
+    "phone": "9876543210",
+    "gender": "FEMALE",
+    "dateOfBirth": "1995-01-01",
+    "age": 28,
+    "bloodGroup": "A+",
+    "address": "456 Updated St",
+    "city": "New City",
+    "state": "New State",
+    "postalCode": "54321",
+    "medicalHistory": "Updated history",
+    "allergies": ["Shellfish"],
+    "emergencyContact": {
+      "name": "John Doe",
+      "relationship": "Spouse",
+      "phone": "1234567890"
+    },
+    "clinicId": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Patient
+
+Delete a patient.
 
 - **URL**: `/patients/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a patient by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Patient ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Get Patient Documents
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Get Patient Documents
+
+Get all documents for a patient.
 
 - **URL**: `/patients/{id}/documents/`
 - **Method**: `GET`
-- **Description**: Get all documents for a patient
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Patient ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "documents": [
-      {
-        "id": "string",
-        "documentId": "string",
-        "name": "string",
-        "type": "string",
-        "fileUrl": "string",
-        "size": 0,
-        "patient": "string",
-        "appointment": "string",
-        "clinic": "string",
-        "tags": ["string"],
-        "notes": "string",
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-### Appointments
+**Response**:
 
-#### Get All Appointments
+```json
+{
+  "success": true,
+  "documents": [
+    {
+      "id": "document-id",
+      "documentId": "DOC123456",
+      "name": "Blood Test Report",
+      "type": "REPORT",
+      "url": "https://example.com/documents/blood-test.pdf",
+      "size": 1024000,
+      "patientId": "patient-id",
+      "appointmentId": "appointment-id",
+      "uploadedById": "user-id",
+      "clinicId": "clinic-id",
+      "tags": ["blood-test", "routine"],
+      "notes": "Routine blood test",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+## Appointment Endpoints
+
+### Get All Appointments
+
+Get a list of all appointments, with optional filtering.
 
 - **URL**: `/appointments/`
 - **Method**: `GET`
-- **Description**: Get a list of all appointments, optionally filtered by clinic, doctor, patient, or status
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `doctorId` (optional): Filter by doctor ID
   - `patientId` (optional): Filter by patient ID
   - `status` (optional): Filter by status
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointments": [
-      {
-        "id": "string",
-        "appointmentId": "string",
-        "patient": "string",
-        "doctor": "string",
-        "clinic": "string",
-        "appointmentDate": "string",
-        "startTime": "string",
-        "endTime": "string",
-        "duration": 0,
-        "type": "string",
-        "status": "string",
-        "concern": "string",
-        "notes": "string",
-        "vitals": {
-          "temperature": 0,
-          "bloodPressure": "string",
-          "heartRate": 0,
-          "respiratoryRate": 0,
-          "oxygenSaturation": 0,
-          "weight": 0,
-          "height": 0
-        },
-        "cancelledAt": "string",
-        "cancelledBy": "string",
-        "cancelReason": "string",
-        "followUpDate": "string",
-        "isFollowUp": true,
-        "previousAppointment": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "phone": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "doctorDetails": {
-          "name": "string",
-          "specialization": "string"
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Appointment
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointments": [
+    {
+      "id": "appointment-id",
+      "appointmentId": "APT123456",
+      "patient": "patient-id",
+      "doctor": "doctor-id",
+      "clinic": "clinic-id",
+      "appointmentDate": "2023-01-01",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "duration": 30,
+      "type": "REGULAR",
+      "status": "SCHEDULED",
+      "concern": "Routine checkup",
+      "notes": "Patient notes",
+      "vitals": {
+        "temperature": 98.6,
+        "bloodPressure": "120/80",
+        "heartRate": 72
+      },
+      "patient_details": {
+        "patientId": "PAT123456",
+        "name": "John Doe",
+        "phone": "1234567890",
+        "gender": "MALE",
+        "age": 33
+      },
+      "doctor_details": {
+        "name": "Dr. Smith",
+        "specialization": "Cardiology"
+      },
+      "createdAt": "2022-12-15T00:00:00Z",
+      "updatedAt": "2022-12-15T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Appointment by ID
+
+Get a specific appointment by ID.
 
 - **URL**: `/appointments/{id}/`
 - **Method**: `GET`
-- **Description**: Get an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "string",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Appointment
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "appointmentId": "APT123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointmentDate": "2023-01-01",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "duration": 30,
+    "type": "REGULAR",
+    "status": "SCHEDULED",
+    "concern": "Routine checkup",
+    "notes": "Patient notes",
+    "vitals": {
+      "temperature": 98.6,
+      "bloodPressure": "120/80",
+      "heartRate": 72
+    },
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "phone": "1234567890",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2022-12-15T00:00:00Z",
+    "updatedAt": "2022-12-15T00:00:00Z"
+  }
+}
+```
+
+### Create Appointment
+
+Create a new appointment.
 
 - **URL**: `/appointments/`
 - **Method**: `POST`
-- **Description**: Create a new appointment
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "patientId": "string",
-    "doctorId": "string",
-    "clinicId": "string",
-    "appointmentDate": "string",
-    "startTime": "string",
-    "endTime": "string",
-    "duration": 0,
-    "type": "string",
-    "concern": "string",
-    "notes": "string",
-    "isFollowUp": true,
-    "previousAppointmentId": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "string",
-      "concern": "string",
-      "notes": "string",
-      "vitals": null,
-      "cancelledAt": null,
-      "cancelledBy": null,
-      "cancelReason": null,
-      "followUpDate": null,
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Update Appointment
+**Request Body**:
+
+```json
+{
+  "patient": "patient-id",
+  "doctor": "doctor-id",
+  "clinic": "clinic-id",
+  "appointmentDate": "2023-01-01",
+  "startTime": "09:00",
+  "endTime": "09:30",
+  "duration": 30,
+  "type": "REGULAR",
+  "concern": "Routine checkup",
+  "notes": "Patient notes",
+  "isFollowUp": false,
+  "previousAppointment": null
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "appointmentId": "APT123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointmentDate": "2023-01-01",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "duration": 30,
+    "type": "REGULAR",
+    "status": "SCHEDULED",
+    "concern": "Routine checkup",
+    "notes": "Patient notes",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "phone": "1234567890",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2022-12-15T00:00:00Z",
+    "updatedAt": "2022-12-15T00:00:00Z"
+  }
+}
+```
+
+### Update Appointment
+
+Update an appointment.
 
 - **URL**: `/appointments/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Request Body**:
-  ```json
-  {
-    "appointmentDate": "string",
-    "startTime": "string",
-    "endTime": "string",
-    "duration": 0,
-    "type": "string",
-    "status": "string",
-    "concern": "string",
-    "notes": "string",
-    "vitals": {
-      "temperature": 0,
-      "bloodPressure": "string",
-      "heartRate": 0,
-      "respiratoryRate": 0,
-      "oxygenSaturation": 0,
-      "weight": 0,
-      "height": 0
-    },
-    "followUpDate": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "string",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Appointment
+**Request Body**:
+
+```json
+{
+  "appointmentDate": "2023-01-02",
+  "startTime": "10:00",
+  "endTime": "10:30",
+  "duration": 30,
+  "type": "FOLLOW_UP",
+  "status": "CONFIRMED",
+  "concern": "Follow-up checkup",
+  "notes": "Updated notes",
+  "vitals": {
+    "temperature": 98.6,
+    "bloodPressure": "120/80",
+    "heartRate": 72
+  },
+  "followUpDate": "2023-01-15"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "appointmentId": "APT123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointmentDate": "2023-01-02",
+    "startTime": "10:00",
+    "endTime": "10:30",
+    "duration": 30,
+    "type": "FOLLOW_UP",
+    "status": "CONFIRMED",
+    "concern": "Follow-up checkup",
+    "notes": "Updated notes",
+    "vitals": {
+      "temperature": 98.6,
+      "bloodPressure": "120/80",
+      "heartRate": 72
+    },
+    "followUpDate": "2023-01-15",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "phone": "1234567890",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2022-12-15T00:00:00Z",
+    "updatedAt": "2022-12-15T00:00:00Z"
+  }
+}
+```
+
+### Delete Appointment
+
+Delete an appointment.
 
 - **URL**: `/appointments/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Cancel Appointment
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Cancel Appointment
+
+Cancel an appointment.
 
 - **URL**: `/appointments/{id}/cancel/`
 - **Method**: `PATCH`
-- **Description**: Cancel an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Request Body**:
-  ```json
-  {
-    "cancelReason": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "CANCELLED",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Check In Appointment
+**Request Body**:
+
+```json
+{
+  "cancel_reason": "Patient requested cancellation"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "status": "CANCELLED",
+    "cancelReason": "Patient requested cancellation",
+    "cancelledAt": "2023-01-01T00:00:00Z",
+    "cancelledBy": "user-id",
+    // Other appointment fields...
+  }
+}
+```
+
+### Check In Appointment
+
+Check in a patient for an appointment.
 
 - **URL**: `/appointments/{id}/check-in/`
 - **Method**: `PATCH`
-- **Description**: Check in an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "CHECKED_IN",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Start Appointment
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "status": "CHECKED_IN",
+    // Other appointment fields...
+  }
+}
+```
+
+### Start Appointment
+
+Start an appointment.
 
 - **URL**: `/appointments/{id}/start/`
 - **Method**: `PATCH`
-- **Description**: Start an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "IN_PROGRESS",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Complete Appointment
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "status": "IN_PROGRESS",
+    // Other appointment fields...
+  }
+}
+```
+
+### Complete Appointment
+
+Complete an appointment.
 
 - **URL**: `/appointments/{id}/complete/`
 - **Method**: `PATCH`
-- **Description**: Complete an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Request Body**:
-  ```json
-  {
-    "vitals": {
-      "temperature": 0,
-      "bloodPressure": "string",
-      "heartRate": 0,
-      "respiratoryRate": 0,
-      "oxygenSaturation": 0,
-      "weight": 0,
-      "height": 0
-    },
-    "notes": "string",
-    "followUpDate": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "COMPLETED",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Reschedule Appointment
+**Request Body**:
+
+```json
+{
+  "vitals": {
+    "temperature": 98.6,
+    "bloodPressure": "120/80",
+    "heartRate": 72,
+    "respiratoryRate": 16,
+    "oxygenSaturation": 98,
+    "weight": 70,
+    "height": 175
+  },
+  "notes": "Patient is doing well",
+  "followUpDate": "2023-01-15"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "status": "COMPLETED",
+    "vitals": {
+      "temperature": 98.6,
+      "bloodPressure": "120/80",
+      "heartRate": 72,
+      "respiratoryRate": 16,
+      "oxygenSaturation": 98,
+      "weight": 70,
+      "height": 175
+    },
+    "notes": "Patient is doing well",
+    "followUpDate": "2023-01-15",
+    // Other appointment fields...
+  }
+}
+```
+
+### Reschedule Appointment
+
+Reschedule an appointment.
 
 - **URL**: `/appointments/{id}/reschedule/`
 - **Method**: `PATCH`
-- **Description**: Reschedule an appointment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Appointment ID
-- **Request Body**:
-  ```json
-  {
-    "appointmentDate": "string",
-    "startTime": "string",
-    "endTime": "string",
-    "duration": 0
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointment": {
-      "id": "string",
-      "appointmentId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointmentDate": "string",
-      "startTime": "string",
-      "endTime": "string",
-      "duration": 0,
-      "type": "string",
-      "status": "RESCHEDULED",
-      "concern": "string",
-      "notes": "string",
-      "vitals": {
-        "temperature": 0,
-        "bloodPressure": "string",
-        "heartRate": 0,
-        "respiratoryRate": 0,
-        "oxygenSaturation": 0,
-        "weight": 0,
-        "height": 0
-      },
-      "cancelledAt": "string",
-      "cancelledBy": "string",
-      "cancelReason": "string",
-      "followUpDate": "string",
-      "isFollowUp": true,
-      "previousAppointment": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "phone": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-### Prescriptions
+**Request Body**:
 
-#### Get All Prescriptions
+```json
+{
+  "appointmentDate": "2023-01-10",
+  "startTime": "14:00",
+  "endTime": "14:30",
+  "duration": 30
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointment": {
+    "id": "appointment-id",
+    "status": "RESCHEDULED",
+    "appointmentDate": "2023-01-10",
+    "startTime": "14:00",
+    "endTime": "14:30",
+    "duration": 30,
+    // Other appointment fields...
+  }
+}
+```
+
+## Prescription Endpoints
+
+### Get All Prescriptions
+
+Get a list of all prescriptions, with optional filtering.
 
 - **URL**: `/prescriptions/`
 - **Method**: `GET`
-- **Description**: Get a list of all prescriptions, optionally filtered by clinic, doctor, or patient
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `doctorId` (optional): Filter by doctor ID
   - `patientId` (optional): Filter by patient ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "prescriptions": [
-      {
-        "id": "string",
-        "prescriptionId": "string",
-        "patient": "string",
-        "doctor": "string",
-        "clinic": "string",
-        "appointment": "string",
-        "diagnosis": "string",
-        "instructions": "string",
-        "followUpDate": "string",
-        "isActive": true,
-        "document": "string",
-        "documentUrl": "string",
-        "medications": [
-          {
-            "id": "string",
-            "name": "string",
-            "dosage": "string",
-            "frequency": "string",
-            "duration": "string",
-            "instructions": "string",
-            "medicine": "string",
-            "quantity": 0
-          }
-        ],
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "doctorDetails": {
-          "name": "string",
-          "specialization": "string"
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Prescription
+**Response**:
+
+```json
+{
+  "success": true,
+  "prescriptions": [
+    {
+      "id": "prescription-id",
+      "prescriptionId": "PRE123456",
+      "patient": "patient-id",
+      "doctor": "doctor-id",
+      "clinic": "clinic-id",
+      "appointment": "appointment-id",
+      "diagnosis": "Hypertension",
+      "medications": [
+        {
+          "id": "medication-id",
+          "name": "Amlodipine",
+          "dosage": "5mg",
+          "frequency": "Once daily",
+          "duration": "30 days",
+          "instructions": "Take after breakfast",
+          "quantity": 30
+        }
+      ],
+      "instructions": "Avoid salty foods",
+      "followUpDate": "2023-02-01",
+      "isActive": true,
+      "document": "document-url",
+      "document_url": "document-url",
+      "patient_details": {
+        "patientId": "PAT123456",
+        "name": "John Doe",
+        "gender": "MALE",
+        "age": 33
+      },
+      "doctor_details": {
+        "name": "Dr. Smith",
+        "specialization": "Cardiology"
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Prescription by ID
+
+Get a specific prescription by ID.
 
 - **URL**: `/prescriptions/{id}/`
 - **Method**: `GET`
-- **Description**: Get a prescription by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Prescription ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "prescription": {
-      "id": "string",
-      "prescriptionId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "diagnosis": "string",
-      "instructions": "string",
-      "followUpDate": "string",
-      "isActive": true,
-      "document": "string",
-      "documentUrl": "string",
-      "medications": [
-        {
-          "id": "string",
-          "name": "string",
-          "dosage": "string",
-          "frequency": "string",
-          "duration": "string",
-          "instructions": "string",
-          "medicine": "string",
-          "quantity": 0
-        }
-      ],
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Prescription
+**Response**:
+
+```json
+{
+  "success": true,
+  "prescription": {
+    "id": "prescription-id",
+    "prescriptionId": "PRE123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
+    "diagnosis": "Hypertension",
+    "medications": [
+      {
+        "id": "medication-id",
+        "name": "Amlodipine",
+        "dosage": "5mg",
+        "frequency": "Once daily",
+        "duration": "30 days",
+        "instructions": "Take after breakfast",
+        "quantity": 30
+      }
+    ],
+    "instructions": "Avoid salty foods",
+    "followUpDate": "2023-02-01",
+    "isActive": true,
+    "document": "document-url",
+    "document_url": "document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Prescription
+
+Create a new prescription.
 
 - **URL**: `/prescriptions/`
 - **Method**: `POST`
-- **Description**: Create a new prescription
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "patientId": "string",
-    "doctorId": "string",
-    "clinicId": "string",
-    "appointmentId": "string",
-    "diagnosis": "string",
+- **Auth Required**: Yes
+
+**Request Body**:
+
+```json
+{
+  "patient": "patient-id",
+  "doctor": "doctor-id",
+  "clinic": "clinic-id",
+  "appointment": "appointment-id",
+  "diagnosis": "Hypertension",
+  "medications": [
+    {
+      "name": "Amlodipine",
+      "dosage": "5mg",
+      "frequency": "Once daily",
+      "duration": "30 days",
+      "instructions": "Take after breakfast",
+      "medicine": "medicine-id",
+      "quantity": 30
+    }
+  ],
+  "instructions": "Avoid salty foods",
+  "followUpDate": "2023-02-01",
+  "document": "document-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "prescription": {
+    "id": "prescription-id",
+    "prescriptionId": "PRE123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
+    "diagnosis": "Hypertension",
     "medications": [
       {
-        "name": "string",
-        "dosage": "string",
-        "frequency": "string",
-        "duration": "string",
-        "instructions": "string",
-        "medicineId": "string",
-        "quantity": 0
+        "id": "medication-id",
+        "name": "Amlodipine",
+        "dosage": "5mg",
+        "frequency": "Once daily",
+        "duration": "30 days",
+        "instructions": "Take after breakfast",
+        "medicine": "medicine-id",
+        "quantity": 30
       }
     ],
-    "instructions": "string",
-    "followUpDate": "string",
-    "document": "file"
+    "instructions": "Avoid salty foods",
+    "followUpDate": "2023-02-01",
+    "isActive": true,
+    "document": "document-url",
+    "document_url": "document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
   }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "prescription": {
-      "id": "string",
-      "prescriptionId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "diagnosis": "string",
-      "instructions": "string",
-      "followUpDate": "string",
-      "isActive": true,
-      "document": "string",
-      "documentUrl": "string",
-      "medications": [
-        {
-          "id": "string",
-          "name": "string",
-          "dosage": "string",
-          "frequency": "string",
-          "duration": "string",
-          "instructions": "string",
-          "medicine": "string",
-          "quantity": 0
-        }
-      ],
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+}
+```
 
-#### Update Prescription
+### Update Prescription
+
+Update a prescription.
 
 - **URL**: `/prescriptions/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a prescription by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Prescription ID
-- **Request Body**:
-  ```json
-  {
-    "diagnosis": "string",
+
+**Request Body**:
+
+```json
+{
+  "diagnosis": "Updated diagnosis",
+  "medications": [
+    {
+      "id": "medication-id",
+      "name": "Updated medication",
+      "dosage": "10mg",
+      "frequency": "Twice daily",
+      "duration": "15 days",
+      "instructions": "Take after meals",
+      "quantity": 30
+    }
+  ],
+  "instructions": "Updated instructions",
+  "followUpDate": "2023-02-15",
+  "isActive": true,
+  "document": "updated-document-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "prescription": {
+    "id": "prescription-id",
+    "prescriptionId": "PRE123456",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
+    "diagnosis": "Updated diagnosis",
     "medications": [
       {
-        "id": "string",
-        "name": "string",
-        "dosage": "string",
-        "frequency": "string",
-        "duration": "string",
-        "instructions": "string",
-        "medicineId": "string",
-        "quantity": 0
+        "id": "medication-id",
+        "name": "Updated medication",
+        "dosage": "10mg",
+        "frequency": "Twice daily",
+        "duration": "15 days",
+        "instructions": "Take after meals",
+        "quantity": 30
       }
     ],
-    "instructions": "string",
-    "followUpDate": "string",
+    "instructions": "Updated instructions",
+    "followUpDate": "2023-02-15",
     "isActive": true,
-    "document": "file"
+    "document": "updated-document-url",
+    "document_url": "updated-document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
   }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "prescription": {
-      "id": "string",
-      "prescriptionId": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "diagnosis": "string",
-      "instructions": "string",
-      "followUpDate": "string",
-      "isActive": true,
-      "document": "string",
-      "documentUrl": "string",
-      "medications": [
-        {
-          "id": "string",
-          "name": "string",
-          "dosage": "string",
-          "frequency": "string",
-          "duration": "string",
-          "instructions": "string",
-          "medicine": "string",
-          "quantity": 0
-        }
-      ],
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+}
+```
 
-#### Delete Prescription
+### Delete Prescription
+
+Delete a prescription.
 
 - **URL**: `/prescriptions/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a prescription by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Prescription ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-### Medicines
+**Response**:
 
-#### Get All Medicines
+```json
+{
+  "success": true
+}
+```
+
+## Medicine Endpoints
+
+### Get All Medicines
+
+Get a list of all medicines, with optional filtering.
 
 - **URL**: `/medicines/`
 - **Method**: `GET`
-- **Description**: Get a list of all medicines, optionally filtered by clinic or active status
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `isActive` (optional): Filter by active status (true/false)
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "medicines": [
-      {
-        "id": "string",
-        "medicineId": "string",
-        "name": "string",
-        "manufacturer": "string",
-        "batchNumber": "string",
-        "type": "string",
-        "dosage": "string",
-        "manufacturedDate": "string",
-        "expiryDate": "string",
-        "price": 0,
-        "stock": 0,
-        "reorderLevel": 0,
-        "clinic": "string",
-        "isActive": true,
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Medicine
+**Response**:
+
+```json
+{
+  "success": true,
+  "medicines": [
+    {
+      "id": "medicine-id",
+      "medicineId": "MED123456",
+      "name": "Amlodipine",
+      "manufacturer": "Pfizer",
+      "batchNumber": "BATCH123",
+      "type": "TABLET",
+      "dosage": "5mg",
+      "manufacturedDate": "2022-01-01",
+      "expiryDate": "2024-01-01",
+      "price": 10.5,
+      "stock": 100,
+      "reorderLevel": 20,
+      "clinic": "clinic-id",
+      "isActive": true,
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Medicine by ID
+
+Get a specific medicine by ID.
 
 - **URL**: `/medicines/{id}/`
 - **Method**: `GET`
-- **Description**: Get a medicine by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Medicine ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "medicine": {
-      "id": "string",
-      "medicineId": "string",
-      "name": "string",
-      "manufacturer": "string",
-      "batchNumber": "string",
-      "type": "string",
-      "dosage": "string",
-      "manufacturedDate": "string",
-      "expiryDate": "string",
-      "price": 0,
-      "stock": 0,
-      "reorderLevel": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Medicine
+**Response**:
+
+```json
+{
+  "success": true,
+  "medicine": {
+    "id": "medicine-id",
+    "medicineId": "MED123456",
+    "name": "Amlodipine",
+    "manufacturer": "Pfizer",
+    "batchNumber": "BATCH123",
+    "type": "TABLET",
+    "dosage": "5mg",
+    "manufacturedDate": "2022-01-01",
+    "expiryDate": "2024-01-01",
+    "price": 10.5,
+    "stock": 100,
+    "reorderLevel": 20,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Medicine
+
+Create a new medicine.
 
 - **URL**: `/medicines/`
 - **Method**: `POST`
-- **Description**: Create a new medicine
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "manufacturer": "string",
-    "batchNumber": "string",
-    "type": "string",
-    "dosage": "string",
-    "manufacturedDate": "string",
-    "expiryDate": "string",
-    "price": 0,
-    "stock": 0,
-    "reorderLevel": 0,
-    "clinicId": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "medicine": {
-      "id": "string",
-      "medicineId": "string",
-      "name": "string",
-      "manufacturer": "string",
-      "batchNumber": "string",
-      "type": "string",
-      "dosage": "string",
-      "manufacturedDate": "string",
-      "expiryDate": "string",
-      "price": 0,
-      "stock": 0,
-      "reorderLevel": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Update Medicine
+**Request Body**:
+
+```json
+{
+  "name": "Amlodipine",
+  "manufacturer": "Pfizer",
+  "batchNumber": "BATCH123",
+  "type": "TABLET",
+  "dosage": "5mg",
+  "manufacturedDate": "2022-01-01",
+  "expiryDate": "2024-01-01",
+  "price": 10.5,
+  "stock": 100,
+  "reorderLevel": 20,
+  "clinic": "clinic-id"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "medicine": {
+    "id": "medicine-id",
+    "medicineId": "MED123456",
+    "name": "Amlodipine",
+    "manufacturer": "Pfizer",
+    "batchNumber": "BATCH123",
+    "type": "TABLET",
+    "dosage": "5mg",
+    "manufacturedDate": "2022-01-01",
+    "expiryDate": "2024-01-01",
+    "price": 10.5,
+    "stock": 100,
+    "reorderLevel": 20,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Medicine
+
+Update a medicine.
 
 - **URL**: `/medicines/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a medicine by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Medicine ID
-- **Request Body**:
-  ```json
-  {
-    "name": "string",
-    "manufacturer": "string",
-    "batchNumber": "string",
-    "type": "string",
-    "dosage": "string",
-    "manufacturedDate": "string",
-    "expiryDate": "string",
-    "price": 0,
-    "stock": 0,
-    "reorderLevel": 0,
-    "isActive": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "medicine": {
-      "id": "string",
-      "medicineId": "string",
-      "name": "string",
-      "manufacturer": "string",
-      "batchNumber": "string",
-      "type": "string",
-      "dosage": "string",
-      "manufacturedDate": "string",
-      "expiryDate": "string",
-      "price": 0,
-      "stock": 0,
-      "reorderLevel": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Medicine
+**Request Body**:
+
+```json
+{
+  "name": "Updated Medicine",
+  "manufacturer": "Updated Manufacturer",
+  "batchNumber": "BATCH456",
+  "type": "CAPSULE",
+  "dosage": "10mg",
+  "manufacturedDate": "2022-02-01",
+  "expiryDate": "2024-02-01",
+  "price": 15.75,
+  "stock": 200,
+  "reorderLevel": 30,
+  "isActive": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "medicine": {
+    "id": "medicine-id",
+    "medicineId": "MED123456",
+    "name": "Updated Medicine",
+    "manufacturer": "Updated Manufacturer",
+    "batchNumber": "BATCH456",
+    "type": "CAPSULE",
+    "dosage": "10mg",
+    "manufacturedDate": "2022-02-01",
+    "expiryDate": "2024-02-01",
+    "price": 15.75,
+    "stock": 200,
+    "reorderLevel": 30,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Medicine
+
+Delete a medicine.
 
 - **URL**: `/medicines/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a medicine by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Medicine ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Update Medicine Stock
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Update Medicine Stock
+
+Update the stock of a medicine.
 
 - **URL**: `/medicines/{id}/update-stock/`
 - **Method**: `PATCH`
-- **Description**: Update a medicine's stock by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Medicine ID
-- **Request Body**:
-  ```json
-  {
-    "quantity": 0,
-    "isAddition": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "medicine": {
-      "id": "string",
-      "medicineId": "string",
-      "name": "string",
-      "manufacturer": "string",
-      "batchNumber": "string",
-      "type": "string",
-      "dosage": "string",
-      "manufacturedDate": "string",
-      "expiryDate": "string",
-      "price": 0,
-      "stock": 0,
-      "reorderLevel": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-### Rooms
+**Request Body**:
 
-#### Get All Rooms
+```json
+{
+  "quantity": 50,
+  "isAddition": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "medicine": {
+    "id": "medicine-id",
+    "medicineId": "MED123456",
+    "name": "Amlodipine",
+    "stock": 150,
+    // Other medicine fields...
+  }
+}
+```
+
+## Room Endpoints
+
+### Get All Rooms
+
+Get a list of all rooms, with optional filtering.
 
 - **URL**: `/rooms/`
 - **Method**: `GET`
-- **Description**: Get a list of all rooms, optionally filtered by clinic or active status
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `isActive` (optional): Filter by active status (true/false)
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "rooms": [
-      {
-        "id": "string",
-        "roomId": "string",
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0,
-        "totalBeds": 0,
-        "availableBeds": 0,
-        "occupiedBeds": 0,
-        "reservedBeds": 0,
-        "clinic": "string",
-        "isActive": true,
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Room
+**Response**:
+
+```json
+{
+  "success": true,
+  "rooms": [
+    {
+      "id": "room-id",
+      "roomId": "ROOM123456",
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1,
+      "totalBeds": 2,
+      "available_beds": 1,
+      "occupied_beds": 1,
+      "reserved_beds": 0,
+      "clinic": "clinic-id",
+      "isActive": true,
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Room by ID
+
+Get a specific room by ID.
 
 - **URL**: `/rooms/{id}/`
 - **Method**: `GET`
-- **Description**: Get a room by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Room ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "room": {
-      "id": "string",
-      "roomId": "string",
-      "roomNumber": "string",
-      "roomType": "string",
-      "floor": 0,
-      "totalBeds": 0,
-      "availableBeds": 0,
-      "occupiedBeds": 0,
-      "reservedBeds": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Room
+**Response**:
+
+```json
+{
+  "success": true,
+  "room": {
+    "id": "room-id",
+    "roomId": "ROOM123456",
+    "roomNumber": "101",
+    "roomType": "PRIVATE",
+    "floor": 1,
+    "totalBeds": 2,
+    "available_beds": 1,
+    "occupied_beds": 1,
+    "reserved_beds": 0,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Room
+
+Create a new room.
 
 - **URL**: `/rooms/`
 - **Method**: `POST`
-- **Description**: Create a new room
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "roomNumber": "string",
-    "roomType": "string",
-    "floor": 0,
-    "totalBeds": 0,
-    "clinicId": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "room": {
-      "id": "string",
-      "roomId": "string",
-      "roomNumber": "string",
-      "roomType": "string",
-      "floor": 0,
-      "totalBeds": 0,
-      "availableBeds": 0,
-      "occupiedBeds": 0,
-      "reservedBeds": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Update Room
+**Request Body**:
+
+```json
+{
+  "roomNumber": "101",
+  "roomType": "PRIVATE",
+  "floor": 1,
+  "totalBeds": 2,
+  "clinic": "clinic-id"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "room": {
+    "id": "room-id",
+    "roomId": "ROOM123456",
+    "roomNumber": "101",
+    "roomType": "PRIVATE",
+    "floor": 1,
+    "totalBeds": 2,
+    "available_beds": 2,
+    "occupied_beds": 0,
+    "reserved_beds": 0,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Room
+
+Update a room.
 
 - **URL**: `/rooms/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a room by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Room ID
-- **Request Body**:
-  ```json
-  {
-    "roomNumber": "string",
-    "roomType": "string",
-    "floor": 0,
-    "totalBeds": 0,
-    "isActive": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "room": {
-      "id": "string",
-      "roomId": "string",
-      "roomNumber": "string",
-      "roomType": "string",
-      "floor": 0,
-      "totalBeds": 0,
-      "availableBeds": 0,
-      "occupiedBeds": 0,
-      "reservedBeds": 0,
-      "clinic": "string",
-      "isActive": true,
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Room
+**Request Body**:
+
+```json
+{
+  "roomNumber": "102",
+  "roomType": "GENERAL",
+  "floor": 2,
+  "totalBeds": 4,
+  "isActive": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "room": {
+    "id": "room-id",
+    "roomId": "ROOM123456",
+    "roomNumber": "102",
+    "roomType": "GENERAL",
+    "floor": 2,
+    "totalBeds": 4,
+    "available_beds": 4,
+    "occupied_beds": 0,
+    "reserved_beds": 0,
+    "clinic": "clinic-id",
+    "isActive": true,
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Room
+
+Delete a room.
 
 - **URL**: `/rooms/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a room by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Room ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-### Beds
+**Response**:
 
-#### Get All Beds
+```json
+{
+  "success": true
+}
+```
 
-- **URL**: `/beds/`
-- **Method**: `GET`
-- **Description**: Get a list of all beds, optionally filtered by room or status
-- **Authentication**: Required
-- **Query Parameters**:
-  - `roomId` (optional): Filter by room ID
-  - `status` (optional): Filter by status
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "beds": [
-      {
-        "id": "string",
-        "bedId": "string",
-        "bedNumber": 0,
-        "room": "string",
-        "status": "string",
-        "patient": "string",
-        "admissionDate": "string",
-        "dischargeDate": "string",
-        "clinic": "string",
-        "notes": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "roomDetails": {
-          "roomNumber": "string",
-          "roomType": "string",
-          "floor": 0
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
+## Bed Endpoints
 
-#### Get Bed
+### Get All Beds by Room
 
-- **URL**: `/beds/{id}/`
-- **Method**: `GET`
-- **Description**: Get a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "string",
-      "patient": "string",
-      "admissionDate": "string",
-      "dischargeDate": "string",
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Create Bed
-
-- **URL**: `/beds/`
-- **Method**: `POST`
-- **Description**: Create a new bed
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "bedNumber": 0,
-    "roomId": "string",
-    "clinicId": "string",
-    "notes": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "AVAILABLE",
-      "patient": null,
-      "admissionDate": null,
-      "dischargeDate": null,
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": null,
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Update Bed
-
-- **URL**: `/beds/{id}/`
-- **Method**: `PATCH`
-- **Description**: Update a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Request Body**:
-  ```json
-  {
-    "bedNumber": 0,
-    "status": "string",
-    "notes": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "string",
-      "patient": "string",
-      "admissionDate": "string",
-      "dischargeDate": "string",
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Delete Bed
-
-- **URL**: `/beds/{id}/`
-- **Method**: `DELETE`
-- **Description**: Delete a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
-
-#### Assign Bed
-
-- **URL**: `/beds/{id}/assign/`
-- **Method**: `PATCH`
-- **Description**: Assign a patient to a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Request Body**:
-  ```json
-  {
-    "patientId": "string",
-    "admissionDate": "string",
-    "dischargeDate": "string"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "OCCUPIED",
-      "patient": "string",
-      "admissionDate": "string",
-      "dischargeDate": "string",
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Discharge Bed
-
-- **URL**: `/beds/{id}/discharge/`
-- **Method**: `PATCH`
-- **Description**: Discharge a patient from a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "AVAILABLE",
-      "patient": null,
-      "admissionDate": null,
-      "dischargeDate": null,
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": null,
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Reserve Bed
-
-- **URL**: `/beds/{id}/reserve/`
-- **Method**: `PATCH`
-- **Description**: Reserve a bed by ID
-- **Authentication**: Required
-- **Path Parameters**:
-  - `id`: Bed ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "bed": {
-      "id": "string",
-      "bedId": "string",
-      "bedNumber": 0,
-      "room": "string",
-      "status": "RESERVED",
-      "patient": null,
-      "admissionDate": null,
-      "dischargeDate": null,
-      "clinic": "string",
-      "notes": "string",
-      "patientDetails": null,
-      "roomDetails": {
-        "roomNumber": "string",
-        "roomType": "string",
-        "floor": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
-
-#### Get Beds by Room
+Get all beds for a specific room.
 
 - **URL**: `/beds/room/{roomId}/`
 - **Method**: `GET`
-- **Description**: Get all beds for a room by room ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `roomId`: Room ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "beds": [
-      {
-        "id": "string",
-        "bedId": "string",
-        "bedNumber": 0,
-        "room": "string",
-        "status": "string",
-        "patient": "string",
-        "admissionDate": "string",
-        "dischargeDate": "string",
-        "clinic": "string",
-        "notes": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "roomDetails": {
-          "roomNumber": "string",
-          "roomType": "string",
-          "floor": 0
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "beds": [
+    {
+      "id": "bed-id",
+      "bedId": "BED123456",
+      "bedNumber": 1,
+      "room": "room-id",
+      "status": "AVAILABLE",
+      "patient": null,
+      "admissionDate": null,
+      "dischargeDate": null,
+      "clinic": "clinic-id",
+      "notes": "Bed notes",
+      "patient_details": null,
+      "room_details": {
+        "roomNumber": "101",
+        "roomType": "PRIVATE",
+        "floor": 1
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Bed by ID
+
+Get a specific bed by ID.
+
+- **URL**: `/beds/{id}/`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 1,
+    "room": "room-id",
+    "status": "AVAILABLE",
+    "patient": null,
+    "admissionDate": null,
+    "dischargeDate": null,
+    "clinic": "clinic-id",
+    "notes": "Bed notes",
+    "patient_details": null,
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
   }
-  ```
+}
+```
 
-### Transactions
+### Create Bed
 
-#### Get All Transactions
+Create a new bed.
+
+- **URL**: `/beds/`
+- **Method**: `POST`
+- **Auth Required**: Yes
+
+**Request Body**:
+
+```json
+{
+  "bedNumber": 1,
+  "room": "room-id",
+  "clinic": "clinic-id",
+  "notes": "Bed notes"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 1,
+    "room": "room-id",
+    "status": "AVAILABLE",
+    "patient": null,
+    "admissionDate": null,
+    "dischargeDate": null,
+    "clinic": "clinic-id",
+    "notes": "Bed notes",
+    "patient_details": null,
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Bed
+
+Update a bed.
+
+- **URL**: `/beds/{id}/`
+- **Method**: `PATCH`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Request Body**:
+
+```json
+{
+  "bedNumber": 2,
+  "status": "MAINTENANCE",
+  "notes": "Updated notes"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 2,
+    "room": "room-id",
+    "status": "MAINTENANCE",
+    "patient": null,
+    "admissionDate": null,
+    "dischargeDate": null,
+    "clinic": "clinic-id",
+    "notes": "Updated notes",
+    "patient_details": null,
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Bed
+
+Delete a bed.
+
+- **URL**: `/beds/{id}/`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Assign Bed
+
+Assign a patient to a bed.
+
+- **URL**: `/beds/{id}/assign/`
+- **Method**: `PATCH`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Request Body**:
+
+```json
+{
+  "patient": "patient-id",
+  "admission_date": "2023-01-01",
+  "discharge_date": "2023-01-07"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 1,
+    "room": "room-id",
+    "status": "OCCUPIED",
+    "patient": "patient-id",
+    "admissionDate": "2023-01-01",
+    "dischargeDate": "2023-01-07",
+    "clinic": "clinic-id",
+    "notes": "Bed notes",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Discharge Bed
+
+Discharge a patient from a bed.
+
+- **URL**: `/beds/{id}/discharge/`
+- **Method**: `PATCH`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 1,
+    "room": "room-id",
+    "status": "AVAILABLE",
+    "patient": null,
+    "admissionDate": null,
+    "dischargeDate": null,
+    "clinic": "clinic-id",
+    "notes": "Bed notes",
+    "patient_details": null,
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Reserve Bed
+
+Reserve a bed.
+
+- **URL**: `/beds/{id}/reserve/`
+- **Method**: `PATCH`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Bed ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "bed": {
+    "id": "bed-id",
+    "bedId": "BED123456",
+    "bedNumber": 1,
+    "room": "room-id",
+    "status": "RESERVED",
+    "patient": null,
+    "admissionDate": null,
+    "dischargeDate": null,
+    "clinic": "clinic-id",
+    "notes": "Bed notes",
+    "patient_details": null,
+    "room_details": {
+      "roomNumber": "101",
+      "roomType": "PRIVATE",
+      "floor": 1
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+## Transaction Endpoints
+
+### Get All Transactions
+
+Get a list of all transactions, with optional filtering.
 
 - **URL**: `/transactions/`
 - **Method**: `GET`
-- **Description**: Get a list of all transactions, optionally filtered by clinic, patient, or type
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `patientId` (optional): Filter by patient ID
   - `type` (optional): Filter by transaction type
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transactions": [
-      {
-        "id": "string",
-        "transactionId": "string",
-        "amount": 0,
-        "type": "string",
-        "description": "string",
-        "paymentMethod": "string",
-        "paymentStatus": "string",
-        "invoice": "string",
-        "appointment": "string",
-        "patient": "string",
-        "doctor": "string",
-        "clinic": "string",
-        "receipt": "string",
-        "receiptUrl": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "doctorDetails": {
-          "name": "string",
-          "specialization": "string"
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Transaction
+**Response**:
+
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "transaction-id",
+      "transactionId": "TXN123456",
+      "amount": 500,
+      "type": "INCOME",
+      "description": "Consultation fee",
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "invoice": "invoice-id",
+      "appointment": "appointment-id",
+      "patient": "patient-id",
+      "doctor": "doctor-id",
+      "clinic": "clinic-id",
+      "receipt": "receipt-url",
+      "receipt_url": "receipt-url",
+      "patient_details": {
+        "patientId": "PAT123456",
+        "name": "John Doe",
+        "gender": "MALE",
+        "age": 33
+      },
+      "doctor_details": {
+        "name": "Dr. Smith",
+        "specialization": "Cardiology"
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Transaction by ID
+
+Get a specific transaction by ID.
 
 - **URL**: `/transactions/{id}/`
 - **Method**: `GET`
-- **Description**: Get a transaction by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Transaction ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transaction": {
-      "id": "string",
-      "transactionId": "string",
-      "amount": 0,
-      "type": "string",
-      "description": "string",
-      "paymentMethod": "string",
-      "paymentStatus": "string",
-      "invoice": "string",
-      "appointment": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "receipt": "string",
-      "receiptUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Transaction
+**Response**:
+
+```json
+{
+  "success": true,
+  "transaction": {
+    "id": "transaction-id",
+    "transactionId": "TXN123456",
+    "amount": 500,
+    "type": "INCOME",
+    "description": "Consultation fee",
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "invoice": "invoice-id",
+    "appointment": "appointment-id",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "receipt": "receipt-url",
+    "receipt_url": "receipt-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "doctor_details": {
+      "name": "Dr. Smith",
+      "specialization": "Cardiology"
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Transaction
+
+Create a new transaction.
 
 - **URL**: `/transactions/`
 - **Method**: `POST`
-- **Description**: Create a new transaction
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "amount": 0,
-    "type": "string",
-    "description": "string",
-    "paymentMethod": "string",
-    "paymentStatus": "string",
-    "invoiceId": "string",
-    "appointmentId": "string",
-    "patientId": "string",
-    "doctorId": "string",
-    "clinicId": "string",
-    "receipt": "file"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transaction": {
-      "id": "string",
-      "transactionId": "string",
-      "amount": 0,
-      "type": "string",
-      "description": "string",
-      "paymentMethod": "string",
-      "paymentStatus": "string",
-      "invoice": "string",
-      "appointment": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "receipt": "string",
-      "receiptUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Update Transaction
+**Request Body**:
+
+```json
+{
+  "amount": 500,
+  "type": "INCOME",
+  "description": "Consultation fee",
+  "paymentMethod": "CASH",
+  "paymentStatus": "PAID",
+  "invoice": "invoice-id",
+  "appointment": "appointment-id",
+  "patient": "patient-id",
+  "doctor": "doctor-id",
+  "clinic": "clinic-id",
+  "receipt": "receipt-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "transaction": {
+    "id": "transaction-id",
+    "transactionId": "TXN123456",
+    "amount": 500,
+    "type": "INCOME",
+    "description": "Consultation fee",
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "invoice": "invoice-id",
+    "appointment": "appointment-id",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "receipt": "receipt-url",
+    "receipt_url": "receipt-url",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Update Transaction
+
+Update a transaction.
 
 - **URL**: `/transactions/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update a transaction by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Transaction ID
-- **Request Body**:
-  ```json
-  {
-    "description": "string",
-    "paymentMethod": "string",
-    "paymentStatus": "string",
-    "receipt": "file"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transaction": {
-      "id": "string",
-      "transactionId": "string",
-      "amount": 0,
-      "type": "string",
-      "description": "string",
-      "paymentMethod": "string",
-      "paymentStatus": "string",
-      "invoice": "string",
-      "appointment": "string",
-      "patient": "string",
-      "doctor": "string",
-      "clinic": "string",
-      "receipt": "string",
-      "receiptUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "doctorDetails": {
-        "name": "string",
-        "specialization": "string"
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Delete Transaction
+**Request Body**:
+
+```json
+{
+  "description": "Updated description",
+  "paymentMethod": "CREDIT_CARD",
+  "paymentStatus": "PAID",
+  "receipt": "updated-receipt-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "transaction": {
+    "id": "transaction-id",
+    "transactionId": "TXN123456",
+    "amount": 500,
+    "type": "INCOME",
+    "description": "Updated description",
+    "paymentMethod": "CREDIT_CARD",
+    "paymentStatus": "PAID",
+    "invoice": "invoice-id",
+    "appointment": "appointment-id",
+    "patient": "patient-id",
+    "doctor": "doctor-id",
+    "clinic": "clinic-id",
+    "receipt": "updated-receipt-url",
+    "receipt_url": "updated-receipt-url",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Delete Transaction
+
+Delete a transaction.
 
 - **URL**: `/transactions/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a transaction by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Transaction ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Get Transaction Summary
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Get Transaction Summary
+
+Get a summary of transactions for a clinic.
 
 - **URL**: `/transactions/summary/`
 - **Method**: `GET`
-- **Description**: Get a summary of transactions for a clinic
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId`: Clinic ID
   - `period` (optional): Period for the summary (day, week, month, year)
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "summary": {
-      "period": "string",
-      "income": 0,
-      "expense": 0,
-      "refund": 0,
-      "net": 0,
-      "paymentMethods": {
-        "CASH": 0,
-        "CREDIT_CARD": 0,
-        "DEBIT_CARD": 0,
-        "UPI": 0,
-        "BANK_TRANSFER": 0,
-        "CHEQUE": 0,
-        "INSURANCE": 0
-      },
-      "transactionCount": 0
-    }
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "summary": {
+    "period": "month",
+    "income": 5000,
+    "expense": 2000,
+    "refund": 500,
+    "net": 2500,
+    "paymentMethods": {
+      "CASH": 3000,
+      "CREDIT_CARD": 1500,
+      "UPI": 500
+    },
+    "transactionCount": 20
   }
-  ```
+}
+```
 
-### Invoices
+## Billing Endpoints
 
-#### Get All Invoices
+### Get All Invoices
+
+Get a list of all invoices, with optional filtering.
 
 - **URL**: `/billing/invoices/`
 - **Method**: `GET`
-- **Description**: Get a list of all invoices, optionally filtered by clinic, patient, or status
-- **Authentication**: Required
+- **Auth Required**: Yes
 - **Query Parameters**:
   - `clinicId` (optional): Filter by clinic ID
   - `patientId` (optional): Filter by patient ID
   - `status` (optional): Filter by status
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "invoices": [
-      {
-        "id": "string",
-        "invoiceId": "string",
-        "patient": "string",
-        "clinic": "string",
-        "appointment": "string",
-        "items": [
-          {
-            "id": "string",
-            "description": "string",
-            "quantity": 0,
-            "unitPrice": 0,
-            "amount": 0,
-            "type": "string",
-            "medicineId": "string",
-            "treatmentId": "string"
-          }
-        ],
-        "subtotal": 0,
-        "discount": 0,
-        "tax": 0,
-        "total": 0,
-        "dueDate": "string",
-        "status": "string",
-        "notes": "string",
-        "document": "string",
-        "documentUrl": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
 
-#### Get Invoice
+**Response**:
+
+```json
+{
+  "success": true,
+  "invoices": [
+    {
+      "id": "invoice-id",
+      "invoiceId": "INV123456",
+      "patient": "patient-id",
+      "clinic": "clinic-id",
+      "appointment": "appointment-id",
+      "items": [
+        {
+          "id": "item-id",
+          "description": "Consultation",
+          "quantity": 1,
+          "unitPrice": 500,
+          "amount": 500,
+          "type": "CONSULTATION"
+        }
+      ],
+      "subtotal": 500,
+      "discount": 0,
+      "tax": 50,
+      "total": 550,
+      "dueDate": "2023-01-15",
+      "status": "PAID",
+      "notes": "Invoice notes",
+      "document": "document-url",
+      "document_url": "document-url",
+      "patient_details": {
+        "patientId": "PAT123456",
+        "name": "John Doe",
+        "gender": "MALE",
+        "age": 33
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Invoice by ID
+
+Get a specific invoice by ID.
 
 - **URL**: `/billing/invoices/{id}/`
 - **Method**: `GET`
-- **Description**: Get an invoice by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Invoice ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "invoice": {
-      "id": "string",
-      "invoiceId": "string",
-      "patient": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "items": [
-        {
-          "id": "string",
-          "description": "string",
-          "quantity": 0,
-          "unitPrice": 0,
-          "amount": 0,
-          "type": "string",
-          "medicineId": "string",
-          "treatmentId": "string"
-        }
-      ],
-      "subtotal": 0,
-      "discount": 0,
-      "tax": 0,
-      "total": 0,
-      "dueDate": "string",
-      "status": "string",
-      "notes": "string",
-      "document": "string",
-      "documentUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
 
-#### Create Invoice
+**Response**:
+
+```json
+{
+  "success": true,
+  "invoice": {
+    "id": "invoice-id",
+    "invoiceId": "INV123456",
+    "patient": "patient-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
+    "items": [
+      {
+        "id": "item-id",
+        "description": "Consultation",
+        "quantity": 1,
+        "unitPrice": 500,
+        "amount": 500,
+        "type": "CONSULTATION"
+      }
+    ],
+    "subtotal": 500,
+    "discount": 0,
+    "tax": 50,
+    "total": 550,
+    "dueDate": "2023-01-15",
+    "status": "PAID",
+    "notes": "Invoice notes",
+    "document": "document-url",
+    "document_url": "document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+### Create Invoice
+
+Create a new invoice.
 
 - **URL**: `/billing/invoices/`
 - **Method**: `POST`
-- **Description**: Create a new invoice
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "patientId": "string",
-    "clinicId": "string",
-    "appointmentId": "string",
+- **Auth Required**: Yes
+
+**Request Body**:
+
+```json
+{
+  "patient": "patient-id",
+  "clinic": "clinic-id",
+  "appointment": "appointment-id",
+  "items": [
+    {
+      "description": "Consultation",
+      "quantity": 1,
+      "unitPrice": 500,
+      "amount": 500,
+      "type": "CONSULTATION"
+    }
+  ],
+  "subtotal": 500,
+  "discount": 0,
+  "tax": 50,
+  "total": 550,
+  "dueDate": "2023-01-15",
+  "notes": "Invoice notes",
+  "document": "document-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "invoice": {
+    "id": "invoice-id",
+    "invoiceId": "INV123456",
+    "patient": "patient-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
     "items": [
       {
-        "description": "string",
-        "quantity": 0,
-        "unitPrice": 0,
-        "amount": 0,
-        "type": "string",
-        "medicineId": "string",
-        "treatmentId": "string"
+        "id": "item-id",
+        "description": "Consultation",
+        "quantity": 1,
+        "unitPrice": 500,
+        "amount": 500,
+        "type": "CONSULTATION"
       }
     ],
-    "subtotal": 0,
+    "subtotal": 500,
     "discount": 0,
-    "tax": 0,
-    "total": 0,
-    "dueDate": "string",
-    "notes": "string",
-    "document": "file"
+    "tax": 50,
+    "total": 550,
+    "dueDate": "2023-01-15",
+    "status": "DRAFT",
+    "notes": "Invoice notes",
+    "document": "document-url",
+    "document_url": "document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
   }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "invoice": {
-      "id": "string",
-      "invoiceId": "string",
-      "patient": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "items": [
-        {
-          "id": "string",
-          "description": "string",
-          "quantity": 0,
-          "unitPrice": 0,
-          "amount": 0,
-          "type": "string",
-          "medicineId": "string",
-          "treatmentId": "string"
-        }
-      ],
-      "subtotal": 0,
-      "discount": 0,
-      "tax": 0,
-      "total": 0,
-      "dueDate": "string",
-      "status": "DRAFT",
-      "notes": "string",
-      "document": "string",
-      "documentUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+}
+```
 
-#### Update Invoice
+### Update Invoice
+
+Update an invoice.
 
 - **URL**: `/billing/invoices/{id}/`
 - **Method**: `PATCH`
-- **Description**: Update an invoice by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Invoice ID
-- **Request Body**:
-  ```json
-  {
+
+**Request Body**:
+
+```json
+{
+  "items": [
+    {
+      "id": "item-id",
+      "description": "Updated Item",
+      "quantity": 2,
+      "unitPrice": 300,
+      "amount": 600,
+      "type": "CONSULTATION"
+    }
+  ],
+  "discount": 50,
+  "tax": 55,
+  "dueDate": "2023-01-20",
+  "status": "SENT",
+  "notes": "Updated notes",
+  "document": "updated-document-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "invoice": {
+    "id": "invoice-id",
+    "invoiceId": "INV123456",
+    "patient": "patient-id",
+    "clinic": "clinic-id",
+    "appointment": "appointment-id",
     "items": [
       {
-        "id": "string",
-        "description": "string",
-        "quantity": 0,
-        "unitPrice": 0,
-        "amount": 0,
-        "type": "string",
-        "medicineId": "string",
-        "treatmentId": "string"
+        "id": "item-id",
+        "description": "Updated Item",
+        "quantity": 2,
+        "unitPrice": 300,
+        "amount": 600,
+        "type": "CONSULTATION"
       }
     ],
-    "discount": 0,
-    "tax": 0,
-    "dueDate": "string",
-    "status": "string",
-    "notes": "string",
-    "document": "file"
+    "subtotal": 600,
+    "discount": 50,
+    "tax": 55,
+    "total": 605,
+    "dueDate": "2023-01-20",
+    "status": "SENT",
+    "notes": "Updated notes",
+    "document": "updated-document-url",
+    "document_url": "updated-document-url",
+    "patient_details": {
+      "patientId": "PAT123456",
+      "name": "John Doe",
+      "gender": "MALE",
+      "age": 33
+    },
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
   }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "invoice": {
-      "id": "string",
-      "invoiceId": "string",
-      "patient": "string",
-      "clinic": "string",
-      "appointment": "string",
-      "items": [
-        {
-          "id": "string",
-          "description": "string",
-          "quantity": 0,
-          "unitPrice": 0,
-          "amount": 0,
-          "type": "string",
-          "medicineId": "string",
-          "treatmentId": "string"
-        }
-      ],
-      "subtotal": 0,
-      "discount": 0,
-      "tax": 0,
-      "total": 0,
-      "dueDate": "string",
-      "status": "string",
-      "notes": "string",
-      "document": "string",
-      "documentUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+}
+```
 
-#### Delete Invoice
+### Delete Invoice
+
+Delete an invoice.
 
 - **URL**: `/billing/invoices/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete an invoice by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Invoice ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-#### Record Payment
+**Response**:
+
+```json
+{
+  "success": true
+}
+```
+
+### Record Payment
+
+Record a payment for an invoice.
 
 - **URL**: `/billing/payment/`
 - **Method**: `POST`
-- **Description**: Record a payment for an invoice
-- **Authentication**: Required
-- **Request Body**:
-  ```json
-  {
-    "invoiceId": "string",
-    "amount": 0,
-    "paymentMethod": "string",
-    "description": "string",
-    "patientId": "string",
-    "clinicId": "string",
-    "receipt": "file"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transaction": {
-      "id": "string",
-      "transactionId": "string",
-      "amount": 0,
-      "type": "INCOME",
-      "description": "string",
-      "paymentMethod": "string",
-      "paymentStatus": "PAID",
-      "invoice": "string",
-      "patient": "string",
-      "clinic": "string",
-      "receipt": "string",
-      "receiptUrl": "string",
-      "patientDetails": {
-        "patientId": "string",
-        "name": "string",
-        "gender": "string",
-        "age": 0
-      },
-      "createdAt": "string",
-      "updatedAt": "string"
-    }
-  }
-  ```
+- **Auth Required**: Yes
 
-### Treatments
+**Request Body**:
 
-#### Get All Treatments
+```json
+{
+  "invoice": "invoice-id",
+  "amount": 550,
+  "paymentMethod": "CASH",
+  "description": "Full payment",
+  "patient": "patient-id",
+  "clinic": "clinic-id",
+  "receipt": "receipt-file"
+}
+```
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "transaction": {
+    "id": "transaction-id",
+    "transactionId": "TXN123456",
+    "amount": 550,
+    "type": "INCOME",
+    "description": "Full payment",
+    "paymentMethod": "CASH",
+    "paymentStatus": "PAID",
+    "invoice": "invoice-id",
+    "patient": "patient-id",
+    "clinic": "clinic-id",
+    "receipt": "receipt-url",
+    "receipt_url": "receipt-url",
+    "createdAt": "2023-01-01T00:00:00Z",
+    "updatedAt": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
+## Treatment Endpoints
+
+### Get All Treatments
+
+Get a list of all treatments.
 
 - **URL**: `/treatments/`
 - **Method**: `GET`
-- **Description**: Get a list of all treatments
-- **Authentication**: Required
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "treatments": [
-      {
-        "id": "string",
-        "name": "string",
-        "description": "string",
-        "cost": 0,
-        "duration": 0,
-        "clinic": "string",
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
+- **Auth Required**: Yes
 
-#### Delete Treatment
+**Response**:
+
+```json
+{
+  "success": true,
+  "treatments": [
+    {
+      "id": "treatment-id",
+      "name": "X-Ray",
+      "description": "X-Ray imaging",
+      "cost": 1000,
+      "duration": 30,
+      "clinic": "clinic-id",
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Delete Treatment
+
+Delete a treatment.
 
 - **URL**: `/treatments/{id}/`
 - **Method**: `DELETE`
-- **Description**: Delete a treatment by ID
-- **Authentication**: Required
-- **Path Parameters**:
+- **Auth Required**: Yes
+- **URL Parameters**:
   - `id`: Treatment ID
-- **Response**:
-  ```json
-  {
-    "success": true
-  }
-  ```
 
-### Dashboard
+**Response**:
 
-#### Get Dashboard Stats
+```json
+{
+  "success": true
+}
+```
 
-- **URL**: `/dashboard/stats/`
-- **Method**: `GET`
-- **Description**: Get dashboard statistics
-- **Authentication**: Required
-- **Query Parameters**:
-  - `clinicId` (optional): Filter by clinic ID
-  - `doctorId` (optional): Filter by doctor ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "stats": {
-      "todayAppointments": 0,
-      "todayPatients": 0,
-      "totalPatients": 0,
-      "malePatients": 0,
-      "femalePatients": 0,
-      "childPatients": 0,
-      "availableDoctors": 0,
-      "checkIns": 0,
-      "appointments": 0
-    }
-  }
-  ```
+## Admin Dashboard Endpoints
 
-#### Get Recent Appointments
+### Get Admin Dashboard Stats
 
-- **URL**: `/dashboard/appointments/`
-- **Method**: `GET`
-- **Description**: Get recent appointments
-- **Authentication**: Required
-- **Query Parameters**:
-  - `clinicId` (optional): Filter by clinic ID
-  - `doctorId` (optional): Filter by doctor ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointments": [
-      {
-        "id": "string",
-        "appointmentId": "string",
-        "patient": "string",
-        "doctor": "string",
-        "clinic": "string",
-        "appointmentDate": "string",
-        "startTime": "string",
-        "endTime": "string",
-        "duration": 0,
-        "type": "string",
-        "status": "string",
-        "concern": "string",
-        "patientDetails": {
-          "patientId": "string",
-          "name": "string",
-          "phone": "string",
-          "gender": "string",
-          "age": 0
-        },
-        "doctorDetails": {
-          "name": "string",
-          "specialization": "string"
-        },
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ]
-  }
-  ```
-
-#### Get Doctors Activity
-
-- **URL**: `/dashboard/doctors-activity/`
-- **Method**: `GET`
-- **Description**: Get doctors activity
-- **Authentication**: Required
-- **Query Parameters**:
-  - `clinicId` (optional): Filter by clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctorsActivity": [
-      {
-        "id": "string",
-        "name": "string",
-        "specialization": "string",
-        "isAvailable": true,
-        "appointments": {
-          "inProgress": 0,
-          "completed": 0,
-          "pending": 0,
-          "total": 0
-        }
-      }
-    ]
-  }
-  ```
-
-#### Get Recent Reports
-
-- **URL**: `/dashboard/reports/`
-- **Method**: `GET`
-- **Description**: Get recent reports
-- **Authentication**: Required
-- **Query Parameters**:
-  - `clinicId` (optional): Filter by clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "reports": [
-      {
-        "id": "string",
-        "title": "string",
-        "type": "string",
-        "generatedDate": "string",
-        "size": "string",
-        "format": "string"
-      }
-    ]
-  }
-  ```
-
-### Admin Dashboard
-
-#### Get Admin Dashboard Stats
+Get statistics for the admin dashboard.
 
 - **URL**: `/admin/stats/`
 - **Method**: `GET`
-- **Description**: Get admin dashboard statistics
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 - **Query Parameters**:
   - `clinicId`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "stats": {
-      "totalPatients": 0,
-      "appointments": 0,
-      "doctors": 0,
-      "staff": 0
-    }
-  }
-  ```
 
-#### Get Admin Doctors
+**Response**:
+
+```json
+{
+  "success": true,
+  "stats": {
+    "totalPatients": 100,
+    "appointments": 50,
+    "doctors": 5,
+    "staff": 10
+  }
+}
+```
+
+### Get Admin Doctors
+
+Get doctors for the admin dashboard.
 
 - **URL**: `/admin/doctors/`
 - **Method**: `GET`
-- **Description**: Get doctors for admin dashboard
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 - **Query Parameters**:
   - `clinicId`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "doctors": [
-      {
-        "id": "string",
-        "name": "string",
-        "specialization": "string",
-        "isAvailable": true,
-        "appointmentCount": 0
-      }
-    ]
-  }
-  ```
 
-#### Get Admin Staff
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctors": [
+    {
+      "id": "doctor-id",
+      "name": "Dr. Smith",
+      "specialization": "Cardiology",
+      "isAvailable": true,
+      "appointmentCount": 20
+    }
+  ]
+}
+```
+
+### Get Admin Staff
+
+Get staff for the admin dashboard.
 
 - **URL**: `/admin/staff/`
 - **Method**: `GET`
-- **Description**: Get staff for admin dashboard
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 - **Query Parameters**:
   - `clinicId`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "staff": [
-      {
-        "id": "string",
-        "name": "string",
-        "role": "string",
-        "isAvailable": true
-      }
-    ]
-  }
-  ```
 
-#### Get Admin Transactions
+**Response**:
+
+```json
+{
+  "success": true,
+  "staff": [
+    {
+      "id": "staff-id",
+      "name": "Staff Name",
+      "role": "Staff",
+      "isAvailable": true
+    }
+  ]
+}
+```
+
+### Get Admin Transactions
+
+Get transactions for the admin dashboard.
 
 - **URL**: `/admin/transactions/`
 - **Method**: `GET`
-- **Description**: Get transactions for admin dashboard
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 - **Query Parameters**:
   - `clinicId`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "transactions": [
-      {
-        "id": "string",
-        "doctorName": "string",
-        "testName": "string",
-        "date": "string",
-        "amount": 0
-      }
-    ]
-  }
-  ```
 
-#### Get Admin Appointments
+**Response**:
+
+```json
+{
+  "success": true,
+  "transactions": [
+    {
+      "id": "transaction-id",
+      "doctorName": "Dr. Smith",
+      "testName": "X-Ray",
+      "date": "01-01-2023",
+      "amount": 1000
+    }
+  ]
+}
+```
+
+### Get Admin Appointments
+
+Get appointments for the admin dashboard.
 
 - **URL**: `/admin/appointments/`
 - **Method**: `GET`
-- **Description**: Get appointments for admin dashboard
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
 - **Query Parameters**:
   - `clinicId`: Clinic ID
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "appointments": [
-      {
-        "id": "string",
-        "sNo": 0,
-        "name": "string",
-        "phoneNumber": "string",
-        "email": "string",
-        "age": 0,
-        "gender": "string",
-        "action": "string"
-      }
-    ]
-  }
-  ```
 
-### Analytics
+**Response**:
 
-#### Get Analytics Data
+```json
+{
+  "success": true,
+  "appointments": [
+    {
+      "id": "appointment-id",
+      "sNo": 1,
+      "name": "John Doe",
+      "phoneNumber": "1234567890",
+      "email": "john@example.com",
+      "age": 33,
+      "gender": "MALE",
+      "action": "Accept"
+    }
+  ]
+}
+```
+
+## Analytics Endpoints
+
+### Get Analytics Data
+
+Get analytics data.
 
 - **URL**: `/analytics/`
 - **Method**: `GET`
-- **Description**: Get analytics data
-- **Authentication**: Required (SUPER_ADMIN or ADMIN role)
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "data": {
-      "revenue": {
-        "thisMonth": 0,
-        "lastMonth": 0,
-        "growth": 0
-      },
-      "patients": {
-        "total": 0,
-        "growth": 0
-      },
-      "appointments": {
-        "completionRate": 0,
-        "total": 0
-      }
+- **Auth Required**: Yes (SUPER_ADMIN or ADMIN)
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "revenue": {
+      "thisMonth": 50000,
+      "lastMonth": 45000,
+      "growth": 11.11
+    },
+    "patients": {
+      "total": 500,
+      "growth": 5.26
+    },
+    "appointments": {
+      "completionRate": 85.5,
+      "total": 200
     }
   }
-  ```
+}
+```
 
-## Data Types
+## Dashboard Endpoints
+
+### Get Dashboard Stats
+
+Get statistics for the dashboard.
+
+- **URL**: `/dashboard/stats/`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `clinicId` (optional): Filter by clinic ID
+  - `doctorId` (optional): Filter by doctor ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "stats": {
+    "todayAppointments": 10,
+    "todayPatients": 8,
+    "totalPatients": 500,
+    "malePatients": 250,
+    "femalePatients": 230,
+    "childPatients": 20,
+    "availableDoctors": 5,
+    "checkIns": 8,
+    "appointments": 10
+  }
+}
+```
+
+### Get Recent Appointments
+
+Get recent appointments for the dashboard.
+
+- **URL**: `/dashboard/appointments/`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `clinicId` (optional): Filter by clinic ID
+  - `doctorId` (optional): Filter by doctor ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "appointments": [
+    {
+      "id": "appointment-id",
+      "appointmentId": "APT123456",
+      "patient": {
+        "patientId": "PAT123456",
+        "name": "John Doe",
+        "phone": "1234567890",
+        "gender": "MALE",
+        "age": 33
+      },
+      "doctor": {
+        "name": "Dr. Smith",
+        "specialization": "Cardiology"
+      },
+      "appointmentDate": "2023-01-01T09:00:00Z",
+      "status": "SCHEDULED",
+      "concern": "Routine checkup"
+    }
+  ]
+}
+```
+
+### Get Doctors Activity
+
+Get doctors activity for the dashboard.
+
+- **URL**: `/dashboard/doctors-activity/`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `clinicId` (optional): Filter by clinic ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "doctorsActivity": [
+    {
+      "id": "doctor-id",
+      "name": "Dr. Smith",
+      "specialization": "Cardiology",
+      "isAvailable": true,
+      "appointments": {
+        "inProgress": 2,
+        "completed": 5,
+        "pending": 3,
+        "total": 10
+      }
+    }
+  ]
+}
+```
+
+### Get Recent Reports
+
+Get recent reports for the dashboard.
+
+- **URL**: `/dashboard/reports/`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `clinicId` (optional): Filter by clinic ID
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "reports": [
+    {
+      "id": "report-id",
+      "title": "Blood Test Report",
+      "type": "Blood Test",
+      "generatedDate": "2023-01-01T00:00:00Z",
+      "size": "1.2 MB",
+      "format": "PDF"
+    }
+  ]
+}
+```
+
+## Data Types and Enums
 
 ### User Roles
 
-- `SUPER_ADMIN`: Super administrator with access to all clinics
-- `ADMIN`: Administrator of a specific clinic
-- `STAFF`: Staff member of a specific clinic
-- `DOCTOR`: Doctor of a specific clinic
-
-### Appointment Status
-
-- `SCHEDULED`: Appointment is scheduled
-- `CONFIRMED`: Appointment is confirmed
-- `CHECKED_IN`: Patient has checked in for the appointment
-- `IN_PROGRESS`: Appointment is in progress
-- `COMPLETED`: Appointment is completed
-- `CANCELLED`: Appointment is cancelled
-- `NO_SHOW`: Patient did not show up for the appointment
-- `RESCHEDULED`: Appointment is rescheduled
-
-### Appointment Type
-
-- `REGULAR`: Regular appointment
-- `EMERGENCY`: Emergency appointment
-- `FOLLOW_UP`: Follow-up appointment
-- `CONSULTATION`: Consultation appointment
-- `PROCEDURE`: Procedure appointment
-- `CHECKUP`: Checkup appointment
-- `VACCINATION`: Vaccination appointment
-- `LABORATORY`: Laboratory appointment
+```typescript
+enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  STAFF = "STAFF",
+  DOCTOR = "DOCTOR"
+}
+```
 
 ### Gender
 
-- `MALE`: Male
-- `FEMALE`: Female
-- `OTHER`: Other
+```typescript
+enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER"
+}
+```
 
 ### Blood Group
 
-- `A+`: A positive
-- `A-`: A negative
-- `B+`: B positive
-- `B-`: B negative
-- `AB+`: AB positive
-- `AB-`: AB negative
-- `O+`: O positive
-- `O-`: O negative
+```typescript
+enum BloodGroup {
+  A_POSITIVE = "A+",
+  A_NEGATIVE = "A-",
+  B_POSITIVE = "B+",
+  B_NEGATIVE = "B-",
+  AB_POSITIVE = "AB+",
+  AB_NEGATIVE = "AB-",
+  O_POSITIVE = "O+",
+  O_NEGATIVE = "O-"
+}
+```
+
+### Appointment Status
+
+```typescript
+enum AppointmentStatus {
+  SCHEDULED = "SCHEDULED",
+  CONFIRMED = "CONFIRMED",
+  CHECKED_IN = "CHECKED_IN",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+  NO_SHOW = "NO_SHOW",
+  RESCHEDULED = "RESCHEDULED"
+}
+```
+
+### Appointment Type
+
+```typescript
+enum AppointmentType {
+  REGULAR = "REGULAR",
+  EMERGENCY = "EMERGENCY",
+  FOLLOW_UP = "FOLLOW_UP",
+  CONSULTATION = "CONSULTATION",
+  PROCEDURE = "PROCEDURE",
+  CHECKUP = "CHECKUP",
+  VACCINATION = "VACCINATION",
+  LABORATORY = "LABORATORY"
+}
+```
 
 ### Medicine Type
 
-- `TABLET`: Tablet
-- `CAPSULE`: Capsule
-- `SYRUP`: Syrup
-- `INJECTION`: Injection
-- `CREAM`: Cream
-- `OINTMENT`: Ointment
-- `DROPS`: Drops
-- `INHALER`: Inhaler
-- `POWDER`: Powder
-- `LOTION`: Lotion
+```typescript
+enum MedicineType {
+  TABLET = "TABLET",
+  CAPSULE = "CAPSULE",
+  SYRUP = "SYRUP",
+  INJECTION = "INJECTION",
+  CREAM = "CREAM",
+  OINTMENT = "OINTMENT",
+  DROPS = "DROPS",
+  INHALER = "INHALER",
+  POWDER = "POWDER",
+  LOTION = "LOTION"
+}
+```
 
 ### Bed Status
 
-- `AVAILABLE`: Bed is available
-- `OCCUPIED`: Bed is occupied
-- `RESERVED`: Bed is reserved
-- `MAINTENANCE`: Bed is under maintenance
+```typescript
+enum BedStatus {
+  AVAILABLE = "AVAILABLE",
+  OCCUPIED = "OCCUPIED",
+  RESERVED = "RESERVED",
+  MAINTENANCE = "MAINTENANCE"
+}
+```
 
 ### Room Type
 
-- `GENERAL`: General room
-- `PRIVATE`: Private room
-- `SEMI_PRIVATE`: Semi-private room
-- `ICU`: Intensive Care Unit
-- `EMERGENCY`: Emergency room
-- `OPERATION_THEATER`: Operation theater
-- `LABOR`: Labor room
-- `NURSERY`: Nursery
+```typescript
+enum RoomType {
+  GENERAL = "GENERAL",
+  PRIVATE = "PRIVATE",
+  SEMI_PRIVATE = "SEMI_PRIVATE",
+  ICU = "ICU",
+  EMERGENCY = "EMERGENCY",
+  OPERATION_THEATER = "OPERATION_THEATER",
+  LABOR = "LABOR",
+  NURSERY = "NURSERY"
+}
+```
 
 ### Transaction Type
 
-- `INCOME`: Income transaction
-- `EXPENSE`: Expense transaction
-- `REFUND`: Refund transaction
+```typescript
+enum TransactionType {
+  INCOME = "INCOME",
+  EXPENSE = "EXPENSE",
+  REFUND = "REFUND"
+}
+```
 
 ### Payment Method
 
-- `CASH`: Cash payment
-- `CREDIT_CARD`: Credit card payment
-- `DEBIT_CARD`: Debit card payment
-- `UPI`: UPI payment
-- `BANK_TRANSFER`: Bank transfer payment
-- `CHEQUE`: Cheque payment
-- `INSURANCE`: Insurance payment
+```typescript
+enum PaymentMethod {
+  CASH = "CASH",
+  CREDIT_CARD = "CREDIT_CARD",
+  DEBIT_CARD = "DEBIT_CARD",
+  UPI = "UPI",
+  BANK_TRANSFER = "BANK_TRANSFER",
+  CHEQUE = "CHEQUE",
+  INSURANCE = "INSURANCE"
+}
+```
 
 ### Payment Status
 
-- `PAID`: Payment is paid
-- `PENDING`: Payment is pending
-- `CANCELLED`: Payment is cancelled
-- `REFUNDED`: Payment is refunded
-- `PARTIALLY_PAID`: Payment is partially paid
+```typescript
+enum PaymentStatus {
+  PAID = "PAID",
+  PENDING = "PENDING",
+  CANCELLED = "CANCELLED",
+  REFUNDED = "REFUNDED",
+  PARTIALLY_PAID = "PARTIALLY_PAID"
+}
+```
 
 ### Invoice Status
 
-- `DRAFT`: Invoice is in draft state
-- `SENT`: Invoice is sent to the patient
-- `PAID`: Invoice is paid
-- `OVERDUE`: Invoice is overdue
-- `CANCELLED`: Invoice is cancelled
-- `PARTIALLY_PAID`: Invoice is partially paid
+```typescript
+enum InvoiceStatus {
+  DRAFT = "DRAFT",
+  SENT = "SENT",
+  PAID = "PAID",
+  OVERDUE = "OVERDUE",
+  CANCELLED = "CANCELLED",
+  PARTIALLY_PAID = "PARTIALLY_PAID"
+}
+```
 
 ### Invoice Item Type
 
-- `CONSULTATION`: Consultation fee
-- `MEDICINE`: Medicine
-- `TREATMENT`: Treatment
-- `PROCEDURE`: Procedure
-- `LABORATORY`: Laboratory test
-- `ROOM_CHARGE`: Room charge
-- `OTHER`: Other
+```typescript
+enum InvoiceItemType {
+  CONSULTATION = "CONSULTATION",
+  MEDICINE = "MEDICINE",
+  TREATMENT = "TREATMENT",
+  PROCEDURE = "PROCEDURE",
+  LABORATORY = "LABORATORY",
+  ROOM_CHARGE = "ROOM_CHARGE",
+  OTHER = "OTHER"
+}
+```
 
 ### Document Type
 
-- `REPORT`: Medical report
-- `PRESCRIPTION`: Prescription
-- `INVOICE`: Invoice
-- `RECEIPT`: Receipt
-- `CONSENT_FORM`: Consent form
-- `MEDICAL_RECORD`: Medical record
-- `INSURANCE`: Insurance document
-- `OTHER`: Other document
+```typescript
+enum DocumentType {
+  REPORT = "REPORT",
+  PRESCRIPTION = "PRESCRIPTION",
+  INVOICE = "INVOICE",
+  RECEIPT = "RECEIPT",
+  CONSENT_FORM = "CONSENT_FORM",
+  MEDICAL_RECORD = "MEDICAL_RECORD",
+  INSURANCE = "INSURANCE",
+  OTHER = "OTHER"
+}
+```
