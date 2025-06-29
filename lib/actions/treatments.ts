@@ -18,6 +18,63 @@ export async function getTreatments() {
   }
 }
 
+export async function getTreatmentById(id: string) {
+  try {
+    const response = await treatmentsApi.getTreatment(id);
+    
+    if (response.success) {
+      return response.treatment;
+    } else {
+      console.error('Error fetching treatment:', response.error);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching treatment:', error);
+    return null;
+  }
+}
+
+export async function createTreatment(data: {
+  name: string;
+  description?: string;
+  cost: number;
+  duration?: number;
+  clinicId: string;
+}) {
+  try {
+    const response = await treatmentsApi.createTreatment(data);
+    
+    if (response.success) {
+      return { success: true, treatment: response.treatment };
+    } else {
+      return { success: false, error: response.error || 'Failed to create treatment' };
+    }
+  } catch (error) {
+    console.error('Error creating treatment:', error);
+    return { success: false, error: 'Failed to create treatment' };
+  }
+}
+
+export async function updateTreatment(id: string, data: {
+  name?: string;
+  description?: string;
+  cost?: number;
+  duration?: number;
+}) {
+  try {
+    const response = await treatmentsApi.updateTreatment(id, data);
+    
+    if (response.success) {
+      return { success: true, treatment: response.treatment };
+    } else {
+      return { success: false, error: response.error || 'Failed to update treatment' };
+    }
+  } catch (error) {
+    console.error('Error updating treatment:', error);
+    return { success: false, error: 'Failed to update treatment' };
+  }
+}
+
 export async function deleteTreatment(id: string) {
   try {
     const response = await treatmentsApi.deleteTreatment(id);

@@ -400,6 +400,10 @@ export const doctorsApi = {
   
   async deleteDoctor(id: string) {
     return apiClient.delete(`/doctors/${id}/`);
+  },
+  
+  async toggleAvailability(id: string) {
+    return apiClient.post(`/doctors/${id}/toggle-availability/`, {});
   }
 };
 
@@ -426,6 +430,33 @@ export const patientsApi = {
   
   async deletePatient(id: string) {
     return apiClient.delete(`/patients/${id}/`);
+  },
+  
+  async getPatientDocuments(id: string) {
+    return apiClient.get(`/patients/${id}/documents/`);
+  },
+  
+  async uploadDocument(patientId: string, file: File, data: any) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/patients/documents/`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.json();
   }
 };
 
@@ -469,6 +500,21 @@ export const appointmentsApi = {
     followUpDate?: string;
   }) {
     return apiClient.patch(`/appointments/${id}/complete/`, data);
+  },
+  
+  async cancelAppointment(id: string, data: {
+    cancelReason: string;
+  }) {
+    return apiClient.patch(`/appointments/${id}/cancel/`, data);
+  },
+  
+  async rescheduleAppointment(id: string, data: {
+    appointmentDate: string;
+    startTime: string;
+    endTime: string;
+    duration: number;
+  }) {
+    return apiClient.patch(`/appointments/${id}/reschedule/`, data);
   }
 };
 
@@ -495,6 +541,24 @@ export const prescriptionsApi = {
   
   async deletePrescription(id: string) {
     return apiClient.delete(`/prescriptions/${id}/`);
+  },
+  
+  async uploadPrescriptionDocument(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('prescriptionId', id);
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/prescriptions/${id}/upload/`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.json();
   }
 };
 
@@ -597,7 +661,8 @@ export const medicinesApi = {
   async updateStock(id: string, quantity: number, isAddition: boolean) {
     return apiClient.patch(`/medicines/${id}/update-stock/`, {
       quantity,
-      isAddition
+      isAddition,
+      action: 'updateStock'
     });
   }
 };
@@ -605,6 +670,18 @@ export const medicinesApi = {
 export const treatmentsApi = {
   async getTreatments() {
     return apiClient.get('/treatments/');
+  },
+  
+  async getTreatment(id: string) {
+    return apiClient.get(`/treatments/${id}/`);
+  },
+  
+  async createTreatment(data: any) {
+    return apiClient.post('/treatments/', data);
+  },
+  
+  async updateTreatment(id: string, data: any) {
+    return apiClient.patch(`/treatments/${id}/`, data);
   },
   
   async deleteTreatment(id: string) {
@@ -666,16 +743,21 @@ export const bedsApi = {
     return apiClient.patch(`/beds/${id}/assign/`, {
       patient: patientId,
       admission_date: admissionDate,
-      discharge_date: dischargeDate
+      discharge_date: dischargeDate,
+      action: 'assign'
     });
   },
   
   async dischargeBed(id: string) {
-    return apiClient.patch(`/beds/${id}/discharge/`, {});
+    return apiClient.patch(`/beds/${id}/discharge/`, {
+      action: 'discharge'
+    });
   },
   
   async reserveBed(id: string) {
-    return apiClient.patch(`/beds/${id}/reserve/`, {});
+    return apiClient.patch(`/beds/${id}/reserve/`, {
+      action: 'reserve'
+    });
   }
 };
 

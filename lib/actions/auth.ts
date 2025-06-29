@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import { UserRole } from "@/lib/types"
 import { authApi } from '@/lib/services/api'
-import { changePassword as changePasswordService, verifyEmail as verifyEmailService } from '@/lib/services/auth'
+import { changePassword as changePasswordService, verifyEmail as verifyEmailService, getSession } from '@/lib/services/auth'
 
 interface LoginCredentials {
   email: string
@@ -214,5 +214,14 @@ export async function verifyEmail(token: string) {
   } catch (error) {
     console.error('Error verifying email:', error)
     return { success: false, error: 'An error occurred while verifying email' }
+  }
+}
+
+export async function getCurrentSession() {
+  try {
+    return await getSession()
+  } catch (error) {
+    console.error('Error getting current session:', error)
+    return null
   }
 }
