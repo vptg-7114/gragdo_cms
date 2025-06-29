@@ -1,3 +1,4 @@
+// components/profile/profile-client.tsx
 "use client"
 
 import { useState } from "react"
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileUpload, FilePreview } from "@/components/shared/file-upload"
 import { 
   User, 
   Mail, 
@@ -59,8 +61,9 @@ interface ProfileClientProps {
 
 export function ProfileClient({ initialProfile }: ProfileClientProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [profileImage, setProfileImage] = useState(initialProfile.profileImage)
+  const [profileImage, setProfileImage] = useState<string | undefined>(initialProfile.profileImage)
   const [activeTab, setActiveTab] = useState("profile")
+  const [uploadedProfileImage, setUploadedProfileImage] = useState<{name: string, url: string} | null>(null)
 
   const {
     register,
@@ -77,15 +80,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
     },
   })
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+  const handleImageUpload = (url: string, file: File) => {
+    setUploadedProfileImage({ name: file.name, url })
+    setProfileImage(url)
   }
 
   const onSubmit = async (data: ProfileFormData) => {
@@ -93,7 +90,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
     try {
       const result = await updateUserProfile(initialProfile.id, {
         ...data,
-        profileImage
+        profileImage: uploadedProfileImage?.url || profileImage
       })
       
       if (result.success) {
@@ -184,15 +181,16 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </AvatarFallback>
                   </Avatar>
                   
-                  <label className="absolute bottom-0 right-0 bg-[#7165e1] text-white p-2 rounded-full cursor-pointer hover:bg-[#5f52d1] transition-colors">
-                    <Camera className="w-4 h-4" />
-                    <input
-                      type="file"
+                  <div className="mt-4">
+                    <FileUpload
+                      onFileUpload={handleImageUpload}
+                      folder="profile-images"
                       accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
+                      multiple={false}
+                      buttonText="Change Photo"
+                      buttonVariant="outline"
                     />
-                  </label>
+                  </div>
                 </div>
                 
                 <h2 className="text-xl md:text-2xl font-sf-pro font-bold text-[#7165e1] mb-2">
