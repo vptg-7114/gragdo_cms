@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { config } from '@/lib/config';
 import { UserRole } from '@/lib/types';
+import { cookies } from 'next/headers';
 
 // Convert string to Uint8Array for jose
 const textEncoder = new TextEncoder();
@@ -122,4 +123,94 @@ export async function changePassword(currentPassword: string, newPassword: strin
       error: 'An error occurred while changing password' 
     };
   }
+}
+
+/**
+ * Get the current session
+ */
+export async function getSession() {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    
+    if (!token) {
+      return null;
+    }
+    
+    const payload = await verifyToken(token);
+    
+    if (!payload) {
+      // Try to refresh the token
+      const refreshToken = cookieStore.get('refresh-token')?.value;
+      
+      if (!refreshToken) {
+        return null;
+      }
+      
+      const newToken = await refreshAccessToken(refreshToken);
+      
+      if (!newToken) {
+        return null;
+      }
+      
+      // Verify the new token
+      const newPayload = await verifyToken(newToken);
+      
+      if (!newPayload) {
+        return null;
+      }
+      
+      return {
+        user: {
+          id: newPayload.sub,
+          email: newPayload.email,
+          name: newPayload.name,
+          role: newPayload.role,
+          clinicId: newPayload.clinicId,
+          clinicIds: newPayload.clinicIds,
+        },
+        expires: new Date(newPayload.exp * 1000),
+      };
+    }
+    
+    return {
+      user: {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        role: payload.role,
+        clinicId: payload.clinicId,
+        clinicIds: payload.clinicIds,
+      },
+      expires: new Date(payload.exp * 1000),
+    };
+  } catch (error) {
+    console.error('Error getting session:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if the user is authenticated
+ */
+export async function isAuthenticated() {
+  const session = await getSession();
+  return !!session;
+}
+
+/**
+ * Check if the user has a specific role
+ */
+export async function hasRole(role: UserRole | UserRole[]) {
+  const session = await getSession();
+  
+  if (!session) {
+    return false;
+  }
+  
+  if (Array.isArray(role)) {
+    return role.includes(session.user.role as UserRole);
+  }
+  
+  return session.user.role === role;
 }

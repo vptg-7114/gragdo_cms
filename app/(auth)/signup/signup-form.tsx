@@ -17,9 +17,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { signup } from "@/lib/actions/auth"
 import { UserRole } from "@/lib/types"
 import { Eye, EyeOff } from "lucide-react"
+import { useSession } from "@/components/auth/session-provider"
 
 export function SignupForm() {
   const router = useRouter()
+  const { login: setSession } = useSession()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -74,6 +76,11 @@ export function SignupForm() {
       })
       
       if (result.success) {
+        // Set the session
+        if (result.user) {
+          setSession(result.user)
+        }
+        
         // Show success message
         setSuccess(true)
       } else {

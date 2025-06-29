@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Calendar, Users, UserCheck, FileText, CreditCard, Settings, ChevronDown, Building2, Menu, X, Users2, Receipt, Activity, Bed, Pill, FlaskRound as Flask, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useSession } from "@/components/auth/session-provider"
 
 interface SidebarProps {
   userRole: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR'
@@ -15,10 +16,16 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useSession()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Use session user role if available
+  const effectiveRole = user?.role || userRole
+  const effectiveClinicId = user?.clinicId || clinicId
+  const effectiveUserId = user?.id || userId
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -38,8 +45,8 @@ export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
   useEffect(() => {
     // Check if the current path is a submenu item and expand its parent
     const treatmentsSubmenuPaths = [
-      `/${clinicId}/admin/treatment`, 
-      `/${clinicId}/admin/medicine`, 
+      `/${effectiveClinicId}/admin/treatment`, 
+      `/${effectiveClinicId}/admin/medicine`, 
       `/admin/treatment`, 
       `/admin/medicine`
     ]
@@ -47,7 +54,7 @@ export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
     if (treatmentsSubmenuPaths.some(path => pathname.startsWith(path))) {
       setExpandedItems(prev => prev.includes('Treatments') ? prev : [...prev, 'Treatments'])
     }
-  }, [pathname, clinicId])
+  }, [pathname, effectiveClinicId])
 
   const toggleExpanded = (item: string) => {
     setExpandedItems(prev => 
@@ -76,10 +83,10 @@ export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
 
   // Generate base paths for each role
   const getBasePath = (role: string) => {
-    if (clinicId && userId && (role === 'STAFF' || role === 'DOCTOR')) {
-      return `/${clinicId}/${role.toLowerCase()}/${userId}`
-    } else if (clinicId) {
-      return `/${clinicId}/${role.toLowerCase()}`
+    if (effectiveClinicId && effectiveUserId && (role === 'STAFF' || role === 'DOCTOR')) {
+      return `/${effectiveClinicId}/${role.toLowerCase()}/${effectiveUserId}`
+    } else if (effectiveClinicId) {
+      return `/${effectiveClinicId}/${role.toLowerCase()}`
     } else {
       return `/${role.toLowerCase()}`
     }
@@ -252,12 +259,12 @@ export function Sidebar({ userRole, clinicId, userId }: SidebarProps) {
   ]
 
   // Determine which menu items to show based on user role
-  let menuItems = userRole === 'DOCTOR' 
+  let menuItems = effectiveRole === 'DOCTOR' 
     ? doctorMenuItems 
-    : (userRole === 'STAFF' ? staffMenuItems : adminMenuItems);
+    : (effectiveRole === 'STAFF' ? staffMenuItems : adminMenuItems);
   
   const filteredMenuItems = menuItems.filter(item => 
-    item.roles.includes(userRole)
+    item.roles.includes(effectiveRole)
   )
 
   if (isMobile) {

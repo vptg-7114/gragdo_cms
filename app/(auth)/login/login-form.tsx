@@ -17,9 +17,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { login } from "@/lib/actions/auth"
 import { UserRole } from "@/lib/types"
 import { Eye, EyeOff } from "lucide-react"
+import { useSession } from "@/components/auth/session-provider"
 
 export function LoginForm() {
   const router = useRouter()
+  const { login: setSession } = useSession()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole | "">("")
@@ -72,8 +74,11 @@ export function LoginForm() {
           localStorage.removeItem('digigo_role')
         }
         
-        // Redirect based on role
+        // Set the session
         if (result.user) {
+          setSession(result.user)
+          
+          // Redirect based on role
           switch (role) {
             case "SUPER_ADMIN":
               router.push("/clinics")
