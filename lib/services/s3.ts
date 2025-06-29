@@ -1,3 +1,4 @@
+// lib/services/s3.ts
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "@/lib/config";
@@ -17,7 +18,7 @@ const s3Client = new S3Client({
  * @param key The key (path) to store the file at
  * @returns The URL of the uploaded file
  */
-export async function uploadFile(file: Buffer, key: string, contentType: string): Promise<string> {
+export async function uploadFile(file: Buffer | Blob, key: string, contentType: string): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: config.aws.s3BucketName,
     Key: key,
@@ -88,4 +89,18 @@ export function generateFileKey(folder: string, fileName: string): string {
   const extension = fileName.split('.').pop();
   
   return `${folder}/${timestamp}-${randomString}.${extension}`;
+}
+
+/**
+ * Uploads a file to S3 from a File object
+ * @param file The file to upload
+ * @param folder The folder to store the file in
+ * @returns The URL of the uploaded file
+ */
+export async function uploadFileObject(file: File, folder: string): Promise<string> {
+  const key = generateFileKey(folder, file.name);
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  
+  return await uploadFile(buffer, key, file.type);
 }
